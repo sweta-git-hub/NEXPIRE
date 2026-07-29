@@ -1,6 +1,9 @@
 import os
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+
+Base = declarative_base()
+
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL", "postgresql://nexpire:nexpire_dev_password@db:5432/nexpire"

@@ -1,65 +1,57 @@
-# NEXPIRE — Phase 0 Starter
+# NEXPIRE — AI-Powered Surplus Food Redistribution & Expiration Platform
 
-Minimal, working scaffold: FastAPI + Postgres/PostGIS + Redis + Celery,
-all wired together and running under Docker Compose, with a seed script.
-This is the "definition of done" for Phase 0 — everything past this point
-(Phases 1-7) builds inside this skeleton.
+NEXPIRE is an intelligent surplus food management and redistribution ecosystem: FastAPI + Postgres/PostGIS + Redis + Celery, running under Docker Compose.
 
-## Prerequisites
-- Docker + Docker Compose installed
-- Git
-
-## First-time setup
+## 🚀 Quick Start
 
 ```bash
-# 1. Copy the env template and fill in real values as you get to
-#    Twilio/Stripe/weather API keys in later phases. Phase 0 works
-#    fine with the defaults as-is.
+# 1. Environment setup
 cp .env.example .env
 
-# 2. Build and start everything
-docker compose up --build
+# 2. Build and start containers
+docker compose up --build -d
 
-# 3. In a second terminal, confirm the API can reach both Postgres
-#    and Redis
+# 3. Verify health check
 curl http://localhost:8000/health
 # -> {"database":"ok","redis":"ok","healthy":true}
 
-# 4. Seed demo data
-docker compose exec api python scripts/seed.py
+# 4. Run automated test suite (pytest + coverage)
+docker compose exec api pytest -v --cov=app
 ```
 
-## What's running
+## 📦 Services Overview
 
-| Service | Container | Port |
-|---|---|---|
-| FastAPI app | nexpire-api | 8000 |
-| Celery worker | nexpire-worker | - |
-| Postgres + PostGIS | nexpire-db | 5432 |
-| Redis | nexpire-redis | 6379 |
+| Service | Container | Internal Port | Host Port |
+|---|---|---|---|
+| FastAPI API | nexpire-api | 8000 | 8000 |
+| Celery Worker | nexpire-worker | - | - |
+| Postgres + PostGIS | nexpire-db | 5432 | 5432 |
+| Redis | nexpire-redis | 6379 | 6379 |
 
-## Common commands
+## 🛠️ API Reference (Phase 1 — Inventory Core)
+
+### Stores
+- `POST /api/v1/stores` — Create store location
+- `GET /api/v1/stores` — List stores (paginated)
+- `GET /api/v1/stores/{store_id}` — Get store details
+- `PUT /api/v1/stores/{store_id}` — Update store
+- `DELETE /api/v1/stores/{store_id}` — Delete store
+
+### Inventory Batches
+- `POST /api/v1/inventory/batches` — Add inventory batch (auto-calculates current price from discount)
+- `GET /api/v1/inventory/batches` — List batches (filters: `store_id`, `category`, `status`, `expiring_before`, `expiring_after`)
+- `GET /api/v1/inventory/batches/{batch_id}` — Get batch details
+- `PUT /api/v1/inventory/batches/{batch_id}` — Update batch details
+- `DELETE /api/v1/inventory/batches/{batch_id}` — Delete batch
+- `POST /api/v1/inventory/upload-csv` — Bulk CSV inventory import with error diagnostics
+
+## 🧪 Testing
 
 ```bash
-# Tail logs
-docker compose logs -f api
-
-# Open a psql shell
-docker compose exec db psql -U nexpire -d nexpire
-
-# Open a Redis CLI
-docker compose exec redis redis-cli
-
-# Rebuild after changing requirements.txt
-docker compose up --build
-
-# Wipe the DB completely (re-runs init.sql on next up)
-docker compose down -v
+# Run pytest in container
+docker compose exec api pytest -v --cov=app
 ```
 
-## Repo/branch conventions (per RULE.md)
-
-- One branch per phase: `phase-0-setup`, `phase-1-inventory`, etc.
-- Frequent small commits within a phase branch.
-- Request explicit go-ahead before merging a phase branch or starting the next one.
-- Update `STATUS.md` and `DECISIONS.md` at every commit/phase boundary.
+## 📋 Documentation
+- [STATUS.md](file:///Users/sweta/Desktop/sweta/HACKATHONS/AAROH/NEXPIRE/STATUS.md) — Implementation roadmap & phase completion checklist
+- [DECISIONS.md](file:///Users/sweta/Desktop/sweta/HACKATHONS/AAROH/NEXPIRE/DECISIONS.md) — Architecture decision records

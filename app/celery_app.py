@@ -17,9 +17,8 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-# Real tasks (expiry-risk scan, SMS dispatch, etc.) get added here
-# starting Phase 2/3 - this stub just proves the worker boots and
-# can talk to Redis.
+# Include task modules
+celery_app.autodiscover_tasks(["app.tasks"])
 
 
 @celery_app.task

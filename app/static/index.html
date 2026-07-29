@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXPIRE — AI Food Waste Rescue Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-card: rgba(18, 26, 43, 0.7);
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.3);
+      --accent-emerald: #059669;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-rose: #f43f5e;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font-main: 'Outfit', sans-serif;
+      --font-code: 'Space Grotesk', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 10% 20%, #0d1527 0%, #070a12 90%);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Glow */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.15); }
+    .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.12); }
+
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2.5rem;
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--bg-card-border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--accent-green-glow);
+    }
+    .brand-logo i { color: #fff; }
+    .brand-title {
+      font-family: var(--font-code);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent-green);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 1300px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      flex: 1;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--bg-card-border);
+      padding-bottom: 0.75rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Glass Cards & Panels */
+    .glass-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      margin-bottom: 2rem;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .panel-title i { color: var(--accent-green); }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(10, 15, 28, 0.8);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      transition: border 0.2s ease;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green-glow);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-emerald));
+      color: #fff;
+      box-shadow: 0 4px 15px var(--accent-green-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-green-glow);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--bg-card-border);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Metric Gauge & Cards */
+    .metric-card {
+      background: rgba(10, 15, 28, 0.6);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .metric-val {
+      font-family: var(--font-code);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+    .metric-lbl {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .data-table th, .data-table td {
+      padding: 0.9rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--bg-card-border);
+    }
+    .data-table th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Output Console */
+    .console-out {
+      background: #050811;
+      border: 1px solid var(--bg-card-border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      color: #a7f3d0;
+      max-height: 250px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-sim { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); }
+    .badge-sent { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">
+        <i data-lucide="leaf"></i>
+      </div>
+      <div>
+        <div class="brand-title">NEXPIRE</div>
+        <div class="brand-subtitle">AI Food-Waste Rescue Platform</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <a href="/docs" target="_blank" style="text-decoration: none;">
+        <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+          <i data-lucide="file-text"></i> Interactive API Docs
+        </button>
+      </a>
+      <div class="status-badge" id="health-badge">
+        <div class="status-dot"></div>
+        <span id="health-text">API Operational</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('ml-tab', this)">
+        <i data-lucide="cpu"></i> ML Dynamic Discount Simulator
+      </button>
+      <button class="tab-btn" onclick="switchTab('notify-tab', this)">
+        <i data-lucide="send"></i> Notification Engine (Phase 3)
+      </button>
+      <button class="tab-btn" onclick="switchTab('inventory-tab', this)">
+        <i data-lucide="store"></i> Stores & Inventory Core
+      </button>
+    </div>
+
+    <!-- TAB 1: ML Dynamic Discount Simulator -->
+    <div id="ml-tab" class="tab-content active">
+      <div class="grid-2">
+        <!-- Input Form -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i data-lucide="sliders"></i> Expiration Risk & Markdown Predictor
+            </div>
+          </div>
+          <form id="ml-predict-form" onsubmit="runMLPrediction(event)">
+            <div class="form-group">
+              <label class="form-label">Item Category</label>
+              <select class="form-select" id="ml-perishability">
+                <option value="0.9">Dairy / Fresh Produce (High Risk - 0.9)</option>
+                <option value="0.7">Bakery / Prepared Meals (Medium Risk - 0.7)</option>
+                <option value="0.4">Meat / Seafood (Refrigerated - 0.4)</option>
+                <option value="0.2">Canned / Dry Goods (Low Perishability - 0.2)</option>
+              </select>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Days to Expiration</label>
+                <input type="number" class="form-input" id="ml-days" value="2" min="0" max="30">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Original Price ($)</label>
+                <input type="number" step="0.01" class="form-input" id="ml-price" value="5.99">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Current Stock Quantity</label>
+                <input type="number" class="form-input" id="ml-stock" value="45">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cost Margin Ratio</label>
+                <input type="number" step="0.05" class="form-input" id="ml-margin" value="0.40" min="0.1" max="0.9">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              <i data-lucide="zap"></i> Calculate Optimal ML Discount
+            </button>
+          </form>
+        </div>
+
+        <!-- Output Cards -->
+        <div>
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i data-lucide="bar-chart-3"></i> Predicted Deal Matrix
+              </div>
+            </div>
+
+            <div class="grid-3" style="margin-bottom: 1.5rem;">
+              <div class="metric-card">
+                <div class="metric-lbl">Risk Score</div>
+                <div class="metric-val" id="res-risk-score" style="color: var(--accent-rose);">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">ML Discount</div>
+                <div class="metric-val" id="res-discount">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">New Price</div>
+                <div class="metric-val" id="res-new-price" style="color: #fff;">--</div>
+              </div>
+            </div>
+
+            <div class="console-out" id="ml-console">// Predictor JSON response will appear here...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Notification Engine (Phase 3) -->
+    <div id="notify-tab" class="tab-content">
+      <div class="grid-2">
+        <!-- Direct & Flash Sale Dispatch -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i data-lucide="message-square"></i> Send Flash Sale Notification
+            </div>
+          </div>
+          <form id="notify-form" onsubmit="sendFlashNotification(event)">
+            <div class="form-group">
+              <label class="form-label">Recipient Phone Number</label>
+              <input type="text" class="form-input" id="notif-phone" value="+15551234567">
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Item Name</label>
+                <input type="text" class="form-input" id="notif-item" value="Organic Milk 1L">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Store Name</label>
+                <input type="text" class="form-input" id="notif-store" value="Metro Fresh Market">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Original / Discount Price ($)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="number" step="0.01" class="form-input" id="notif-orig" value="4.00">
+                  <input type="number" step="0.01" class="form-input" id="notif-disc" value="1.99">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Channel</label>
+                <select class="form-select" id="notif-channel">
+                  <option value="sms">SMS Alert</option>
+                  <option value="whatsapp">WhatsApp Alert</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              <i data-lucide="send"></i> Dispatch Flash Sale Deal
+            </button>
+          </form>
+        </div>
+
+        <!-- Inbound Reply Webhook Simulator -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i data-lucide="phone-incoming"></i> Simulate Inbound Reply Webhook
+            </div>
+          </div>
+          <form id="webhook-form" onsubmit="simulateWebhook(event)">
+            <div class="form-group">
+              <label class="form-label">Sender Phone Number</label>
+              <input type="text" class="form-input" id="wh-phone" value="+15551234567">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Customer Reply Body</label>
+              <select class="form-select" id="wh-body">
+                <option value="YES">"YES" (Claim Item Deal)</option>
+                <option value="CLAIM">"CLAIM" (Reserve Item)</option>
+                <option value="HELP">"HELP" (Customer Support)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-secondary" style="width: 100%; margin-bottom: 1.5rem;">
+              <i data-lucide="arrow-down-left"></i> Trigger Inbound TwiML Webhook
+            </button>
+          </form>
+
+          <div class="panel-title" style="font-size: 0.95rem; margin-bottom: 0.5rem;">
+            TwiML XML Webhook Response:
+          </div>
+          <div class="console-out" id="wh-console">// TwiML response XML will render here...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Stores & Inventory Core -->
+    <div id="inventory-tab" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="building"></i> Active Stores & Inventory Batches
+          </div>
+          <button class="btn btn-secondary" onclick="fetchStores()">
+            <i data-lucide="refresh-cw"></i> Refresh Data
+          </button>
+        </div>
+
+        <div class="console-out" id="stores-console">// Click Refresh to load active database stores...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Tab switcher
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // Health check on load
+    async function checkHealth() {
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        if (data.healthy) {
+          document.getElementById('health-badge').style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          document.getElementById('health-text').innerText = 'API & DB Operational';
+        } else {
+          document.getElementById('health-text').innerText = 'Partial Outage';
+        }
+      } catch (e) {
+        document.getElementById('health-text').innerText = 'Disconnected';
+      }
+    }
+    checkHealth();
+
+    // ML Predictor submission
+    async function runMLPrediction(e) {
+      e.preventDefault();
+      const payload = {
+        perishability_index: parseFloat(document.getElementById('ml-perishability').value),
+        days_to_expiry: parseInt(document.getElementById('ml-days').value),
+        original_price: parseFloat(document.getElementById('ml-price').value),
+        current_stock: parseInt(document.getElementById('ml-stock').value),
+        cost_margin_ratio: parseFloat(document.getElementById('ml-margin').value)
+      };
+
+      try {
+        const res = await fetch('/api/v1/ml/predict-discount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        document.getElementById('res-risk-score').innerText = (data.risk_score * 100).toFixed(1) + '%';
+        document.getElementById('res-discount').innerText = data.suggested_discount_percentage.toFixed(0) + '%';
+        document.getElementById('res-new-price').innerText = '$' + data.suggested_price.toFixed(2);
+        document.getElementById('ml-console').innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('ml-console').innerText = 'Error: ' + err.message;
+      }
+    }
+
+    // Notification Dispatcher
+    async function sendFlashNotification(e) {
+      e.preventDefault();
+      const orig = parseFloat(document.getElementById('notif-orig').value);
+      const disc = parseFloat(document.getElementById('notif-disc').value);
+      const pct = ((orig - disc) / orig) * 100;
+
+      const payload = {
+        to_phone: document.getElementById('notif-phone').value,
+        item_name: document.getElementById('notif-item').value,
+        store_name: document.getElementById('notif-store').value,
+        original_price: orig,
+        discounted_price: disc,
+        discount_percentage: pct,
+        claim_url: 'http://localhost:8000/claim/demo',
+        channel: document.getElementById('notif-channel').value
+      };
+
+      try {
+        const res = await fetch('/api/v1/notifications/send-flash-sale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert('Notification Dispatched! Status: ' + data.status + ' (SID: ' + data.message_sid + ')');
+      } catch (err) {
+        alert('Failed: ' + err.message);
+      }
+    }
+
+    // Inbound Webhook Simulator
+    async function simulateWebhook(e) {
+      e.preventDefault();
+      const phone = document.getElementById('wh-phone').value;
+      const body = document.getElementById('wh-body').value;
+
+      const formData = new URLSearchParams();
+      formData.append('From', phone);
+      formData.append('Body', body);
+      formData.append('MessageSid', 'SM_SIMULATED_DEMO');
+
+      try {
+        const res = await fetch('/api/v1/notifications/twilio-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+        const xmlText = await res.text();
+        document.getElementById('wh-console').innerText = xmlText;
+      } catch (err) {
+        document.getElementById('wh-console').innerText = 'Error: ' + err.message;
+      }
+    }
+
+    // Fetch stores
+    async function fetchStores() {
+      try {
+        const res = await fetch('/api/v1/stores/');
+        const data = await res.json();
+        document.getElementById('stores-console').innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('stores-console').innerText = 'Error fetching stores: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

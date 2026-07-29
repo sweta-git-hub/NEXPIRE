@@ -41,6 +41,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./scripts:/app/scripts
+      - ./tests:/app/tests
     depends_on:
       db:
         condition: service_healthy
@@ -59,6 +60,7 @@ services:
       - .env
     volumes:
       - ./app:/app/app
+      - ./tests:/app/tests
     depends_on:
       db:
         condition: service_healthy

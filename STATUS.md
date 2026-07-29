@@ -1,15 +1,18 @@
 # NEXPIRE Project Status
 
-## Current Phase: Phase 1 — Inventory Core (Completed)
+## Current Phase: Phase 2 — ML Expiration Risk Model & Dynamic Discounting (Completed)
 
-### Phase 1 Summary
-Phase 1 implements the foundational inventory management system for NEXPIRE.
+### Phase 2 Summary
+Phase 2 implements the machine learning engine for food batch expiration risk scoring and dynamic price markdown calculation.
 
-- **Store CRUD API**: Full REST endpoints (`POST`, `GET`, `PUT`, `DELETE`) for store location management.
-- **Inventory Batch CRUD API**: Full REST endpoints for managing inventory batches with automated dynamic pricing calculation and multi-criteria filtering (`store_id`, `category`, `status`, `expiration_date`).
-- **CSV Ingestion Engine**: Fast bulk inventory ingestion via `/api/v1/inventory/upload-csv` with row-by-row error handling and validation summary.
-- **Database & Migration**: Complete SQLAlchemy ORM models (`Store`, `Batch`) with PostgreSQL/PostGIS backend.
-- **Testing & Coverage**: Comprehensive test suite achieving 91%+ test coverage across models, schemas, and API endpoints.
+- **Synthetic Dataset Generator**: Realistic training data simulation in `app/ml/synthetic_data.py` (perishability decay, stock levels, margins, and ambient temperature factor).
+- **Scikit-Learn Regression Pipeline**: Multi-output Random Forest regressor (`app/ml/trainer.py`) trained to predict `risk_score` (0.0 to 1.0) and `suggested_discount_percentage` (0% to 90%), serialized to `pricing_model.joblib`.
+- **Inference & Weather Integration**: `PricingPredictor` engine with OpenWeather API integration (`app/services/weather.py`) for temperature-driven risk scaling.
+- **REST Endpoints**:
+  - `POST /api/v1/ml/predict-discount`: Direct risk score & discount inference for item attributes.
+  - `POST /api/v1/ml/reprice-batch/{batch_id}`: Evaluates database batch risk, applies ML discount & current price to PostgreSQL DB.
+  - `POST /api/v1/ml/train`: On-demand model retraining.
+- **Testing & Coverage**: 9 total test suites passing with 92% code coverage.
 
 ---
 
@@ -19,7 +22,7 @@ Phase 1 implements the foundational inventory management system for NEXPIRE.
 |-------|-------------|--------|
 | Phase 0 | Docker & Postgres/Redis Infrastructure | ✅ Completed |
 | Phase 1 | Inventory Core (Stores, Batches, CSV Upload) | ✅ Completed |
-| Phase 2 | ML Expiration Risk Model & Dynamic Discounting | ⏳ Pending |
+| Phase 2 | ML Expiration Risk Model & Dynamic Discounting | ✅ Completed |
 | Phase 3 | Notification Engine (SMS, WhatsApp, Twilio) | ⏳ Pending |
 | Phase 4 | Standing Order Engine (NGO & Shelter priority) | ⏳ Pending |
 | Phase 5 | Consumer Marketplace & Geo-routing | ⏳ Pending |

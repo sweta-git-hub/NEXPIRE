@@ -28,22 +28,17 @@ docker compose exec api pytest -v --cov=app
 | Postgres + PostGIS | nexpire-db | 5432 | 5432 |
 | Redis | nexpire-redis | 6379 | 6379 |
 
-## 🛠️ API Reference (Phase 1 — Inventory Core)
+## 🛠️ API Reference
 
-### Stores
-- `POST /api/v1/stores` — Create store location
-- `GET /api/v1/stores` — List stores (paginated)
-- `GET /api/v1/stores/{store_id}` — Get store details
-- `PUT /api/v1/stores/{store_id}` — Update store
-- `DELETE /api/v1/stores/{store_id}` — Delete store
+### Phase 1 — Inventory Core
+- **Stores**: `POST /api/v1/stores`, `GET /api/v1/stores`, `GET /api/v1/stores/{id}`, `PUT /api/v1/stores/{id}`, `DELETE /api/v1/stores/{id}`
+- **Batches**: `POST /api/v1/inventory/batches`, `GET /api/v1/inventory/batches`, `GET /api/v1/inventory/batches/{id}`, `PUT /api/v1/inventory/batches/{id}`, `DELETE /api/v1/inventory/batches/{id}`
+- **Bulk CSV Upload**: `POST /api/v1/inventory/upload-csv`
 
-### Inventory Batches
-- `POST /api/v1/inventory/batches` — Add inventory batch (auto-calculates current price from discount)
-- `GET /api/v1/inventory/batches` — List batches (filters: `store_id`, `category`, `status`, `expiring_before`, `expiring_after`)
-- `GET /api/v1/inventory/batches/{batch_id}` — Get batch details
-- `PUT /api/v1/inventory/batches/{batch_id}` — Update batch details
-- `DELETE /api/v1/inventory/batches/{batch_id}` — Delete batch
-- `POST /api/v1/inventory/upload-csv` — Bulk CSV inventory import with error diagnostics
+### Phase 2 — ML Expiration Risk & Dynamic Discounting
+- `POST /api/v1/ml/predict-discount` — Predict risk score (0.0–1.0) and optimal discount percentage for item features.
+- `POST /api/v1/ml/reprice-batch/{batch_id}` — Evaluate batch expiration risk, fetch weather temperature, apply ML discount & current price in PostgreSQL DB.
+- `POST /api/v1/ml/train` — Trigger on-demand retraining of the Scikit-Learn ML pricing model.
 
 ## 🧪 Testing
 

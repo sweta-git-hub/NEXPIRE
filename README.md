@@ -1,4 +1,4 @@
-# ResQ-Chain — Phase 0 Starter
+# NEXPIRE — Phase 0 Starter
 
 Minimal, working scaffold: FastAPI + Postgres/PostGIS + Redis + Celery,
 all wired together and running under Docker Compose, with a seed script.
@@ -33,10 +33,10 @@ docker compose exec api python scripts/seed.py
 
 | Service | Container | Port |
 |---|---|---|
-| FastAPI app | resqchain-api | 8000 |
-| Celery worker | resqchain-worker | - |
-| Postgres + PostGIS | resqchain-db | 5432 |
-| Redis | resqchain-redis | 6379 |
+| FastAPI app | nexpire-api | 8000 |
+| Celery worker | nexpire-worker | - |
+| Postgres + PostGIS | nexpire-db | 5432 |
+| Redis | nexpire-redis | 6379 |
 
 ## Common commands
 
@@ -45,7 +45,7 @@ docker compose exec api python scripts/seed.py
 docker compose logs -f api
 
 # Open a psql shell
-docker compose exec db psql -U resq -d resqchain
+docker compose exec db psql -U nexpire -d nexpire
 
 # Open a Redis CLI
 docker compose exec redis redis-cli

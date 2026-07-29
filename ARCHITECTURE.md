@@ -1,4 +1,4 @@
-# ARCHITECTURE.md — ResQ-Chain Technical Architecture
+# ARCHITECTURE.md — NEXPIRE Technical Architecture
 
 This document is the technical reference companion to `README.md`. It describes the system at the
 level a new engineer (or agent) needs to be productive without re-deriving design decisions from
@@ -8,7 +8,7 @@ scratch. For *why* certain choices were made, cross-reference `DECISIONS.md`.
 
 ## 1. System Overview — Three Planes
 
-ResQ-Chain is best understood as three cooperating planes rather than one monolith. Keeping this
+NEXPIRE is best understood as three cooperating planes rather than one monolith. Keeping this
 separation explicit in the codebase (not just conceptually) is what lets phases be built and demoed
 independently per `RULES.md`.
 

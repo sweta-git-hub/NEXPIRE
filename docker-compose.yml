@@ -1,80 +1,70 @@
 services:
   db:
     image: postgis/postgis:16-3.4
+    container_name: resqchain-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-resq}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resq}
-      POSTGRES_DB: ${POSTGRES_DB:-resq_chain}
+      POSTGRES_USER: resq
+      POSTGRES_PASSWORD: resq_dev_password
+      POSTGRES_DB: resqchain
     ports:
       - "5432:5432"
     volumes:
-      - resq_db_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resq}"]
+      test: ["CMD-SHELL", "pg_isready -U resq -d resqchain"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
+    container_name: resqchain-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  backend:
-    build:
-      context: ./backend
+  api:
+    build: .
+    container_name: resqchain-api
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  celery_worker:
-    build:
-      context: ./backend
+  # Celery worker — same image as the API, different entrypoint.
+  # Not wired to a task queue yet (that starts in Phase 3/4) but the
+  # container is included now so the topology is right from day one.
+  worker:
+    build: .
+    container_name: resqchain-worker
     restart: unless-stopped
-    env_file: .env
-    depends_on:
-      - backend
-      - redis
+    env_file:
+      - .env
     volumes:
-      - ./backend:/app
-    command: celery -A app.tasks.celery_app worker --loglevel=info
-
-  celery_beat:
-    build:
-      context: ./backend
-    restart: unless-stopped
-    env_file: .env
+      - ./app:/app/app
     depends_on:
-      - backend
-      - redis
-    volumes:
-      - ./backend:/app
-    command: celery -A app.tasks.celery_app beat --loglevel=info
-
-  frontend:
-    build:
-      context: ./frontend
-    restart: unless-stopped
-    env_file: .env
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app worker --loglevel=info
 
 volumes:
-  resq_db_data:
+  pgdata:

@@ -1,26 +1,26 @@
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: resqchain-db
+    container_name: nexpire-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: resq
-      POSTGRES_PASSWORD: resq_dev_password
-      POSTGRES_DB: resqchain
+      POSTGRES_USER: nexpire
+      POSTGRES_PASSWORD: nexpire_dev_password
+      POSTGRES_DB: nexpire
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U resq -d resqchain"]
+      test: ["CMD-SHELL", "pg_isready -U nexpire -d nexpire"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: resqchain-redis
+    container_name: nexpire-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -32,7 +32,7 @@ services:
 
   api:
     build: .
-    container_name: resqchain-api
+    container_name: nexpire-api
     restart: unless-stopped
     env_file:
       - .env
@@ -53,7 +53,7 @@ services:
   # container is included now so the topology is right from day one.
   worker:
     build: .
-    container_name: resqchain-worker
+    container_name: nexpire-worker
     restart: unless-stopped
     env_file:
       - .env

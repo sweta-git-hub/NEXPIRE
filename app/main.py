@@ -3,7 +3,7 @@ import redis
 from fastapi import FastAPI
 from app.db import check_db_connection
 
-app = FastAPI(title="ResQ-Chain API", version="0.1.0")
+app = FastAPI(title="NEXPIRE API", version="0.1.0")
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 redis_client = redis.from_url(REDIS_URL)
@@ -11,7 +11,7 @@ redis_client = redis.from_url(REDIS_URL)
 
 @app.get("/")
 def root():
-    return {"service": "resq-chain-api", "status": "running"}
+    return {"service": "nexpire-api", "status": "running"}
 
 
 @app.get("/health")

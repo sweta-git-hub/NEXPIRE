@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql://resq:resq_dev_password@db:5432/resqchain"
+    "DATABASE_URL", "postgresql://nexpire:nexpire_dev_password@db:5432/nexpire"
 )
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)

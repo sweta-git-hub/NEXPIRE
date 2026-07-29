@@ -1,4 +1,4 @@
-# RULE.md — ResQ-Chain Development Working Rules
+# RULE.md — NEXPIRE Development Working Rules
 
 This file governs how **any** developer or coding agent (Claude Code, another AI agent, or a human
 contributor) works on this repository. It must be read before writing the first line of code, and

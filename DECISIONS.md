@@ -1,50 +1,25 @@
-# DECISIONS.md — Technical Decision Log
+# Architecture Decision Records (ADR)
 
-Append-only. One entry per non-trivial technical decision, added **at the time the decision is made**
-— not reconstructed later from memory. See `RULES.md` Rule D. Newest entries at the bottom.
+## ADR 001: Project Rebranding to NEXPIRE
+- **Context**: Project named ResQ-Chain renamed to NEXPIRE across codebase, configuration, and documentation.
+- **Decision**: Update all docker service names, environment variables, documentation, and API metadata to `NEXPIRE`.
+- **Status**: Implemented & Verified.
 
-Format:
-```markdown
-## [Phase <n>] <short decision title>
-**Date:** <date>
-**Decision:** <what was decided>
-**Rationale:** <why, including alternatives considered and rejected>
-**Reversible?** <yes/no — and what it would take to reverse it>
-```
+## ADR 002: Inventory Core Architecture (Phase 1)
+- **Context**: Need high-throughput CRUD for retail store inventory management and bulk CSV imports.
+- **Decision**: 
+  - Use SQLAlchemy ORM with PostgreSQL backend for persistent storage.
+  - Implement Pydantic v2 schemas for strict request/response data validation.
+  - Automatic `current_price` calculation based on `discount_percentage` when `current_price` is omitted.
+  - Streamed CSV parsing using standard library `csv.DictReader` and row-level rollback handling to return clear import error diagnostics without failing valid rows.
+- **Status**: Implemented & Verified.
 
----
-
-## [Phase 0] Use synthetic data for initial ML training
-**Date:** repo initialization
-**Decision:** Train Model A/B on a generated synthetic dataset (per-category price-elasticity curves
-plus noise, seeded for reproducibility) rather than waiting for or fabricating real retailer history.
-**Rationale:** No real retailer POS history is available at project start. Synthetic data lets the ML
-pipeline be built and demoed honestly, labeled as such, rather than presenting placeholder numbers as
-real. The model interface is designed so real data can be swapped in later without changing the
-scoring API.
-**Reversible?** Yes — swapping in real data requires no interface change, only a new training dataset
-and a retrain.
-
-## [Phase 0] PostgreSQL + PostGIS as the single source of truth
-**Date:** repo initialization
-**Decision:** Use one PostgreSQL instance (with the PostGIS extension) for both relational/transactional
-data (stores, batches, claims) and geospatial radius queries (geofencing, delivery-fee distance calc),
-rather than a separate geospatial datastore.
-**Rationale:** Avoids operating two databases under a short timeline; PostGIS is mature enough for the
-radius-query volume this project needs; keeps transactional integrity (claims/reservations) and
-geospatial queries in the same consistency boundary.
-**Reversible?** Yes, but costly later — would require a data-layer split if geospatial query volume
-ever outgrows a single Postgres instance. Not a near-term concern at hackathon/early-product scale.
-
-## [Phase 0] Redis TTL keys as the reservation-locking mechanism
-**Date:** repo initialization
-**Decision:** Use a Redis key with a TTL (`reserved_until`) per batch as the single mechanism preventing
-double-claims, rather than a database-row lock or a separate distributed-lock service.
-**Rationale:** Redis is already in the stack as the Celery broker, so this adds no new infrastructure.
-TTL expiry naturally implements "reservation times out after N minutes" without extra cleanup logic.
-**Reversible?** Yes, but any future locking mechanism must be a full replacement, not a second
-competing lock — see `ARCHITECTURE.md` §6.
-
----
-
-_Add new entries below this line as decisions are made._
+## ADR 003: ML Expiration Risk & Dynamic Discount Architecture (Phase 2)
+- **Context**: Need automated, objective price markdown recommendations based on perishable food timelines, stock volumes, margin constraints, and environmental factors.
+- **Decision**:
+  - Scikit-Learn Multi-Output `RandomForestRegressor` pipeline preprocessed with `ColumnTransformer` (StandardScaler + OneHotEncoder).
+  - Synthetic food batch training data generator (`app/ml/synthetic_data.py`) to ensure deterministic offline training capability.
+  - Model serialization using `joblib` stored at `app/ml/artifacts/pricing_model.joblib`.
+  - Automatic initial training on app startup if artifact is missing.
+  - Ambient temperature integration via `app/services/weather.py` (OpenWeather API with 25.0°C default fallback).
+- **Status**: Implemented & Verified.

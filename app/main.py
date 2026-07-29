@@ -1,9 +1,39 @@
 import os
 import redis
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.db import check_db_connection
 
-app = FastAPI(title="NEXPIRE API", version="0.1.0")
+from app.db import check_db_connection, engine, Base
+import app.models  # Ensures models are imported so Base.metadata knows about them
+from app.api.stores import router as stores_router
+from app.api.inventory import router as inventory_router
+from app.api.pricing import router as pricing_router
+from app.ml.predictor import get_predictor
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure database tables exist
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Warning: Failed to create database tables on startup: {e}")
+
+    # Ensure ML predictor model is loaded/trained on startup
+    try:
+        get_predictor()
+    except Exception as e:
+        print(f"Warning: Failed to load/train ML model on startup: {e}")
+
+    yield
+
+
+app = FastAPI(title="NEXPIRE API", version="0.1.0", lifespan=lifespan)
+
+# Register API Routers
+app.include_router(stores_router)
+app.include_router(inventory_router)
+app.include_router(pricing_router)
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 redis_client = redis.from_url(REDIS_URL)

@@ -13,29 +13,47 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
-    /* ===== DESIGN TOKENS ===== */
+    /* ===== DESIGN TOKENS (Locked Brand Palette & Shape System) ===== */
     :root {
       --bg-dark: #0b0f19;
       --bg-card: rgba(18, 26, 43, 0.7);
       --bg-card-border: rgba(255, 255, 255, 0.08);
+      
+      /* Primary Brand Accent (Locked per design-taste-frontend §4.2) */
       --accent-green: #10b981;
-      --accent-green-glow: rgba(16, 185, 129, 0.3);
+      --accent-green-glow: rgba(16, 185, 129, 0.2);
       --accent-emerald: #059669;
+
+      /* Semantic Accents only (Info, Error, Warning) */
       --accent-cyan: #06b6d4;
-      --accent-cyan-glow: rgba(6, 182, 212, 0.25);
-      --accent-purple: #8b5cf6;
-      --accent-purple-glow: rgba(139, 92, 246, 0.25);
+      --accent-cyan-glow: rgba(6, 182, 212, 0.15);
       --accent-rose: #f43f5e;
+      --accent-rose-glow: rgba(244, 63, 94, 0.15);
       --accent-amber: #f59e0b;
-      --accent-amber-glow: rgba(245, 158, 11, 0.25);
+      --accent-amber-glow: rgba(245, 158, 11, 0.15);
+      --accent-purple: #8b5cf6;
+      --accent-purple-glow: rgba(139, 92, 246, 0.15);
+
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
+      
+      /* Typography (Muted & Display paired) */
       --font-main: 'Outfit', sans-serif;
-      --font-code: 'Space Grotesk', monospace;
-      --radius-card: 16px;
+      --font-display: 'Space Grotesk', sans-serif; /* Geometric display sans-serif */
+      --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; /* True monospace for data/SKUs */
+      
+      /* Shape Consistency Lock (design-taste-frontend §4.4) */
+      --radius-card: 12px;
       --radius-sm: 8px;
+      --radius-badge: 6px;
+      --radius-pill: 9999px;
+
       --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
-      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Specific transitions instead of generic transition: all (web-design-guidelines §Animation) */
+      --trans-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --trans-transform: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      --trans-shadow: box-shadow 0.2s ease-in-out;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,16 +63,23 @@
       color: var(--text-main);
       font-family: var(--font-main);
       min-height: 100vh;
+      min-height: 100dvh; /* Viewport stability for mobile layout jumps */
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
     }
 
-    /* ===== AMBIENT ORBS ===== */
+    /* ===== AMBIENT ORBS (Slow micro-motions) ===== */
     .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: 0; pointer-events: none; }
-    .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.12); }
-    .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.10); }
-    .glow-3 { top: 50%; left: -5%; width: 300px; height: 300px; background: rgba(139, 92, 246, 0.08); }
+    
+    @media (prefers-reduced-motion: no-preference) {
+      .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.08); }
+      .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.06); }
+      .glow-3 { top: 50%; left: -5%; width: 300px; height: 300px; background: rgba(139, 92, 246, 0.05); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .glow-orb { display: none; }
+    }
 
     /* ===== HEADER ===== */
     header {
@@ -75,7 +100,7 @@
     }
     .brand-logo svg { color: #fff; width: 20px; height: 20px; }
     .brand-title {
-      font-family: var(--font-code); font-size: 1.5rem; font-weight: 700;
+      font-family: var(--font-display); font-size: 1.5rem; font-weight: 700;
       letter-spacing: -0.5px;
       background: linear-gradient(90deg, #ffffff, #a7f3d0);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -106,15 +131,20 @@
       padding-bottom: 0.75rem;
     }
     .tab-btn {
-      background: transparent; border: none;
+      background: transparent; border: 1px solid transparent;
       color: var(--text-muted); font-family: var(--font-main);
       font-size: 0.88rem; font-weight: 500;
-      padding: 0.55rem 1rem; border-radius: 8px; cursor: pointer;
+      padding: 0.55rem 1rem; border-radius: var(--radius-sm); cursor: pointer;
       display: flex; align-items: center; gap: 0.45rem;
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .tab-btn svg { width: 15px; height: 15px; }
     .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .tab-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
+    }
     .tab-btn.active {
       color: #fff;
       background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,182,212,0.18));
@@ -136,7 +166,7 @@
       margin-bottom: 1.75rem;
     }
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .panel-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.55rem; }
+    .panel-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.55rem; text-wrap: balance; }
     .panel-title svg { color: var(--accent-green); width: 18px; height: 18px; flex-shrink: 0; }
 
     /* ===== GRIDS ===== */
@@ -152,7 +182,7 @@
       padding: 1.5rem;
       display: flex; flex-direction: column; gap: 0.75rem;
       position: relative; overflow: hidden;
-      transition: var(--transition);
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
     }
     .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
     .kpi-card::before {
@@ -176,8 +206,9 @@
     .kpi-icon svg { width: 20px; height: 20px; }
 
     .kpi-val {
-      font-family: var(--font-code); font-size: 2.2rem; font-weight: 700;
+      font-family: var(--font-display); font-size: 2.2rem; font-weight: 700;
       line-height: 1; letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
     }
     .kpi-val.green  { color: var(--accent-green); }
     .kpi-val.cyan   { color: var(--accent-cyan); }
@@ -193,7 +224,7 @@
       border-radius: 12px; padding: 1.25rem;
       display: flex; flex-direction: column; gap: 0.5rem;
     }
-    .metric-val { font-family: var(--font-code); font-size: 1.8rem; font-weight: 700; color: var(--accent-green); }
+    .metric-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--accent-green); font-variant-numeric: tabular-nums; }
     .metric-lbl { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* ===== CHART RING CONTAINER ===== */
@@ -204,7 +235,7 @@
     .ring-item { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
     .ring-item canvas { width: 110px !important; height: 110px !important; }
     .ring-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; text-align: center; }
-    .ring-val { font-family: var(--font-code); font-size: 1.1rem; font-weight: 700; color: var(--text-main); text-align: center; }
+    .ring-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-main); text-align: center; font-variant-numeric: tabular-nums; }
 
     /* ===== CONVERSION RATE BAR ===== */
     .conversion-bar-wrap { margin-top: 0.5rem; }
@@ -236,7 +267,7 @@
     .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
     .data-table th, .data-table td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--bg-card-border); }
     .data-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
-    .data-table td { font-size: 0.9rem; }
+    .data-table td { font-size: 0.9rem; font-variant-numeric: tabular-nums; }
     .data-table tr:hover td { background: rgba(255,255,255,0.02); }
 
     /* ===== FORM CONTROLS ===== */
@@ -248,11 +279,11 @@
       border: 1px solid var(--bg-card-border);
       border-radius: var(--radius-sm);
       color: var(--text-main); font-family: var(--font-main); font-size: 0.92rem;
-      transition: border 0.2s ease;
+      transition: var(--trans-colors), var(--trans-shadow);
     }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
+    .form-input:focus-visible, .form-select:focus-visible, .form-textarea:focus-visible {
       outline: none; border-color: var(--accent-green);
-      box-shadow: 0 0 10px var(--accent-green-glow);
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
     }
     .form-select option { background: #0d1527; }
 
@@ -260,46 +291,61 @@
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
       padding: 0.7rem 1.4rem; border-radius: var(--radius-sm);
-      font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none;
-      font-family: var(--font-main); transition: var(--transition);
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent;
+      font-family: var(--font-main); 
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
     }
     .btn svg { width: 16px; height: 16px; }
+    
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
+    }
+
     .btn-primary {
       background: linear-gradient(135deg, var(--accent-green), var(--accent-emerald));
       color: #fff; box-shadow: 0 4px 15px var(--accent-green-glow);
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-green-glow); }
+    .btn-primary:active { transform: translateY(-1px); }
+    
     .btn-secondary {
       background: rgba(255,255,255,0.07); color: var(--text-main);
       border: 1px solid var(--bg-card-border);
     }
     .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+    .btn-secondary:active { transform: translateY(0); }
+    
     .btn-cyan {
       background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
       color: #fff; box-shadow: 0 4px 15px var(--accent-cyan-glow);
     }
     .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-cyan-glow); }
+    
     .btn-purple {
       background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
       color: #fff; box-shadow: 0 4px 15px var(--accent-purple-glow);
     }
     .btn-purple:hover { transform: translateY(-2px); }
+    
     .btn-rose {
       background: linear-gradient(135deg, var(--accent-rose), #be123c);
       color: #fff; box-shadow: 0 4px 15px rgba(244,63,94,0.3);
     }
     .btn-rose:hover { transform: translateY(-2px); }
+    
     .btn-amber {
       background: linear-gradient(135deg, var(--accent-amber), #d97706);
       color: #1a1a1a; box-shadow: 0 4px 15px var(--accent-amber-glow);
     }
     .btn-amber:hover { transform: translateY(-2px); }
-    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; border-radius: var(--radius-badge); }
     .btn-full { width: 100%; }
 
     /* ===== BADGES ===== */
     .badge {
-      padding: 0.22rem 0.6rem; border-radius: 6px;
+      padding: 0.22rem 0.6rem; border-radius: var(--radius-badge);
       font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
     .badge-green  { background: rgba(16,185,129,0.2);  color: var(--accent-green);  border: 1px solid rgba(16,185,129,0.35); }
@@ -311,7 +357,7 @@
 
     /* ===== CONSOLE OUTPUT ===== */
     .console-out {
-      background: #050811; border: 1px solid var(--bg-card-border); border-radius: 10px;
+      background: #050811; border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm);
       padding: 1rem; font-family: var(--font-code); font-size: 0.82rem;
       color: #a7f3d0; max-height: 260px; overflow-y: auto; white-space: pre-wrap;
       line-height: 1.6;
@@ -321,12 +367,13 @@
     .ngo-card {
       background: rgba(8, 13, 24, 0.7);
       border: 1px solid var(--bg-card-border);
-      border-radius: 12px; padding: 1.25rem;
+      border-radius: var(--radius-sm); padding: 1.25rem;
       display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 1rem; transition: var(--transition);
+      gap: 1rem; 
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
       margin-bottom: 0.85rem;
     }
-    .ngo-card:hover { border-color: rgba(16,185,129,0.25); }
+    .ngo-card:hover { border-color: rgba(16,185,129,0.25); transform: translateY(-1px); }
     .ngo-card-info { flex: 1; }
     .ngo-card-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.35rem; }
     .ngo-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
@@ -337,17 +384,22 @@
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
       color: var(--text-muted);
-      border-radius: 9999px;
+      border-radius: var(--radius-pill);
       padding: 0.35rem 0.85rem;
       font-size: 0.82rem; font-weight: 500;
       cursor: pointer; font-family: var(--font-main);
-      transition: all 0.18s ease;
+      transition: var(--trans-colors);
       white-space: nowrap;
     }
     .type-pill:hover {
       border-color: rgba(16,185,129,0.35);
       color: var(--text-main);
       background: rgba(16,185,129,0.07);
+    }
+    .type-pill:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
     }
     .type-pill.active {
       background: rgba(16,185,129,0.15);
@@ -372,7 +424,7 @@
       border: 1px solid var(--bg-card-border);
       border-radius: 20px; padding: 2.5rem;
       text-align: center; position: relative; overflow: hidden;
-      transition: var(--transition);
+      transition: var(--trans-colors), var(--trans-shadow);
     }
     .auction-card.urgent { border-color: rgba(244,63,94,0.5); box-shadow: 0 0 40px rgba(244,63,94,0.15); }
     .auction-card.warming { border-color: rgba(245,158,11,0.4); box-shadow: 0 0 40px rgba(245,158,11,0.1); }
@@ -431,7 +483,7 @@
       padding: 0.25rem 0.6rem; border-radius: 6px;
       font-size: 0.78rem; font-family: var(--font-code);
       background: rgba(255,255,255,0.06); color: var(--text-muted);
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .price-tick.current {
       background: rgba(16,185,129,0.15); color: var(--accent-green);
@@ -464,7 +516,11 @@
       width: 72px; height: 72px; border-radius: 50%;
       background: rgba(16,185,129,0.15); border: 2px solid var(--accent-green);
       display: flex; align-items: center; justify-content: center;
-      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .claimed-checkmark {
+        animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      }
     }
     .claimed-checkmark svg { width: 32px; height: 32px; color: var(--accent-green); }
     @keyframes popIn { 0%{transform:scale(0)}100%{transform:scale(1)} }
@@ -481,24 +537,32 @@
       position: fixed; inset: 0; z-index: 100;
       background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
     }
-    .modal-backdrop.active { opacity: 1; pointer-events: all; }
     .modal-card {
       background: linear-gradient(145deg, #0f1e35, #0a1220);
       border: 1px solid rgba(16,185,129,0.35);
       border-radius: 24px; padding: 2.5rem;
       max-width: 500px; width: 90%; position: relative;
       box-shadow: 0 0 60px rgba(16,185,129,0.2), 0 30px 60px rgba(0,0,0,0.5);
-      transform: scale(0.92); transition: transform 0.3s ease;
+      transform: scale(0.92);
     }
+    @media (prefers-reduced-motion: no-preference) {
+      .modal-backdrop {
+        transition: opacity 0.3s ease;
+      }
+      .modal-card {
+        transition: transform 0.3s ease;
+      }
+    }
+    .modal-backdrop.active { opacity: 1; pointer-events: all; }
     .modal-backdrop.active .modal-card { transform: scale(1); }
     .modal-close {
       position: absolute; top: 1.25rem; right: 1.25rem;
       background: rgba(255,255,255,0.06); border: none; cursor: pointer;
       width: 32px; height: 32px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center; color: var(--text-muted);
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text-main); }
     .modal-close svg { width: 16px; height: 16px; }
@@ -551,8 +615,13 @@
     /* ===== LOADING SHIMMER ===== */
     .shimmer {
       background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+      background-size: 200% 100%;
       border-radius: 8px; height: 16px;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .shimmer {
+        animation: shimmer 1.5s infinite;
+      }
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
@@ -564,7 +633,12 @@
       background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
       color: var(--accent-green); backdrop-filter: blur(12px);
       transform: translateY(20px); opacity: 0;
-      transition: all 0.3s ease; pointer-events: none;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      #toast {
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
     }
     #toast.show { transform: translateY(0); opacity: 1; }
     #toast.error { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent-rose); }
@@ -586,12 +660,12 @@
       </div>
     </div>
     <div style="display:flex;gap:1rem;align-items:center;">
-      <a href="/docs" target="_blank" style="text-decoration:none;">
-        <button class="btn btn-secondary btn-sm"><i data-lucide="file-text"></i> API Docs</button>
+      <a href="/docs" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+        <i data-lucide="file-text" aria-hidden="true"></i> API Docs
       </a>
       <div class="status-badge" id="health-badge">
         <div class="status-dot"></div>
-        <span id="health-text">Checking...</span>
+        <span id="health-text">Checking…</span>
       </div>
     </div>
   </header>
@@ -600,24 +674,24 @@
   <main>
 
     <!-- Navigation Tabs -->
-    <div class="tabs" id="main-tabs">
-      <button class="tab-btn" id="tab-btn-impact" onclick="switchTab('impact-tab', this)">
-        <i data-lucide="leaf"></i> Eco-Impact Dashboard
+    <div class="tabs" id="main-tabs" role="tablist" aria-label="NEXPIRE Navigation Tabs">
+      <button class="tab-btn active" id="tab-btn-impact" role="tab" aria-selected="true" aria-controls="impact-tab" onclick="switchTab('impact-tab', this)">
+        <i data-lucide="leaf" aria-hidden="true"></i> Eco-Impact Dashboard
       </button>
-      <button class="tab-btn" id="tab-btn-ngo" onclick="switchTab('ngo-tab', this)">
-        <i data-lucide="building-2"></i> Bulk Customers
+      <button class="tab-btn" id="tab-btn-ngo" role="tab" aria-selected="false" aria-controls="ngo-tab" onclick="switchTab('ngo-tab', this)">
+        <i data-lucide="building-2" aria-hidden="true"></i> Bulk Customers
       </button>
-      <button class="tab-btn" onclick="switchTab('ml-tab', this)">
-        <i data-lucide="cpu"></i> ML Discount Simulator
+      <button class="tab-btn" id="tab-btn-ml" role="tab" aria-selected="false" aria-controls="ml-tab" onclick="switchTab('ml-tab', this)">
+        <i data-lucide="cpu" aria-hidden="true"></i> ML Discount Simulator
       </button>
-      <button class="tab-btn" id="tab-btn-claims" onclick="switchTab('claims-tab', this)">
-        <i data-lucide="zap"></i> ML Flash Claims
+      <button class="tab-btn" id="tab-btn-claims" role="tab" aria-selected="false" aria-controls="claims-tab" onclick="switchTab('claims-tab', this)">
+        <i data-lucide="zap" aria-hidden="true"></i> ML Flash Claims
       </button>
-      <button class="tab-btn" onclick="switchTab('notify-tab', this)">
-        <i data-lucide="send"></i> Notification Engine
+      <button class="tab-btn" id="tab-btn-notify" role="tab" aria-selected="false" aria-controls="notify-tab" onclick="switchTab('notify-tab', this)">
+        <i data-lucide="send" aria-hidden="true"></i> Notification Engine
       </button>
-      <button class="tab-btn" onclick="switchTab('inventory-tab', this)">
-        <i data-lucide="store"></i> Inventory Core
+      <button class="tab-btn" id="tab-btn-inventory" role="tab" aria-selected="false" aria-controls="inventory-tab" onclick="switchTab('inventory-tab', this)">
+        <i data-lucide="store" aria-hidden="true"></i> Inventory Core
       </button>
     </div>
 
@@ -625,7 +699,7 @@
     <!-- ==========================================
          TAB: ECO-IMPACT DASHBOARD (Phase 6)
          ========================================== -->
-    <div id="impact-tab" class="tab-content">
+    <div id="impact-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-impact" tabindex="0">
 
       <!-- Hero KPI row -->
       <div class="grid-4" style="margin-bottom:1.75rem;" id="kpi-grid">
@@ -764,7 +838,7 @@
     <!-- ==========================================
          TAB: BULK CUSTOMERS & STANDING ORDERS
          ========================================== -->
-    <div id="ngo-tab" class="tab-content">
+    <div id="ngo-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-ngo" tabindex="0">
 
       <!-- Page header -->
       <div style="margin-bottom:1.5rem;">
@@ -905,7 +979,7 @@
             <button class="btn btn-purple btn-full" onclick="evaluateEngine()" id="eval-btn">
               <i data-lucide="play"></i> Evaluate All Bulk Orders
             </button>
-            <div id="eval-result" style="margin-top:1.25rem;"></div>
+            <div id="eval-result" style="margin-top:1.25rem;" aria-live="polite"></div>
           </div>
         </div>
 
@@ -939,7 +1013,7 @@
             <i data-lucide="refresh-cw"></i> Load Allocations
           </button>
         </div>
-        <div id="matches-list">
+        <div id="matches-list" aria-live="polite">
           <div class="empty-state">
             <i data-lucide="inbox"></i>
             <p>Click "Load Allocations" to see priority inventory matches across all bulk customer segments</p>
@@ -956,7 +1030,7 @@
     <!-- ==========================================
          TAB: ML FLASH CLAIMS
          ========================================== -->
-    <div id="claims-tab" class="tab-content">
+    <div id="claims-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-claims" tabindex="0">
       <div class="glass-panel">
         <div class="panel-header">
           <div class="panel-title"><i data-lucide="zap"></i> ML Flash Claim Tokens</div>
@@ -971,10 +1045,10 @@
           Discount prices are calculated by the <strong style="color:var(--accent-cyan);">Predictive AI Markdown Engine</strong> using shelf-life decay, temperature, quantity and product condition. No bidding or auction timer is applied — claim the product directly at the ML-determined optimal price.
         </div>
 
-        <div id="flash-claims-table-container">
+        <div id="flash-claims-table-container" aria-live="polite">
           <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
             <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
-            <div style="color:var(--text-muted); font-size:0.88rem;">Loading flash claims...</div>
+            <div style="color:var(--text-muted); font-size:0.88rem;">Loading flash claims…</div>
           </div>
         </div>
       </div>
@@ -984,7 +1058,7 @@
     <!-- ==========================================
          TAB: ML DISCOUNT SIMULATOR (Phase 2)
          ========================================== -->
-    <div id="ml-tab" class="tab-content">
+    <div id="ml-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-ml" tabindex="0">
       <div class="grid-2">
         <div class="glass-panel">
           <div class="panel-header">
@@ -1068,7 +1142,7 @@
                 <span class="badge badge-muted" id="ml-risk-level-badge">Awaiting Calculation</span>
               </div>
 
-              <div id="ml-result-body">
+              <div id="ml-result-body" aria-live="polite">
                 <div style="margin-top:0.25rem;">
                   <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem; line-height: 1.45;">
                     The Predictive AI Markdown Engine automatically tracks decay thresholds. Below is the active pricing schema baseline:
@@ -1124,7 +1198,7 @@
     <!-- ==========================================
          TAB: NOTIFICATION ENGINE (Phase 3)
          ========================================== -->
-    <div id="notify-tab" class="tab-content">
+    <div id="notify-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-notify" tabindex="0">
       <div class="grid-2">
         <div class="glass-panel">
           <div class="panel-header">
@@ -1188,7 +1262,7 @@
             </button>
           </form>
           <div class="panel-title" style="font-size:0.9rem;margin-bottom:0.5rem;">TwiML XML Webhook Response:</div>
-          <div class="console-out" id="wh-console">// TwiML response XML will render here...</div>
+          <div class="console-out" id="wh-console">// TwiML response XML will render here…</div>
         </div>
       </div>
 
@@ -1246,7 +1320,7 @@
     <!-- ==========================================
          TAB: INVENTORY CORE (Phase 1)
          ========================================== -->
-    <div id="inventory-tab" class="tab-content">
+    <div id="inventory-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-inventory" tabindex="0">
       <!-- Top Summary KPI Cards -->
       <div class="kpi-grid" style="margin-bottom: 1.5rem;">
         <div class="kpi-card glow-green">
@@ -1278,7 +1352,7 @@
           <span class="badge badge-cyan" id="store-count-badge">0 Stores</span>
         </div>
         <div id="stores-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
-          <div class="empty-state"><i data-lucide="loader"></i><p>Loading stores...</p></div>
+          <div class="empty-state"><i data-lucide="loader" aria-hidden="true"></i><p>Loading stores…</p></div>
         </div>
       </div>
 
@@ -1287,7 +1361,7 @@
         <div class="panel-header" style="flex-wrap: wrap; gap: 1rem;">
           <div class="panel-title"><i data-lucide="boxes"></i> Real-Time Inventory Batches</div>
           <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-            <input type="text" id="inv-search" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" placeholder="Search SKU or product..." oninput="filterInventory()">
+            <input type="text" id="inv-search" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" placeholder="Search SKU or product…" oninput="filterInventory()">
             
             <select id="inv-store-filter" class="form-select" style="width: 160px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" onchange="filterInventory()">
               <option value="ALL">All Stores</option>
@@ -1305,7 +1379,7 @@
 
         <div style="overflow-x: auto; margin-top: 0.5rem;">
           <div id="batches-table-container">
-            <div class="empty-state"><i data-lucide="loader"></i><p>Loading inventory batches...</p></div>
+            <div class="empty-state"><i data-lucide="loader" aria-hidden="true"></i><p>Loading inventory batches…</p></div>
           </div>
         </div>
       </div>
@@ -1319,7 +1393,7 @@
        ========================================== -->
   <div class="modal-backdrop" id="receipt-modal" onclick="closeReceiptModal(event)">
     <div class="modal-card">
-      <button class="modal-close" onclick="closeReceiptModalDirect()"><i data-lucide="x"></i></button>
+      <button class="modal-close" onclick="closeReceiptModalDirect()" aria-label="Close modal"><i data-lucide="x" aria-hidden="true"></i></button>
 
       <div class="receipt-top">
         <div class="receipt-logo"><i data-lucide="leaf"></i></div>
@@ -1343,7 +1417,7 @@
       </div>
 
       <div class="receipt-msg" id="r-msg">
-        Loading your impact data...
+        Loading your impact data…
       </div>
 
       <div class="receipt-actions">
@@ -1368,12 +1442,15 @@
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // ===== TAB SWITCHER =====
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active');
+        el.setAttribute('aria-selected', 'false');
+      });
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       if (tabId === 'impact-tab') loadAnalytics();
       if (tabId === 'ngo-tab') { loadStandingOrders(); }
       if (tabId === 'inventory-tab') { loadInventoryCore(); }
@@ -1691,7 +1768,7 @@
       e.preventDefault();
       const btn = document.getElementById('ngo-submit-btn');
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader"></i> Registering...';
+      btn.innerHTML = '<i data-lucide="loader"></i> Registering…';
 
       const payload = {
         ngo_name: document.getElementById('ngo-name').value,
@@ -1730,7 +1807,7 @@
     async function evaluateEngine() {
       const btn = document.getElementById('eval-btn');
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader"></i> Evaluating...';
+      btn.innerHTML = '<i data-lucide="loader"></i> Evaluating…';
       document.getElementById('eval-result').innerHTML = '';
       try {
         const res = await fetch('/api/v1/standing-orders/evaluate', { method: 'POST' });
@@ -2079,7 +2156,7 @@
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
           <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
-          <div style="color:var(--text-muted); font-size:0.88rem;">Loading active flash claims...</div>
+          <div style="color:var(--text-muted); font-size:0.88rem;">Loading active flash claims…</div>
         </div>
       `;
 

@@ -2,15 +2,27 @@ import numpy as np
 import pandas as pd
 
 
-CATEGORIES = ["Dairy", "Bakery", "Produce", "Meat", "Prepared", "Beverages", "General"]
+CATEGORIES = [
+    "Dairy",
+    "Bakery",
+    "Fruits & Veggies",
+    "Food Grains",
+    "Beverages",
+    "Snacks",
+    "Oil & Masala",
+    "Meat & Seafood",
+    "Ready-to-Eat",
+]
 CATEGORY_PERISHABILITY = {
-    "Produce": 1.4,
-    "Meat": 1.5,
+    "Fruits & Veggies": 1.4,
+    "Meat & Seafood": 1.5,
     "Dairy": 1.3,
-    "Prepared": 1.4,
+    "Ready-to-Eat": 1.4,
     "Bakery": 1.2,
     "Beverages": 0.8,
-    "General": 0.7,
+    "Snacks": 0.7,
+    "Oil & Masala": 0.5,
+    "Food Grains": 0.4,
 }
 
 

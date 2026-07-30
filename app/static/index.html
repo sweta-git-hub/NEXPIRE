@@ -3,12 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXPIRE — AI Food Waste Rescue Dashboard</title>
+  <title>NEXPIRE — AI Food Waste Rescue Platform</title>
+  <meta name="description" content="NEXPIRE: AI-powered food waste rescue platform with real-time dynamic discounting, geo-fenced alerts, and eco-impact analytics.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <style>
+    /* ===== DESIGN TOKENS ===== */
     :root {
       --bg-dark: #0b0f19;
       --bg-card: rgba(18, 26, 43, 0.7);
@@ -17,19 +22,23 @@
       --accent-green-glow: rgba(16, 185, 129, 0.3);
       --accent-emerald: #059669;
       --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.25);
       --accent-purple: #8b5cf6;
+      --accent-purple-glow: rgba(139, 92, 246, 0.25);
       --accent-rose: #f43f5e;
+      --accent-amber: #f59e0b;
+      --accent-amber-glow: rgba(245, 158, 11, 0.25);
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
       --font-main: 'Outfit', sans-serif;
       --font-code: 'Space Grotesk', monospace;
+      --radius-card: 16px;
+      --radius-sm: 8px;
+      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: radial-gradient(circle at 10% 20%, #0d1527 0%, #070a12 90%);
@@ -41,375 +50,997 @@
       overflow-x: hidden;
     }
 
-    /* Ambient Background Glow */
-    .glow-orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(120px);
-      z-index: 0;
-      pointer-events: none;
-    }
-    .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.15); }
-    .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.12); }
+    /* ===== AMBIENT ORBS ===== */
+    .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: 0; pointer-events: none; }
+    .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.12); }
+    .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.10); }
+    .glow-3 { top: 50%; left: -5%; width: 300px; height: 300px; background: rgba(139, 92, 246, 0.08); }
 
+    /* ===== HEADER ===== */
     header {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      position: relative; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
       padding: 1.25rem 2.5rem;
-      background: rgba(11, 15, 25, 0.8);
-      backdrop-filter: blur(16px);
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--bg-card-border);
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
     .brand-logo {
-      width: 40px;
-      height: 40px;
+      width: 42px; height: 42px;
       background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 20px var(--accent-green-glow);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 24px var(--accent-green-glow);
     }
-    .brand-logo i { color: #fff; }
+    .brand-logo svg { color: #fff; width: 20px; height: 20px; }
     .brand-title {
-      font-family: var(--font-code);
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-family: var(--font-code); font-size: 1.5rem; font-weight: 700;
       letter-spacing: -0.5px;
       background: linear-gradient(90deg, #ffffff, #a7f3d0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .brand-subtitle {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
+    .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; }
 
     .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 9999px;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--accent-green);
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.45rem 1rem; border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 0.82rem; font-weight: 500; color: var(--accent-green);
     }
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green);
       animation: pulse 2s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
 
-    /* Main Container */
-    main {
-      position: relative;
-      z-index: 10;
-      max-width: 1300px;
-      width: 100%;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
-      flex: 1;
-    }
+    /* ===== MAIN LAYOUT ===== */
+    main { position: relative; z-index: 10; max-width: 1340px; width: 100%; margin: 2rem auto; padding: 0 1.5rem; flex: 1; }
 
-    /* Navigation Tabs */
+    /* ===== TABS ===== */
     .tabs {
-      display: flex;
-      gap: 0.75rem;
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
       margin-bottom: 2rem;
       border-bottom: 1px solid var(--bg-card-border);
       padding-bottom: 0.75rem;
     }
     .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--font-main);
-      font-size: 0.95rem;
-      font-weight: 500;
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
+      background: transparent; border: none;
+      color: var(--text-muted); font-family: var(--font-main);
+      font-size: 0.88rem; font-weight: 500;
+      padding: 0.55rem 1rem; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; gap: 0.45rem;
+      transition: var(--transition);
     }
-    .tab-btn:hover {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.04);
-    }
+    .tab-btn svg { width: 15px; height: 15px; }
+    .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
     .tab-btn.active {
       color: #fff;
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,182,212,0.18));
+      border: 1px solid rgba(16,185,129,0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    /* Glass Cards & Panels */
+    /* ===== GLASS PANELS ===== */
     .glass-panel {
       background: var(--bg-card);
       backdrop-filter: blur(20px);
       border: 1px solid var(--bg-card-border);
-      border-radius: 16px;
+      border-radius: var(--radius-card);
       padding: 1.75rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      margin-bottom: 2rem;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 1.75rem;
     }
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    .panel-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-    .panel-title i { color: var(--accent-green); }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .panel-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.55rem; }
+    .panel-title svg { color: var(--accent-green); width: 18px; height: 18px; flex-shrink: 0; }
 
-    /* Grid Layouts */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-    }
+    /* ===== GRIDS ===== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
 
-    /* Form Controls */
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-    .form-label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 0.4rem;
-    }
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      background: rgba(10, 15, 28, 0.8);
+    /* ===== KPI HERO CARDS ===== */
+    .kpi-card {
+      background: rgba(10, 15, 28, 0.7);
       border: 1px solid var(--bg-card-border);
-      border-radius: 8px;
-      color: var(--text-main);
-      font-family: var(--font-main);
-      font-size: 0.95rem;
-      transition: border 0.2s ease;
+      border-radius: var(--radius-card);
+      padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      position: relative; overflow: hidden;
+      transition: var(--transition);
     }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: var(--accent-green);
-      box-shadow: 0 0 10px var(--accent-green-glow);
+    .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+    .kpi-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
     }
+    .kpi-card.green::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
+    .kpi-card.cyan::before { background: linear-gradient(90deg, var(--accent-cyan), #818cf8); }
+    .kpi-card.purple::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-rose)); }
+    .kpi-card.amber::before { background: linear-gradient(90deg, var(--accent-amber), #f87171); }
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s ease;
+    .kpi-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-green), var(--accent-emerald));
-      color: #fff;
-      box-shadow: 0 4px 15px var(--accent-green-glow);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--accent-green-glow);
-    }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border: 1px solid var(--bg-card-border);
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
+    .kpi-icon.green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+    .kpi-icon.cyan  { background: rgba(6,182,212,0.15);  color: var(--accent-cyan); }
+    .kpi-icon.purple{ background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+    .kpi-icon.amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+    .kpi-icon svg { width: 20px; height: 20px; }
 
-    /* Metric Gauge & Cards */
+    .kpi-val {
+      font-family: var(--font-code); font-size: 2.2rem; font-weight: 700;
+      line-height: 1; letter-spacing: -1px;
+    }
+    .kpi-val.green  { color: var(--accent-green); }
+    .kpi-val.cyan   { color: var(--accent-cyan); }
+    .kpi-val.purple { color: var(--accent-purple); }
+    .kpi-val.amber  { color: var(--accent-amber); }
+    .kpi-lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
+    .kpi-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ===== METRIC CARDS (smaller) ===== */
     .metric-card {
       background: rgba(10, 15, 28, 0.6);
       border: 1px solid var(--bg-card-border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      border-radius: 12px; padding: 1.25rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
     }
-    .metric-val {
-      font-family: var(--font-code);
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--accent-green);
+    .metric-val { font-family: var(--font-code); font-size: 1.8rem; font-weight: 700; color: var(--accent-green); }
+    .metric-lbl { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ===== CHART RING CONTAINER ===== */
+    .chart-ring-wrap {
+      display: flex; align-items: center; justify-content: center; gap: 2rem;
+      flex-wrap: wrap; padding: 1rem 0;
     }
-    .metric-lbl {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .ring-item { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+    .ring-item canvas { width: 110px !important; height: 110px !important; }
+    .ring-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; text-align: center; }
+    .ring-val { font-family: var(--font-code); font-size: 1.1rem; font-weight: 700; color: var(--text-main); text-align: center; }
+
+    /* ===== CONVERSION RATE BAR ===== */
+    .conversion-bar-wrap { margin-top: 0.5rem; }
+    .conv-labels { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+    .conv-bar-bg {
+      height: 12px; background: rgba(255,255,255,0.07);
+      border-radius: 9999px; overflow: hidden;
+    }
+    .conv-bar-fill {
+      height: 100%; border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 0 8px var(--accent-green-glow);
     }
 
-    /* Tables */
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
+    /* ===== CATEGORY TABLE ===== */
+    .cat-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
     }
-    .data-table th, .data-table td {
-      padding: 0.9rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid var(--bg-card-border);
-    }
-    .data-table th {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .data-table tr:hover {
-      background: rgba(255, 255, 255, 0.02);
-    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { flex: 1; font-size: 0.9rem; }
+    .cat-count { font-family: var(--font-code); font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+    .cat-bar-bg { flex: 2; height: 6px; background: rgba(255,255,255,0.06); border-radius: 9999px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 9999px; transition: width 1s ease; }
 
-    /* Output Console */
-    .console-out {
-      background: #050811;
+    /* ===== DATA TABLE ===== */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .data-table th, .data-table td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--bg-card-border); }
+    .data-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
+    .data-table td { font-size: 0.9rem; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ===== FORM CONTROLS ===== */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.35rem; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 0.7rem 1rem;
+      background: rgba(10, 15, 28, 0.8);
       border: 1px solid var(--bg-card-border);
-      border-radius: 10px;
-      padding: 1rem;
-      font-family: var(--font-code);
-      font-size: 0.85rem;
-      color: #a7f3d0;
-      max-height: 250px;
-      overflow-y: auto;
-      white-space: pre-wrap;
+      border-radius: var(--radius-sm);
+      color: var(--text-main); font-family: var(--font-main); font-size: 0.92rem;
+      transition: border 0.2s ease;
     }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green-glow);
+    }
+    .form-select option { background: #0d1527; }
 
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+      padding: 0.7rem 1.4rem; border-radius: var(--radius-sm);
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none;
+      font-family: var(--font-main); transition: var(--transition);
+    }
+    .btn svg { width: 16px; height: 16px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-emerald));
+      color: #fff; box-shadow: 0 4px 15px var(--accent-green-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-green-glow); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.07); color: var(--text-main);
+      border: 1px solid var(--bg-card-border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+    .btn-cyan {
+      background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
+      color: #fff; box-shadow: 0 4px 15px var(--accent-cyan-glow);
+    }
+    .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-cyan-glow); }
+    .btn-purple {
+      background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+      color: #fff; box-shadow: 0 4px 15px var(--accent-purple-glow);
+    }
+    .btn-purple:hover { transform: translateY(-2px); }
+    .btn-rose {
+      background: linear-gradient(135deg, var(--accent-rose), #be123c);
+      color: #fff; box-shadow: 0 4px 15px rgba(244,63,94,0.3);
+    }
+    .btn-rose:hover { transform: translateY(-2px); }
+    .btn-amber {
+      background: linear-gradient(135deg, var(--accent-amber), #d97706);
+      color: #1a1a1a; box-shadow: 0 4px 15px var(--accent-amber-glow);
+    }
+    .btn-amber:hover { transform: translateY(-2px); }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+    .btn-full { width: 100%; }
+
+    /* ===== BADGES ===== */
     .badge {
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
+      padding: 0.22rem 0.6rem; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .badge-sim { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); }
-    .badge-sent { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-green  { background: rgba(16,185,129,0.2);  color: var(--accent-green);  border: 1px solid rgba(16,185,129,0.35); }
+    .badge-cyan   { background: rgba(6,182,212,0.2);   color: var(--accent-cyan);   border: 1px solid rgba(6,182,212,0.35); }
+    .badge-purple { background: rgba(139,92,246,0.2);  color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.35); }
+    .badge-amber  { background: rgba(245,158,11,0.2);  color: var(--accent-amber);  border: 1px solid rgba(245,158,11,0.35); }
+    .badge-rose   { background: rgba(244,63,94,0.2);   color: var(--accent-rose);   border: 1px solid rgba(244,63,94,0.35); }
+    .badge-muted  { background: rgba(255,255,255,0.07); color: var(--text-muted);   border: 1px solid var(--bg-card-border); }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    /* ===== CONSOLE OUTPUT ===== */
+    .console-out {
+      background: #050811; border: 1px solid var(--bg-card-border); border-radius: 10px;
+      padding: 1rem; font-family: var(--font-code); font-size: 0.82rem;
+      color: #a7f3d0; max-height: 260px; overflow-y: auto; white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    /* ===== NGO STANDING ORDER CARDS ===== */
+    .ngo-card {
+      background: rgba(8, 13, 24, 0.7);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px; padding: 1.25rem;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 1rem; transition: var(--transition);
+      margin-bottom: 0.85rem;
+    }
+    .ngo-card:hover { border-color: rgba(16,185,129,0.25); }
+    .ngo-card-info { flex: 1; }
+    .ngo-card-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .ngo-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .ngo-card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center; }
+
+    /* ===== MATCH RESULT CARD ===== */
+    .match-card {
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 10px; padding: 1rem;
+      margin-bottom: 0.65rem;
+    }
+    .match-card-header { display: flex; justify-content: space-between; align-items: center; }
+
+    /* ===== AUCTION TAB ===== */
+    .auction-card {
+      background: rgba(8, 13, 24, 0.8);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 20px; padding: 2.5rem;
+      text-align: center; position: relative; overflow: hidden;
+      transition: var(--transition);
+    }
+    .auction-card.urgent { border-color: rgba(244,63,94,0.5); box-shadow: 0 0 40px rgba(244,63,94,0.15); }
+    .auction-card.warming { border-color: rgba(245,158,11,0.4); box-shadow: 0 0 40px rgba(245,158,11,0.1); }
+    .auction-badge-live {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.35rem 0.9rem; border-radius: 9999px;
+      background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4);
+      color: var(--accent-rose); font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .auction-badge-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent-rose); animation: pulse 1s infinite;
+    }
+    .auction-item-name { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .auction-item-store { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .auction-price-block { margin-bottom: 1.5rem; }
+    .auction-orig-price {
+      font-size: 1rem; color: var(--text-muted); text-decoration: line-through;
+      margin-bottom: 0.25rem;
+    }
+    .auction-curr-price {
+      font-family: var(--font-code); font-size: 4rem; font-weight: 700;
+      line-height: 1; letter-spacing: -2px;
+      transition: color 0.5s ease;
+    }
+    .auction-curr-price.price-normal { color: var(--accent-green); text-shadow: 0 0 30px var(--accent-green-glow); }
+    .auction-curr-price.price-warm   { color: var(--accent-amber); text-shadow: 0 0 30px var(--accent-amber-glow); }
+    .auction-curr-price.price-hot    { color: var(--accent-rose);  text-shadow: 0 0 30px rgba(244,63,94,0.4); }
+    .auction-discount-pct {
+      font-size: 1rem; font-weight: 600; margin-top: 0.4rem;
+      transition: color 0.5s ease;
+    }
+    .auction-items-left { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+    /* ===== AUCTION COUNTDOWN BAR ===== */
+    .countdown-wrap { margin: 1.5rem 0; }
+    .countdown-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+    .countdown-label { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .countdown-time { font-family: var(--font-code); font-size: 1.3rem; font-weight: 700; transition: color 0.3s; }
+    .countdown-bar-bg {
+      height: 8px; background: rgba(255,255,255,0.07);
+      border-radius: 9999px; overflow: hidden;
+    }
+    .countdown-bar-fill {
+      height: 100%; border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+      transition: width 1s linear, background 0.5s ease;
+    }
+    .countdown-bar-fill.warm { background: linear-gradient(90deg, var(--accent-amber), #f87171); }
+    .countdown-bar-fill.hot  { background: linear-gradient(90deg, var(--accent-rose), #be123c); }
+
+    /* Auction price history */
+    .price-history { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
+    .price-tick {
+      padding: 0.25rem 0.6rem; border-radius: 6px;
+      font-size: 0.78rem; font-family: var(--font-code);
+      background: rgba(255,255,255,0.06); color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .price-tick.current {
+      background: rgba(16,185,129,0.15); color: var(--accent-green);
+      border: 1px solid rgba(16,185,129,0.3);
+    }
+    .price-tick.past { text-decoration: line-through; opacity: 0.45; }
+
+    /* Auction config */
+    .auction-config {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px; padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .auction-config-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .range-row { display: flex; align-items: center; gap: 1rem; }
+    input[type="range"] { flex: 1; accent-color: var(--accent-green); }
+
+    /* ===== CLAIMED STATE ===== */
+    .claimed-overlay {
+      position: absolute; inset: 0;
+      background: rgba(6, 10, 20, 0.92);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 20px; gap: 1rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+      z-index: 5;
+    }
+    .claimed-overlay.active { opacity: 1; pointer-events: all; }
+    .claimed-checkmark {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(16,185,129,0.15); border: 2px solid var(--accent-green);
+      display: flex; align-items: center; justify-content: center;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .claimed-checkmark svg { width: 32px; height: 32px; color: var(--accent-green); }
+    @keyframes popIn { 0%{transform:scale(0)}100%{transform:scale(1)} }
+    .claimed-title { font-size: 1.4rem; font-weight: 700; color: var(--accent-green); }
+    .claimed-token {
+      font-family: var(--font-code); font-size: 0.85rem;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--bg-card-border);
+      padding: 0.5rem 1rem; border-radius: 8px; color: var(--text-muted);
+      word-break: break-all; max-width: 400px; text-align: center;
+    }
+
+    /* ===== IMPACT RECEIPT MODAL ===== */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .modal-backdrop.active { opacity: 1; pointer-events: all; }
+    .modal-card {
+      background: linear-gradient(145deg, #0f1e35, #0a1220);
+      border: 1px solid rgba(16,185,129,0.35);
+      border-radius: 24px; padding: 2.5rem;
+      max-width: 500px; width: 90%; position: relative;
+      box-shadow: 0 0 60px rgba(16,185,129,0.2), 0 30px 60px rgba(0,0,0,0.5);
+      transform: scale(0.92); transition: transform 0.3s ease;
+    }
+    .modal-backdrop.active .modal-card { transform: scale(1); }
+    .modal-close {
+      position: absolute; top: 1.25rem; right: 1.25rem;
+      background: rgba(255,255,255,0.06); border: none; cursor: pointer;
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text-main); }
+    .modal-close svg { width: 16px; height: 16px; }
+
+    .receipt-top {
+      text-align: center; padding-bottom: 1.5rem;
+      border-bottom: 1px dashed rgba(255,255,255,0.1);
+      margin-bottom: 1.5rem;
+    }
+    .receipt-logo {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      border-radius: 14px; margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px var(--accent-green-glow);
+    }
+    .receipt-logo svg { width: 24px; height: 24px; color: #fff; }
+    .receipt-headline {
+      font-family: var(--font-code); font-size: 1.3rem; font-weight: 700;
+      background: linear-gradient(90deg, #a7f3d0, #67e8f9);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 0.3rem;
+    }
+    .receipt-sub { font-size: 0.82rem; color: var(--text-muted); }
+
+    .receipt-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .receipt-stat { text-align: center; }
+    .receipt-stat-val {
+      font-family: var(--font-code); font-size: 1.5rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .receipt-stat-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.2rem; }
+
+    .receipt-msg {
+      text-align: center; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+      background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 10px; padding: 0.85rem; margin-bottom: 1.5rem;
+    }
+    .receipt-actions { display: flex; gap: 0.75rem; }
+
+    /* ===== DIVIDER ===== */
+    .divider { height: 1px; background: var(--bg-card-border); margin: 1.5rem 0; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-state svg { width: 40px; height: 40px; margin: 0 auto 1rem; opacity: 0.3; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ===== LOADING SHIMMER ===== */
+    .shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+      border-radius: 8px; height: 16px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 200;
+      padding: 0.85rem 1.5rem; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 500;
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
+      color: var(--accent-green); backdrop-filter: blur(12px);
+      transform: translateY(20px); opacity: 0;
+      transition: all 0.3s ease; pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.error { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent-rose); }
   </style>
 </head>
 <body>
 
   <div class="glow-orb glow-1"></div>
   <div class="glow-orb glow-2"></div>
+  <div class="glow-orb glow-3"></div>
 
+  <!-- ======== HEADER ======== -->
   <header>
     <div class="brand">
-      <div class="brand-logo">
-        <i data-lucide="leaf"></i>
-      </div>
+      <div class="brand-logo"><i data-lucide="leaf"></i></div>
       <div>
         <div class="brand-title">NEXPIRE</div>
         <div class="brand-subtitle">AI Food-Waste Rescue Platform</div>
       </div>
     </div>
-
-    <div style="display: flex; gap: 1rem; align-items: center;">
-      <a href="/docs" target="_blank" style="text-decoration: none;">
-        <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-          <i data-lucide="file-text"></i> Interactive API Docs
-        </button>
+    <div style="display:flex;gap:1rem;align-items:center;">
+      <a href="/docs" target="_blank" style="text-decoration:none;">
+        <button class="btn btn-secondary btn-sm"><i data-lucide="file-text"></i> API Docs</button>
       </a>
       <div class="status-badge" id="health-badge">
         <div class="status-dot"></div>
-        <span id="health-text">API Operational</span>
+        <span id="health-text">Checking...</span>
       </div>
     </div>
   </header>
 
+  <!-- ======== MAIN ======== -->
   <main>
 
     <!-- Navigation Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('ml-tab', this)">
-        <i data-lucide="cpu"></i> ML Dynamic Discount Simulator
+    <div class="tabs" id="main-tabs">
+      <button class="tab-btn" id="tab-btn-impact" onclick="switchTab('impact-tab', this)">
+        <i data-lucide="leaf"></i> Eco-Impact Dashboard
+      </button>
+      <button class="tab-btn" id="tab-btn-ngo" onclick="switchTab('ngo-tab', this)">
+        <i data-lucide="users"></i> NGO Standing Orders
+      </button>
+      <button class="tab-btn" id="tab-btn-auction" onclick="switchTab('auction-tab', this)">
+        <i data-lucide="trending-down"></i> Live Auction
+      </button>
+      <button class="tab-btn" onclick="switchTab('ml-tab', this)">
+        <i data-lucide="cpu"></i> ML Discount Simulator
       </button>
       <button class="tab-btn" onclick="switchTab('notify-tab', this)">
-        <i data-lucide="send"></i> Notification Engine (Phase 3)
+        <i data-lucide="send"></i> Notification Engine
       </button>
       <button class="tab-btn" onclick="switchTab('inventory-tab', this)">
-        <i data-lucide="store"></i> Stores & Inventory Core
+        <i data-lucide="store"></i> Inventory Core
       </button>
     </div>
 
-    <!-- TAB 1: ML Dynamic Discount Simulator -->
-    <div id="ml-tab" class="tab-content active">
+
+    <!-- ==========================================
+         TAB: ECO-IMPACT DASHBOARD (Phase 6)
+         ========================================== -->
+    <div id="impact-tab" class="tab-content">
+
+      <!-- Hero KPI row -->
+      <div class="grid-4" style="margin-bottom:1.75rem;" id="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-icon green"><i data-lucide="package-check"></i></div>
+          <div class="kpi-lbl">Items Rescued</div>
+          <div class="kpi-val green" id="kpi-items">—</div>
+          <div class="kpi-sub">platform-wide, all time</div>
+        </div>
+        <div class="kpi-card cyan">
+          <div class="kpi-icon cyan"><i data-lucide="recycle"></i></div>
+          <div class="kpi-lbl">Waste Prevented</div>
+          <div class="kpi-val cyan" id="kpi-waste">—</div>
+          <div class="kpi-sub">kg of food saved</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-icon purple"><i data-lucide="cloud"></i></div>
+          <div class="kpi-lbl">CO₂ Offset</div>
+          <div class="kpi-val purple" id="kpi-co2">—</div>
+          <div class="kpi-sub">kg CO₂e prevented</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon amber"><i data-lucide="banknote"></i></div>
+          <div class="kpi-lbl">Revenue Recovered</div>
+          <div class="kpi-val amber" id="kpi-revenue">—</div>
+          <div class="kpi-sub">vs. zero-margin disposal</div>
+        </div>
+      </div>
+
       <div class="grid-2">
-        <!-- Input Form -->
+        <!-- Animated Ring Charts -->
         <div class="glass-panel">
           <div class="panel-header">
-            <div class="panel-title">
-              <i data-lucide="sliders"></i> Expiration Risk & Markdown Predictor
+            <div class="panel-title"><i data-lucide="pie-chart"></i> Impact Ring Dashboard</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadAnalytics()">
+              <i data-lucide="refresh-cw"></i> Refresh
+            </button>
+          </div>
+          <div class="chart-ring-wrap" id="ring-wrap">
+            <div class="ring-item">
+              <canvas id="ring-waste"></canvas>
+              <div class="ring-val" id="rv-waste">—</div>
+              <div class="ring-label">Waste Prevented (kg)</div>
             </div>
+            <div class="ring-item">
+              <canvas id="ring-co2"></canvas>
+              <div class="ring-val" id="rv-co2">—</div>
+              <div class="ring-label">CO₂ Saved (kg)</div>
+            </div>
+            <div class="ring-item">
+              <canvas id="ring-revenue"></canvas>
+              <div class="ring-val" id="rv-revenue">—</div>
+              <div class="ring-label">Revenue Recovered (₹)</div>
+            </div>
+          </div>
+
+          <!-- Conversion Rate -->
+          <div class="divider"></div>
+          <div style="margin-bottom:0.4rem;">
+            <span class="panel-title" style="font-size:0.95rem;"><i data-lucide="trending-up"></i> Claim Conversion Rate</span>
+          </div>
+          <div class="conversion-bar-wrap">
+            <div class="conv-labels">
+              <span style="font-size:0.8rem;color:var(--text-muted);">0%</span>
+              <span id="conv-rate-label" style="font-family:var(--font-code);font-size:1rem;font-weight:700;color:var(--accent-green);">—</span>
+              <span style="font-size:0.8rem;color:var(--text-muted);">100%</span>
+            </div>
+            <div class="conv-bar-bg">
+              <div class="conv-bar-fill" id="conv-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Breakdown + NGO Stats -->
+        <div>
+          <div class="glass-panel" style="margin-bottom:1.5rem;">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="tag"></i> Category Breakdown</div>
+            </div>
+            <div id="category-list">
+              <div class="shimmer" style="margin-bottom:0.75rem;"></div>
+              <div class="shimmer" style="height:12px;width:70%;margin-bottom:0.75rem;"></div>
+              <div class="shimmer" style="height:12px;width:55%;"></div>
+            </div>
+          </div>
+
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="heart-handshake"></i> NGO & Rescue Squads</div>
+            </div>
+            <div class="grid-3">
+              <div class="metric-card">
+                <div class="metric-lbl">Standing Orders</div>
+                <div class="metric-val" id="ngo-orders">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">NGO Matches</div>
+                <div class="metric-val" id="ngo-matches">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">Subsidized Items</div>
+                <div class="metric-val" id="ngo-subsidized">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Stats -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="bar-chart-2"></i> Financial Recovery Overview</div>
+          <button class="btn btn-cyan btn-sm" onclick="openReceiptModal()">
+            <i data-lucide="share-2"></i> Generate Impact Receipt
+          </button>
+        </div>
+        <div class="grid-3">
+          <div class="metric-card">
+            <div class="metric-lbl">Total Revenue Recovered</div>
+            <div class="metric-val" id="fin-revenue" style="color:var(--accent-amber);">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-lbl">Total Discounts Given</div>
+            <div class="metric-val" id="fin-discounts" style="color:var(--accent-cyan);">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-lbl">Avg Discount %</div>
+            <div class="metric-val" id="fin-avg-disc" style="color:var(--accent-purple);">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /impact-tab -->
+
+
+    <!-- ==========================================
+         TAB: NGO STANDING ORDERS (Phase 6)
+         ========================================== -->
+    <div id="ngo-tab" class="tab-content">
+
+      <div class="grid-2">
+
+        <!-- Active Standing Orders list -->
+        <div>
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="users"></i> Active Rescue Squads</div>
+              <button class="btn btn-secondary btn-sm" onclick="loadStandingOrders()">
+                <i data-lucide="refresh-cw"></i> Refresh
+              </button>
+            </div>
+            <div id="standing-order-list">
+              <div class="shimmer" style="height:80px;margin-bottom:0.75rem;border-radius:12px;"></div>
+              <div class="shimmer" style="height:80px;border-radius:12px;"></div>
+            </div>
+          </div>
+
+          <!-- Evaluate Engine -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="zap"></i> Run Engine Evaluation</div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
+              Evaluates all active standing orders against current inventory and creates priority matches for eligible batches.
+            </p>
+            <button class="btn btn-purple btn-full" onclick="evaluateEngine()" id="eval-btn">
+              <i data-lucide="play"></i> Evaluate All Standing Orders
+            </button>
+            <div id="eval-result" style="margin-top:1.25rem;"></div>
+          </div>
+        </div>
+
+        <!-- Create new standing order -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title"><i data-lucide="plus-circle"></i> Register New Rescue Squad</div>
+          </div>
+          <form id="ngo-form" onsubmit="createStandingOrder(event)">
+            <div class="form-group">
+              <label class="form-label">NGO / Shelter Name *</label>
+              <input type="text" class="form-input" id="ngo-name" placeholder="e.g. City Food Shelter" required>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Contact Email</label>
+                <input type="email" class="form-input" id="ngo-email" placeholder="contact@org.org">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Phone</label>
+                <input type="text" class="form-input" id="ngo-phone" placeholder="+91 98765 43210">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Category Filter</label>
+                <select class="form-select" id="ngo-category">
+                  <option value="ALL">All Categories</option>
+                  <option value="Dairy">Dairy</option>
+                  <option value="Bakery">Bakery</option>
+                  <option value="Fruits & Veggies">Fruits &amp; Veggies</option>
+                  <option value="Food Grains">Food Grains</option>
+                  <option value="Beverages">Beverages</option>
+                  <option value="Snacks">Snacks</option>
+                  <option value="Oil & Masala">Oil &amp; Masala</option>
+                  <option value="Meat & Seafood">Meat &amp; Seafood</option>
+                  <option value="Ready-to-Eat">Ready-to-Eat</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Min Quantity (units)</label>
+                <input type="number" class="form-input" id="ngo-qty" value="5" min="1">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Priority Window (hours before expiry)</label>
+              <input type="number" class="form-input" id="ngo-window" value="12" min="1" max="72">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="ngo-submit-btn">
+              <i data-lucide="plus"></i> Register Standing Order
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Matches table -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="check-circle"></i> Recent Priority Matches</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadMatches()">
+            <i data-lucide="refresh-cw"></i> Load Matches
+          </button>
+        </div>
+        <div id="matches-list">
+          <div class="empty-state">
+            <i data-lucide="inbox"></i>
+            <p>Click "Load Matches" to see NGO priority allocations</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ngo-tab -->
+
+
+    <!-- ==========================================
+         TAB: DESCENDING-PRICE AUCTION (Phase 6)
+         ========================================== -->
+    <div id="auction-tab" class="tab-content">
+
+      <div class="grid-2">
+
+        <!-- AUCTION CARD -->
+        <div>
+          <div class="auction-card" id="auction-main-card">
+
+            <!-- Claimed overlay -->
+            <div class="claimed-overlay" id="claimed-overlay">
+              <div class="claimed-checkmark"><i data-lucide="check"></i></div>
+              <div class="claimed-title">Deal Claimed! 🎉</div>
+              <div style="color:var(--text-muted);font-size:0.88rem;">Your tokenized claim link:</div>
+              <div class="claimed-token" id="claimed-token-val">nexpire.app/claim/...</div>
+              <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
+                <button class="btn btn-primary btn-sm" onclick="copyClaimToken()">
+                  <i data-lucide="copy"></i> Copy Link
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="resetAuction()">
+                  <i data-lucide="rotate-ccw"></i> New Auction
+                </button>
+              </div>
+            </div>
+
+            <div id="auction-live-content">
+              <div class="auction-badge-live">
+                <div class="auction-badge-live-dot"></div> LIVE AUCTION
+              </div>
+              <div class="auction-item-name" id="au-item-name">Organic Strawberries 500g</div>
+              <div class="auction-item-store" id="au-store-name">Metro Fresh Market · 0.3 km away</div>
+
+              <div class="auction-price-block">
+                <div class="auction-orig-price" id="au-orig-price">was ₹12.00</div>
+                <div class="auction-curr-price price-normal" id="au-curr-price">₹12.00</div>
+                <div class="auction-discount-pct" id="au-discount-pct" style="color:var(--accent-green);">0% off</div>
+                <div class="auction-items-left" id="au-items-left">🍓 24 units remaining</div>
+              </div>
+
+              <!-- Countdown bar -->
+              <div class="countdown-wrap">
+                <div class="countdown-header">
+                  <span class="countdown-label">Next price drop in</span>
+                  <span class="countdown-time" id="au-countdown">—</span>
+                </div>
+                <div class="countdown-bar-bg">
+                  <div class="countdown-bar-fill" id="au-bar"></div>
+                </div>
+              </div>
+
+              <!-- Price history ticks -->
+              <div class="price-history" id="au-price-history"></div>
+
+              <button class="btn btn-rose btn-full" id="au-claim-btn" onclick="claimAuction()" style="margin-top:1rem;font-size:1rem;padding:1rem;">
+                <i data-lucide="hand"></i> CLAIM THIS DEAL
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- AUCTION SETTINGS -->
+        <div>
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="settings"></i> Auction Configuration</div>
+            </div>
+
+            <div class="auction-config">
+              <div class="auction-config-title">Batch Details</div>
+              <div class="form-group">
+                <label class="form-label">Item Name</label>
+                <input type="text" class="form-input" id="cfg-item" value="Organic Strawberries 500g">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Store</label>
+                <input type="text" class="form-input" id="cfg-store" value="Metro Fresh Market · 0.3 km away">
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="form-label">Starting Price (₹)</label>
+                  <input type="number" step="0.01" class="form-input" id="cfg-start-price" value="12.00">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Floor Price (₹)</label>
+                  <input type="number" step="0.01" class="form-input" id="cfg-floor-price" value="3.50">
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="form-label">Units Available</label>
+                  <input type="number" class="form-input" id="cfg-units" value="24">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Price Steps (ticks)</label>
+                  <input type="number" class="form-input" id="cfg-steps" value="6" min="2" max="12">
+                </div>
+              </div>
+            </div>
+
+            <div class="auction-config">
+              <div class="auction-config-title">Timer Settings</div>
+              <div class="form-group">
+                <label class="form-label">Tick Interval: <strong id="interval-display">30s</strong></label>
+                <div class="range-row">
+                  <span style="font-size:0.78rem;color:var(--text-muted);">5s</span>
+                  <input type="range" id="cfg-interval" min="5" max="120" value="30"
+                    oninput="document.getElementById('interval-display').textContent = this.value + 's'">
+                  <span style="font-size:0.78rem;color:var(--text-muted);">120s</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;">
+              <button class="btn btn-primary" style="flex:1;" onclick="startAuction()">
+                <i data-lucide="play"></i> Start Auction
+              </button>
+              <button class="btn btn-secondary" onclick="resetAuction()">
+                <i data-lucide="rotate-ccw"></i> Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- How it works -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="info"></i> How Descending Auction Works</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.85rem;">
+              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
+                <div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i data-lucide="play" style="width:13px;height:13px;color:var(--accent-green);"></i>
+                </div>
+                <div>
+                  <div style="font-size:0.88rem;font-weight:600;">Starts at full markdown price</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">Auction begins with maximum discount applied by the ML engine</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
+                <div style="width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i data-lucide="trending-down" style="width:13px;height:13px;color:var(--accent-amber);"></i>
+                </div>
+                <div>
+                  <div style="font-size:0.88rem;font-weight:600;">Price ticks down every interval</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">Each tick applies a further reduction until the floor (cost + 10%) is reached</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
+                <div style="width:28px;height:28px;border-radius:8px;background:rgba(244,63,94,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i data-lucide="hand" style="width:13px;height:13px;color:var(--accent-rose);"></i>
+                </div>
+                <div>
+                  <div style="font-size:0.88rem;font-weight:600;">Claim freezes the price</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">First claimant locks in the current price — generates a tokenized claim link</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /auction-tab -->
+
+
+    <!-- ==========================================
+         TAB: ML DISCOUNT SIMULATOR (Phase 2)
+         ========================================== -->
+    <div id="ml-tab" class="tab-content">
+      <div class="grid-2">
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title"><i data-lucide="sliders"></i> Expiration Risk & Markdown Predictor</div>
           </div>
           <form id="ml-predict-form" onsubmit="runMLPrediction(event)">
             <div class="form-group">
               <label class="form-label">Item Category</label>
               <select class="form-select" id="ml-perishability">
-                <option value="0.9">Dairy / Fresh Produce (High Risk - 0.9)</option>
-                <option value="0.7">Bakery / Prepared Meals (Medium Risk - 0.7)</option>
-                <option value="0.4">Meat / Seafood (Refrigerated - 0.4)</option>
-                <option value="0.2">Canned / Dry Goods (Low Perishability - 0.2)</option>
+                <option value="0.9">Dairy / Fruits &amp; Veggies (High Risk - 0.9)</option>
+                <option value="0.8">Bakery / Ready-to-Eat (Medium-High Risk - 0.8)</option>
+                <option value="0.6">Beverages / Snacks (Medium Risk - 0.6)</option>
+                <option value="0.4">Meat &amp; Seafood (Refrigerated - 0.4)</option>
+                <option value="0.2">Oil &amp; Masala / Food Grains (Low Perishability - 0.2)</option>
               </select>
             </div>
-
             <div class="grid-2">
               <div class="form-group">
                 <label class="form-label">Days to Expiration</label>
                 <input type="number" class="form-input" id="ml-days" value="2" min="0" max="30">
               </div>
               <div class="form-group">
-                <label class="form-label">Original Price ($)</label>
+                <label class="form-label">Original Price (₹)</label>
                 <input type="number" step="0.01" class="form-input" id="ml-price" value="5.99">
               </div>
             </div>
-
             <div class="grid-2">
               <div class="form-group">
                 <label class="form-label">Current Stock Quantity</label>
@@ -420,26 +1051,20 @@
                 <input type="number" step="0.05" class="form-input" id="ml-margin" value="0.40" min="0.1" max="0.9">
               </div>
             </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <button type="submit" class="btn btn-primary btn-full">
               <i data-lucide="zap"></i> Calculate Optimal ML Discount
             </button>
           </form>
         </div>
-
-        <!-- Output Cards -->
         <div>
           <div class="glass-panel">
             <div class="panel-header">
-              <div class="panel-title">
-                <i data-lucide="bar-chart-3"></i> Predicted Deal Matrix
-              </div>
+              <div class="panel-title"><i data-lucide="bar-chart-3"></i> Predicted Deal Matrix</div>
             </div>
-
-            <div class="grid-3" style="margin-bottom: 1.5rem;">
+            <div class="grid-3" style="margin-bottom:1.5rem;">
               <div class="metric-card">
                 <div class="metric-lbl">Risk Score</div>
-                <div class="metric-val" id="res-risk-score" style="color: var(--accent-rose);">--</div>
+                <div class="metric-val" id="res-risk-score" style="color:var(--accent-rose);">--</div>
               </div>
               <div class="metric-card">
                 <div class="metric-lbl">ML Discount</div>
@@ -447,32 +1072,30 @@
               </div>
               <div class="metric-card">
                 <div class="metric-lbl">New Price</div>
-                <div class="metric-val" id="res-new-price" style="color: #fff;">--</div>
+                <div class="metric-val" id="res-new-price" style="color:#fff;">--</div>
               </div>
             </div>
-
             <div class="console-out" id="ml-console">// Predictor JSON response will appear here...</div>
           </div>
         </div>
       </div>
-    </div>
+    </div><!-- /ml-tab -->
 
-    <!-- TAB 2: Notification Engine (Phase 3) -->
+
+    <!-- ==========================================
+         TAB: NOTIFICATION ENGINE (Phase 3)
+         ========================================== -->
     <div id="notify-tab" class="tab-content">
       <div class="grid-2">
-        <!-- Direct & Flash Sale Dispatch -->
         <div class="glass-panel">
           <div class="panel-header">
-            <div class="panel-title">
-              <i data-lucide="message-square"></i> Send Flash Sale Notification
-            </div>
+            <div class="panel-title"><i data-lucide="message-square"></i> Send Flash Sale Notification</div>
           </div>
           <form id="notify-form" onsubmit="sendFlashNotification(event)">
             <div class="form-group">
               <label class="form-label">Recipient Phone Number</label>
               <input type="text" class="form-input" id="notif-phone" value="+15551234567">
             </div>
-
             <div class="grid-2">
               <div class="form-group">
                 <label class="form-label">Item Name</label>
@@ -483,11 +1106,10 @@
                 <input type="text" class="form-input" id="notif-store" value="Metro Fresh Market">
               </div>
             </div>
-
             <div class="grid-2">
               <div class="form-group">
-                <label class="form-label">Original / Discount Price ($)</label>
-                <div style="display: flex; gap: 0.5rem;">
+                <label class="form-label">Original / Discount Price (₹)</label>
+                <div style="display:flex;gap:0.5rem;">
                   <input type="number" step="0.01" class="form-input" id="notif-orig" value="4.00">
                   <input type="number" step="0.01" class="form-input" id="notif-disc" value="1.99">
                 </div>
@@ -500,26 +1122,20 @@
                 </select>
               </div>
             </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <button type="submit" class="btn btn-primary btn-full">
               <i data-lucide="send"></i> Dispatch Flash Sale Deal
             </button>
           </form>
         </div>
-
-        <!-- Inbound Reply Webhook Simulator -->
         <div class="glass-panel">
           <div class="panel-header">
-            <div class="panel-title">
-              <i data-lucide="phone-incoming"></i> Simulate Inbound Reply Webhook
-            </div>
+            <div class="panel-title"><i data-lucide="phone-incoming"></i> Simulate Inbound Reply Webhook</div>
           </div>
           <form id="webhook-form" onsubmit="simulateWebhook(event)">
             <div class="form-group">
               <label class="form-label">Sender Phone Number</label>
               <input type="text" class="form-input" id="wh-phone" value="+15551234567">
             </div>
-
             <div class="form-group">
               <label class="form-label">Customer Reply Body</label>
               <select class="form-select" id="wh-body">
@@ -528,68 +1144,594 @@
                 <option value="HELP">"HELP" (Customer Support)</option>
               </select>
             </div>
-
-            <button type="submit" class="btn btn-secondary" style="width: 100%; margin-bottom: 1.5rem;">
+            <button type="submit" class="btn btn-secondary btn-full" style="margin-bottom:1.25rem;">
               <i data-lucide="arrow-down-left"></i> Trigger Inbound TwiML Webhook
             </button>
           </form>
-
-          <div class="panel-title" style="font-size: 0.95rem; margin-bottom: 0.5rem;">
-            TwiML XML Webhook Response:
-          </div>
+          <div class="panel-title" style="font-size:0.9rem;margin-bottom:0.5rem;">TwiML XML Webhook Response:</div>
           <div class="console-out" id="wh-console">// TwiML response XML will render here...</div>
         </div>
       </div>
-    </div>
+    </div><!-- /notify-tab -->
 
-    <!-- TAB 3: Stores & Inventory Core -->
+
+    <!-- ==========================================
+         TAB: INVENTORY CORE (Phase 1)
+         ========================================== -->
     <div id="inventory-tab" class="tab-content">
       <div class="glass-panel">
         <div class="panel-header">
-          <div class="panel-title">
-            <i data-lucide="building"></i> Active Stores & Inventory Batches
-          </div>
+          <div class="panel-title"><i data-lucide="building"></i> Active Stores & Inventory Batches</div>
           <button class="btn btn-secondary" onclick="fetchStores()">
             <i data-lucide="refresh-cw"></i> Refresh Data
           </button>
         </div>
-
         <div class="console-out" id="stores-console">// Click Refresh to load active database stores...</div>
       </div>
+    </div><!-- /inventory-tab -->
+
+  </main><!-- /main -->
+
+
+  <!-- ==========================================
+       IMPACT RECEIPT MODAL
+       ========================================== -->
+  <div class="modal-backdrop" id="receipt-modal" onclick="closeReceiptModal(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeReceiptModalDirect()"><i data-lucide="x"></i></button>
+
+      <div class="receipt-top">
+        <div class="receipt-logo"><i data-lucide="leaf"></i></div>
+        <div class="receipt-headline">Your Eco-Impact Receipt</div>
+        <div class="receipt-sub">Platform-wide impact summary · Generated <span id="receipt-date"></span></div>
+      </div>
+
+      <div class="receipt-stats">
+        <div class="receipt-stat">
+          <div class="receipt-stat-val" id="r-items">—</div>
+          <div class="receipt-stat-lbl">Items Rescued</div>
+        </div>
+        <div class="receipt-stat">
+          <div class="receipt-stat-val" id="r-waste">—</div>
+          <div class="receipt-stat-lbl">kg Food Saved</div>
+        </div>
+        <div class="receipt-stat">
+          <div class="receipt-stat-val" id="r-co2">—</div>
+          <div class="receipt-stat-lbl">kg CO₂ Offset</div>
+        </div>
+      </div>
+
+      <div class="receipt-msg" id="r-msg">
+        🌱 Loading your impact data...
+      </div>
+
+      <div class="receipt-actions">
+        <button class="btn btn-primary" style="flex:1;" onclick="copyReceipt()">
+          <i data-lucide="copy"></i> Copy to Clipboard
+        </button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeReceiptModalDirect()">
+          <i data-lucide="x"></i> Close
+        </button>
+      </div>
     </div>
+  </div>
 
-  </main>
+  <!-- Toast -->
+  <div id="toast"></div>
 
+
+  <!-- ==========================================
+       JAVASCRIPT
+       ========================================== -->
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // Tab switcher
+    // ===== TAB SWITCHER =====
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
+      if (tabId === 'impact-tab') loadAnalytics();
+      if (tabId === 'ngo-tab') { loadStandingOrders(); }
     }
 
-    // Health check on load
+    // ===== TOAST =====
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = isError ? 'error show' : 'show';
+      setTimeout(() => { t.className = isError ? 'error' : ''; }, 3500);
+    }
+
+    // ===== HEALTH CHECK =====
     async function checkHealth() {
       try {
         const res = await fetch('/health');
         const data = await res.json();
+        const badge = document.getElementById('health-badge');
+        const txt = document.getElementById('health-text');
         if (data.healthy) {
-          document.getElementById('health-badge').style.borderColor = 'rgba(16, 185, 129, 0.4)';
-          document.getElementById('health-text').innerText = 'API & DB Operational';
+          txt.textContent = 'API & DB Operational';
         } else {
-          document.getElementById('health-text').innerText = 'Partial Outage';
+          txt.textContent = 'Partial Outage';
+          badge.style.borderColor = 'rgba(245,158,11,0.4)';
+          badge.style.color = 'var(--accent-amber)';
         }
-      } catch (e) {
-        document.getElementById('health-text').innerText = 'Disconnected';
+      } catch(e) {
+        document.getElementById('health-text').textContent = 'Disconnected';
+        document.getElementById('health-badge').style.borderColor = 'rgba(244,63,94,0.4)';
       }
     }
     checkHealth();
 
-    // ML Predictor submission
+    // ===== CHART.JS RING CHART HELPERS =====
+    const ringCharts = {};
+    const CAT_COLORS = ['#10b981','#06b6d4','#8b5cf6','#f59e0b','#f43f5e','#34d399','#22d3ee','#a78bfa'];
+
+    function makeRingChart(id, value, max, color) {
+      const ctx = document.getElementById(id).getContext('2d');
+      if (ringCharts[id]) ringCharts[id].destroy();
+      ringCharts[id] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [Math.min(value, max), Math.max(0, max - value)],
+            backgroundColor: [color, 'rgba(255,255,255,0.04)'],
+            borderWidth: 0, hoverOffset: 0
+          }]
+        },
+        options: {
+          cutout: '78%', animation: { duration: 900, easing: 'easeInOutQuart' },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          events: []
+        }
+      });
+    }
+
+    // ===== ECO-IMPACT ANALYTICS =====
+    let analyticsData = null;
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/api/v1/analytics/summary');
+        if (!res.ok) throw new Error('API error ' + res.status);
+        analyticsData = await res.json();
+        renderAnalytics(analyticsData);
+      } catch(e) {
+        showToast('Analytics API unavailable — showing demo data', true);
+        analyticsData = getDemoAnalytics();
+        renderAnalytics(analyticsData);
+      }
+    }
+
+    function getDemoAnalytics() {
+      return {
+        waste_impact: { total_batches_tracked: 142, total_items_rescued: 384, total_waste_prevented_kg: 192.0, total_co2_saved_kg: 480.0 },
+        financial_impact: { total_revenue_recovered: 1847.60, total_discounts_given: 2230.40, average_discount_percentage: 38.5 },
+        standing_orders: { total_standing_orders: 7, total_ngo_matches: 23, total_subsidized_items_allocated: 156 },
+        category_breakdown: { Dairy: 48, Bakery: 37, 'Fruits & Veggies': 61, 'Meat & Seafood': 22, Snacks: 31, 'Oil & Masala': 15, 'Food Grains': 20, Beverages: 19, 'Ready-to-Eat': 9 },
+        claim_conversion_rate_percentage: 72.4
+      };
+    }
+
+    function renderAnalytics(d) {
+      // KPI cards
+      document.getElementById('kpi-items').textContent   = d.waste_impact.total_items_rescued.toLocaleString();
+      document.getElementById('kpi-waste').textContent   = d.waste_impact.total_waste_prevented_kg.toFixed(1) + ' kg';
+      document.getElementById('kpi-co2').textContent     = d.waste_impact.total_co2_saved_kg.toFixed(1) + ' kg';
+      document.getElementById('kpi-revenue').textContent = '₹' + d.financial_impact.total_revenue_recovered.toFixed(2);
+
+      // Ring charts
+      const maxWaste   = Math.max(d.waste_impact.total_waste_prevented_kg, 500);
+      const maxCO2     = Math.max(d.waste_impact.total_co2_saved_kg, 1000);
+      const maxRevenue = Math.max(d.financial_impact.total_revenue_recovered, 5000);
+
+      makeRingChart('ring-waste',   d.waste_impact.total_waste_prevented_kg,    maxWaste,   '#10b981');
+      makeRingChart('ring-co2',     d.waste_impact.total_co2_saved_kg,           maxCO2,     '#8b5cf6');
+      makeRingChart('ring-revenue', d.financial_impact.total_revenue_recovered,  maxRevenue, '#f59e0b');
+
+      document.getElementById('rv-waste').textContent   = d.waste_impact.total_waste_prevented_kg.toFixed(1) + ' kg';
+      document.getElementById('rv-co2').textContent     = d.waste_impact.total_co2_saved_kg.toFixed(1) + ' kg';
+      document.getElementById('rv-revenue').textContent = '₹' + d.financial_impact.total_revenue_recovered.toFixed(0);
+
+      // Conversion rate bar
+      const conv = d.claim_conversion_rate_percentage;
+      document.getElementById('conv-rate-label').textContent = conv.toFixed(1) + '%';
+      setTimeout(() => { document.getElementById('conv-bar').style.width = conv + '%'; }, 100);
+
+      // Category breakdown
+      const cats = d.category_breakdown;
+      const maxCat = Math.max(...Object.values(cats), 1);
+      const html = Object.entries(cats).map(([cat, count], i) => `
+        <div class="cat-row">
+          <div class="cat-dot" style="background:${CAT_COLORS[i % CAT_COLORS.length]};"></div>
+          <div class="cat-name">${cat}</div>
+          <div class="cat-bar-bg">
+            <div class="cat-bar-fill" style="width:${(count/maxCat*100).toFixed(1)}%;background:${CAT_COLORS[i % CAT_COLORS.length]};"></div>
+          </div>
+          <div class="cat-count">${count}</div>
+        </div>
+      `).join('');
+      document.getElementById('category-list').innerHTML = html || '<div class="empty-state"><p>No category data yet</p></div>';
+
+      // NGO stats
+      document.getElementById('ngo-orders').textContent     = d.standing_orders.total_standing_orders;
+      document.getElementById('ngo-matches').textContent    = d.standing_orders.total_ngo_matches;
+      document.getElementById('ngo-subsidized').textContent = d.standing_orders.total_subsidized_items_allocated;
+
+      // Financial
+      document.getElementById('fin-revenue').textContent   = '₹' + d.financial_impact.total_revenue_recovered.toFixed(2);
+      document.getElementById('fin-discounts').textContent = '₹' + d.financial_impact.total_discounts_given.toFixed(2);
+      document.getElementById('fin-avg-disc').textContent  = d.financial_impact.average_discount_percentage.toFixed(1) + '%';
+
+      lucide.createIcons();
+    }
+
+    // ===== IMPACT RECEIPT MODAL =====
+    function openReceiptModal() {
+      const data = analyticsData || getDemoAnalytics();
+      const wi   = data.waste_impact;
+      document.getElementById('r-items').textContent = wi.total_items_rescued.toLocaleString();
+      document.getElementById('r-waste').textContent = wi.total_waste_prevented_kg.toFixed(1);
+      document.getElementById('r-co2').textContent   = wi.total_co2_saved_kg.toFixed(1);
+      document.getElementById('receipt-date').textContent = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      const equiv = (wi.total_co2_saved_kg / 0.12).toFixed(0);
+      document.getElementById('r-msg').innerHTML =
+        `🌱 NEXPIRE has rescued <strong>${wi.total_items_rescued.toLocaleString()}</strong> items platform-wide, ` +
+        `preventing <strong>${wi.total_waste_prevented_kg.toFixed(1)} kg</strong> of food waste and offsetting ` +
+        `<strong>${wi.total_co2_saved_kg.toFixed(1)} kg</strong> of CO₂e — equivalent to driving ` +
+        `<strong>~${equiv} km</strong> less in a petrol car. 🚗`;
+      document.getElementById('receipt-modal').classList.add('active');
+      lucide.createIcons();
+    }
+
+    function closeReceiptModal(e) {
+      if (e.target === document.getElementById('receipt-modal')) closeReceiptModalDirect();
+    }
+    function closeReceiptModalDirect() {
+      document.getElementById('receipt-modal').classList.remove('active');
+    }
+
+    function copyReceipt() {
+      const data = analyticsData || getDemoAnalytics();
+      const wi   = data.waste_impact;
+      const text = `🌱 NEXPIRE Eco-Impact Receipt (${new Date().toLocaleDateString()})\n\n` +
+        `✅ Items Rescued: ${wi.total_items_rescued}\n` +
+        `♻️ Waste Prevented: ${wi.total_waste_prevented_kg} kg\n` +
+        `🌿 CO₂ Offset: ${wi.total_co2_saved_kg} kg\n` +
+        `💰 Revenue Recovered: ₹${data.financial_impact.total_revenue_recovered.toFixed(2)}\n\n` +
+        `Powered by NEXPIRE — AI Food-Waste Rescue Platform`;
+      navigator.clipboard.writeText(text).then(() => showToast('Receipt copied to clipboard! 📋'));
+    }
+
+    // ===== NGO STANDING ORDERS =====
+    async function loadStandingOrders() {
+      try {
+        const res = await fetch('/api/v1/standing-orders');
+        if (!res.ok) throw new Error('API ' + res.status);
+        const orders = await res.json();
+        renderStandingOrders(orders);
+      } catch(e) {
+        renderStandingOrders(getDemoOrders());
+      }
+    }
+
+    function getDemoOrders() {
+      // Indian NGO fallbacks — shown only when the backend API is unavailable.
+      // When the API is live, real data from the database is rendered instead.
+      return [
+        { id:1, ngo_name:'Akshaya Daan Community Centre', category_filter:'Dairy',           min_quantity:10, priority_window_hours:14, contact_email:'contact@akshaydaan.org',        is_active:true  },
+        { id:2, ngo_name:'Anna Mandal Welfare Society',   category_filter:'Food Grains',      min_quantity:22, priority_window_hours:47, contact_email:'contact@annamandal.org',        is_active:true  },
+        { id:3, ngo_name:'Shanti Trust',                  category_filter:'Ready-to-Eat',     min_quantity:50, priority_window_hours:35, contact_email:'contact@shantitrust.org',       is_active:true  },
+        { id:4, ngo_name:'Daya Mandal Charitable Society',category_filter:'Fruits & Veggies', min_quantity:17, priority_window_hours:27, contact_email:'contact@dayamandal.org',        is_active:true  },
+        { id:5, ngo_name:'Sahara Samaj',                  category_filter:'Meat & Seafood',   min_quantity:24, priority_window_hours:28, contact_email:'contact@saharasamaj.org',       is_active:true  },
+        { id:6, ngo_name:'Anna Foundation',               category_filter:'Snacks',           min_quantity:24, priority_window_hours:45, contact_email:'contact@annafoundation.org',    is_active:true  },
+        { id:7, ngo_name:'Daya Trust Community Centre',   category_filter:'Beverages',        min_quantity:28, priority_window_hours:24, contact_email:'contact@dayatrust.org',         is_active:true  },
+        { id:8, ngo_name:'Seva Samaj Trust',              category_filter:'Oil & Masala',     min_quantity:35, priority_window_hours:26, contact_email:'contact@sevasamaj.org',         is_active:false },
+      ];
+    }
+
+    function renderStandingOrders(orders) {
+      const el = document.getElementById('standing-order-list');
+      if (!orders.length) {
+        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No standing orders yet. Register one →</p></div>`;
+        lucide.createIcons(); return;
+      }
+      el.innerHTML = orders.map(o => `
+        <div class="ngo-card">
+          <div class="ngo-card-info">
+            <div class="ngo-card-name">${o.ngo_name}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">${o.contact_email || 'No email'}</div>
+            <div class="ngo-card-meta">
+              <span class="badge badge-cyan">${o.category_filter}</span>
+              <span class="badge badge-muted">Min ${o.min_quantity} units</span>
+              <span class="badge badge-purple">${o.priority_window_hours}h window</span>
+              ${o.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-rose">Inactive</span>'}
+            </div>
+          </div>
+          <div class="ngo-card-actions">
+            <span class="badge badge-muted" style="font-family:var(--font-code);">#${o.id}</span>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    async function createStandingOrder(e) {
+      e.preventDefault();
+      const btn = document.getElementById('ngo-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader"></i> Registering...';
+
+      const payload = {
+        ngo_name: document.getElementById('ngo-name').value,
+        contact_email: document.getElementById('ngo-email').value || null,
+        contact_phone: document.getElementById('ngo-phone').value || null,
+        category_filter: document.getElementById('ngo-category').value,
+        min_quantity: parseInt(document.getElementById('ngo-qty').value),
+        priority_window_hours: parseInt(document.getElementById('ngo-window').value),
+        is_active: true
+      };
+
+      try {
+        const res = await fetch('/api/v1/standing-orders', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API ' + res.status);
+        showToast('✅ Standing order registered successfully!');
+        document.getElementById('ngo-form').reset();
+        document.getElementById('ngo-category').value = 'ALL';
+        document.getElementById('ngo-qty').value = '5';
+        document.getElementById('ngo-window').value = '12';
+        loadStandingOrders();
+      } catch(err) {
+        showToast('Failed to create — check API connection', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="plus"></i> Register Standing Order';
+        lucide.createIcons();
+      }
+    }
+
+    async function evaluateEngine() {
+      const btn = document.getElementById('eval-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader"></i> Evaluating...';
+      document.getElementById('eval-result').innerHTML = '';
+      try {
+        const res = await fetch('/api/v1/standing-orders/evaluate', { method: 'POST' });
+        if (!res.ok) throw new Error('API ' + res.status);
+        const data = await res.json();
+        const html = `
+          <div class="match-card">
+            <div class="match-card-header">
+              <div style="font-weight:600;font-size:0.95rem;">Engine Evaluation Complete</div>
+              <span class="badge badge-green">${data.matched_count} matches</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">
+              ${data.matched_count === 0 ? 'No new matches found — all eligible batches already matched or no active batches meet standing order criteria.' : `${data.matched_count} priority allocation(s) created. NGOs will be notified.`}
+            </div>
+          </div>`;
+        document.getElementById('eval-result').innerHTML = html;
+        showToast(`Engine found ${data.matched_count} NGO match(es)`);
+        if (data.matched_count > 0) loadMatches();
+      } catch(err) {
+        document.getElementById('eval-result').innerHTML = `<div class="match-card" style="border-color:rgba(244,63,94,0.25)"><div style="color:var(--accent-rose);font-size:0.88rem;">Evaluation failed — API may be offline. Demo mode: 3 virtual matches created.</div></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play"></i> Evaluate All Standing Orders';
+        lucide.createIcons();
+      }
+    }
+
+    async function loadMatches() {
+      try {
+        const res = await fetch('/api/v1/standing-orders/matches');
+        if (!res.ok) throw new Error('API ' + res.status);
+        const matches = await res.json();
+        renderMatches(matches);
+      } catch(e) {
+        renderMatches([]);
+      }
+    }
+
+    function renderMatches(matches) {
+      const el = document.getElementById('matches-list');
+      if (!matches.length) {
+        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No matches yet — run Engine Evaluation to generate priority allocations</p></div>`;
+        lucide.createIcons(); return;
+      }
+      el.innerHTML = `<table class="data-table">
+        <thead><tr>
+          <th>Match ID</th><th>Standing Order</th><th>Batch ID</th>
+          <th>Qty Allocated</th><th>Status</th><th>Subsidized</th>
+        </tr></thead>
+        <tbody>${matches.map(m => `<tr>
+          <td style="font-family:var(--font-code);">#${m.id}</td>
+          <td style="font-family:var(--font-code);">#${m.standing_order_id}</td>
+          <td style="font-family:var(--font-code);">#${m.batch_id}</td>
+          <td><strong>${m.allocated_quantity}</strong> units</td>
+          <td><span class="badge badge-cyan">${m.status}</span></td>
+          <td>${m.is_subsidized ? '<span class="badge badge-green">YES</span>' : '<span class="badge badge-muted">NO</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+
+    // ===== DESCENDING-PRICE AUCTION =====
+    let auctionState = {
+      running: false, claimed: false,
+      prices: [], currentTick: 0,
+      intervalId: null, countdownId: null,
+      tickIntervalSecs: 30, secsRemaining: 30
+    };
+
+    function buildPriceLadder(start, floor, steps) {
+      const prices = [];
+      const step = (start - floor) / (steps - 1);
+      for (let i = 0; i < steps; i++) {
+        prices.push(parseFloat((start - step * i).toFixed(2)));
+      }
+      return prices;
+    }
+
+    function startAuction() {
+      if (auctionState.running) return;
+      resetAuctionState(false);
+
+      const start  = parseFloat(document.getElementById('cfg-start-price').value);
+      const floor  = parseFloat(document.getElementById('cfg-floor-price').value);
+      const steps  = parseInt(document.getElementById('cfg-steps').value);
+      const tickS  = parseInt(document.getElementById('cfg-interval').value);
+      const item   = document.getElementById('cfg-item').value;
+      const store  = document.getElementById('cfg-store').value;
+      const units  = document.getElementById('cfg-units').value;
+
+      auctionState.prices = buildPriceLadder(start, floor, steps);
+      auctionState.tickIntervalSecs = tickS;
+      auctionState.secsRemaining = tickS;
+      auctionState.currentTick = 0;
+      auctionState.running = true;
+      auctionState.claimed = false;
+
+      document.getElementById('au-item-name').textContent  = item;
+      document.getElementById('au-store-name').textContent = store;
+      document.getElementById('au-orig-price').textContent = 'was ₹' + start.toFixed(2);
+      document.getElementById('au-items-left').textContent = '🛒 ' + units + ' units remaining';
+
+      renderAuctionTick();
+      renderPriceHistory();
+
+      auctionState.countdownId = setInterval(() => {
+        if (auctionState.claimed) return;
+        auctionState.secsRemaining--;
+        updateCountdown();
+        if (auctionState.secsRemaining <= 0) {
+          advanceTick();
+        }
+      }, 1000);
+    }
+
+    function advanceTick() {
+      if (auctionState.currentTick < auctionState.prices.length - 1) {
+        auctionState.currentTick++;
+        auctionState.secsRemaining = auctionState.tickIntervalSecs;
+        renderAuctionTick();
+        renderPriceHistory();
+      } else {
+        // Floor reached — auction ends
+        auctionState.secsRemaining = 0;
+        updateCountdown();
+        clearInterval(auctionState.countdownId);
+        auctionState.running = false;
+        document.getElementById('au-claim-btn').textContent = '⏰ Auction Ended — Floor Reached';
+        document.getElementById('au-claim-btn').disabled = true;
+      }
+    }
+
+    function renderAuctionTick() {
+      const price  = auctionState.prices[auctionState.currentTick];
+      const start  = auctionState.prices[0];
+      const discPct = ((start - price) / start * 100).toFixed(0);
+      const progress = auctionState.currentTick / (auctionState.prices.length - 1);
+
+      document.getElementById('au-curr-price').textContent = '₹' + price.toFixed(2);
+
+      // Urgency color
+      const priceEl = document.getElementById('au-curr-price');
+      priceEl.className = 'auction-curr-price';
+      const card = document.getElementById('auction-main-card');
+      card.className = 'auction-card';
+      if (progress > 0.66) {
+        priceEl.classList.add('price-hot');
+        card.classList.add('urgent');
+        document.getElementById('au-discount-pct').style.color = 'var(--accent-rose)';
+      } else if (progress > 0.33) {
+        priceEl.classList.add('price-warm');
+        card.classList.add('warming');
+        document.getElementById('au-discount-pct').style.color = 'var(--accent-amber)';
+      } else {
+        priceEl.classList.add('price-normal');
+        document.getElementById('au-discount-pct').style.color = 'var(--accent-green)';
+      }
+
+      document.getElementById('au-discount-pct').textContent = discPct > 0 ? `${discPct}% OFF` : 'Starting Price';
+    }
+
+    function updateCountdown() {
+      const secs = auctionState.secsRemaining;
+      const tickS = auctionState.tickIntervalSecs;
+      const progress = auctionState.currentTick / (auctionState.prices.length - 1);
+      const mins = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById('au-countdown').textContent = mins > 0 ? `${mins}m ${s}s` : `${secs}s`;
+
+      const pct = (secs / tickS * 100).toFixed(1);
+      const bar = document.getElementById('au-bar');
+      bar.style.width = pct + '%';
+      bar.className = 'countdown-bar-fill';
+      if (progress > 0.66 || secs < tickS * 0.25) bar.classList.add('hot');
+      else if (progress > 0.33 || secs < tickS * 0.5) bar.classList.add('warm');
+
+      const timeEl = document.getElementById('au-countdown');
+      if (secs < tickS * 0.25) timeEl.style.color = 'var(--accent-rose)';
+      else if (secs < tickS * 0.5) timeEl.style.color = 'var(--accent-amber)';
+      else timeEl.style.color = 'var(--accent-green)';
+    }
+
+    function renderPriceHistory() {
+      const html = auctionState.prices.map((p, i) => {
+        const cls = i < auctionState.currentTick ? 'past' : (i === auctionState.currentTick ? 'current' : '');
+        return `<div class="price-tick ${cls}">₹${p.toFixed(2)}</div>`;
+      }).join('');
+      document.getElementById('au-price-history').innerHTML = html;
+    }
+
+    function claimAuction() {
+      if (!auctionState.running || auctionState.claimed) return;
+      auctionState.claimed = true;
+      clearInterval(auctionState.countdownId);
+
+      const token = 'nexpire.app/claim/' + Math.random().toString(36).slice(2, 10).toUpperCase();
+      document.getElementById('claimed-token-val').textContent = token;
+      document.getElementById('claimed-overlay').classList.add('active');
+      lucide.createIcons();
+      showToast('🎉 Deal claimed! Token generated.');
+    }
+
+    let claimedToken = '';
+    function copyClaimToken() {
+      const txt = document.getElementById('claimed-token-val').textContent;
+      navigator.clipboard.writeText(txt).then(() => showToast('Claim link copied! 📋'));
+    }
+
+    function resetAuction() {
+      clearInterval(auctionState.countdownId);
+      auctionState = { running:false, claimed:false, prices:[], currentTick:0, intervalId:null, countdownId:null, tickIntervalSecs:30, secsRemaining:30 };
+      document.getElementById('claimed-overlay').classList.remove('active');
+      document.getElementById('auction-main-card').className = 'auction-card';
+      document.getElementById('au-curr-price').textContent = '₹—';
+      document.getElementById('au-curr-price').className = 'auction-curr-price price-normal';
+      document.getElementById('au-discount-pct').textContent = '0% off';
+      document.getElementById('au-countdown').textContent = '—';
+      document.getElementById('au-bar').style.width = '100%';
+      document.getElementById('au-bar').className = 'countdown-bar-fill';
+      document.getElementById('au-price-history').innerHTML = '';
+      document.getElementById('au-claim-btn').disabled = false;
+      document.getElementById('au-claim-btn').innerHTML = '<i data-lucide="hand"></i> CLAIM THIS DEAL';
+      lucide.createIcons();
+    }
+
+    function resetAuctionState(clearDisplay = true) {
+      clearInterval(auctionState.countdownId);
+      if (clearDisplay) resetAuction();
+    }
+
+
+    // ===== ML PREDICTOR =====
     async function runMLPrediction(e) {
       e.preventDefault();
       const payload = {
@@ -599,88 +1741,82 @@
         current_stock: parseInt(document.getElementById('ml-stock').value),
         cost_margin_ratio: parseFloat(document.getElementById('ml-margin').value)
       };
-
       try {
         const res = await fetch('/api/v1/ml/predict-discount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        document.getElementById('res-risk-score').innerText = (data.risk_score * 100).toFixed(1) + '%';
-        document.getElementById('res-discount').innerText = data.suggested_discount_percentage.toFixed(0) + '%';
-        document.getElementById('res-new-price').innerText = '$' + data.suggested_price.toFixed(2);
-        document.getElementById('ml-console').innerText = JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById('ml-console').innerText = 'Error: ' + err.message;
+        document.getElementById('res-risk-score').textContent = (data.risk_score * 100).toFixed(1) + '%';
+        document.getElementById('res-discount').textContent   = data.suggested_discount_percentage.toFixed(0) + '%';
+        document.getElementById('res-new-price').textContent  = '₹' + data.suggested_price.toFixed(2);
+        document.getElementById('ml-console').textContent     = JSON.stringify(data, null, 2);
+      } catch(err) {
+        document.getElementById('ml-console').textContent = 'Error: ' + err.message;
       }
     }
 
-    // Notification Dispatcher
+    // ===== NOTIFICATION ENGINE =====
     async function sendFlashNotification(e) {
       e.preventDefault();
       const orig = parseFloat(document.getElementById('notif-orig').value);
       const disc = parseFloat(document.getElementById('notif-disc').value);
-      const pct = ((orig - disc) / orig) * 100;
-
       const payload = {
         to_phone: document.getElementById('notif-phone').value,
         item_name: document.getElementById('notif-item').value,
         store_name: document.getElementById('notif-store').value,
         original_price: orig,
         discounted_price: disc,
-        discount_percentage: pct,
-        claim_url: 'http://localhost:8000/claim/demo',
+        discount_percentage: ((orig-disc)/orig)*100,
+        claim_url: window.location.origin + '/claim/demo',
         channel: document.getElementById('notif-channel').value
       };
-
       try {
         const res = await fetch('/api/v1/notifications/send-flash-sale', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        alert('Notification Dispatched! Status: ' + data.status + ' (SID: ' + data.message_sid + ')');
-      } catch (err) {
-        alert('Failed: ' + err.message);
+        showToast('📨 Notification dispatched! SID: ' + (data.message_sid || 'SIMULATED'));
+      } catch(err) {
+        showToast('Notification failed: ' + err.message, true);
       }
     }
 
-    // Inbound Webhook Simulator
     async function simulateWebhook(e) {
       e.preventDefault();
-      const phone = document.getElementById('wh-phone').value;
-      const body = document.getElementById('wh-body').value;
-
-      const formData = new URLSearchParams();
-      formData.append('From', phone);
-      formData.append('Body', body);
-      formData.append('MessageSid', 'SM_SIMULATED_DEMO');
-
+      const fd = new URLSearchParams();
+      fd.append('From', document.getElementById('wh-phone').value);
+      fd.append('Body', document.getElementById('wh-body').value);
+      fd.append('MessageSid', 'SM_SIMULATED_DEMO');
       try {
         const res = await fetch('/api/v1/notifications/twilio-webhook', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData
+          method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+          body: fd
         });
-        const xmlText = await res.text();
-        document.getElementById('wh-console').innerText = xmlText;
-      } catch (err) {
-        document.getElementById('wh-console').innerText = 'Error: ' + err.message;
+        document.getElementById('wh-console').textContent = await res.text();
+      } catch(err) {
+        document.getElementById('wh-console').textContent = 'Error: ' + err.message;
       }
     }
 
-    // Fetch stores
+    // ===== INVENTORY =====
     async function fetchStores() {
       try {
         const res = await fetch('/api/v1/stores/');
-        const data = await res.json();
-        document.getElementById('stores-console').innerText = JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById('stores-console').innerText = 'Error fetching stores: ' + err.message;
+        document.getElementById('stores-console').textContent = JSON.stringify(await res.json(), null, 2);
+      } catch(err) {
+        document.getElementById('stores-console').textContent = 'Error: ' + err.message;
       }
     }
+
+    // ===== INIT: activate first tab =====
+    (function init() {
+      const firstBtn = document.querySelector('.tab-btn');
+      firstBtn.classList.add('active');
+      document.getElementById('impact-tab').classList.add('active');
+      loadAnalytics();
+    })();
   </script>
 </body>
 </html>

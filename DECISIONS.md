@@ -23,3 +23,49 @@
   - Automatic initial training on app startup if artifact is missing.
   - Ambient temperature integration via `app/services/weather.py` (OpenWeather API with 25.0°C default fallback).
 - **Status**: Implemented & Verified.
+
+## ADR 004: Standing Order Engine & NGO Priority Allocation (Phase 4)
+- **Context**: Shelters and NGOs require reliable, priority access to expiring food batches without competing in consumer payment loops.
+- **Decision**:
+  - Implement rule-based `StandingOrder` subscription model (`category_filter`, `min_quantity`, `priority_window_hours`).
+  - Create dedicated `StandingOrderMatch` priority allocation entities (`is_subsidized=True`, `status="RESERVED"`), bypassing payment processing entirely for shelter claims.
+  - Provide automated evaluation trigger endpoint (`POST /api/v1/standing-orders/evaluate`) to scan candidate active/discounted batches against standing order rules.
+- **Status**: Implemented & Verified.
+
+## ADR 005: Notification Engine Architecture & Inbound SMS Claiming (Phase 3)
+- **Context**: Need hyper-local outbound flash-sale notification dispatch (SMS & WhatsApp via Twilio) and frictionless inbound SMS reply claiming ("reply YES").
+- **Decision**:
+  - Implement `TwilioNotificationService` (`app/services/notification.py`) supporting both SMS and WhatsApp channels.
+  - Automatic fallback to mock message IDs when Twilio API credentials are unset or invalid in local testing.
+  - Inbound Twilio webhook handler (`POST /api/v1/notifications/twilio-inbound`) parsing "YES" or "CLAIM <batch_id>" to automatically reserve food rescue items.
+  - Asynchronous background dispatch task `dispatch_batch_notifications_task` in `app/tasks/dispatch.py` for Celery worker execution off the HTTP request path.
+- **Status**: Implemented & Verified.
+
+## ADR 006: Consumer Marketplace, Geo-routing & Redis TTL Locking (Phase 5)
+- **Context**: Consumers need a frictionless one-link claim flow with concurrency-safe reservations; geo-fenced discovery ensures alerts only reach reachable buyers.
+- **Decision**:
+  - `Claim` model with unique `claim_token` (URL-safe random) as the tokenized single-use claim link.
+  - Redis `SET NX EX` key `claim:lock:{batch_id}` as the single source of truth for batch reservation — prevents double-claiming under simultaneous alerts without a database lock.
+  - `ST_DWithin` PostGIS geography query for O(log n) radius search; Python haversine fallback for SQLite test environments.
+  - `reserved_until` timestamp stored on the claim row for persistence; Redis TTL is the enforcement gate.
+- **Status**: Implemented & Verified.
+
+## ADR 007: Multi-rail Payments (Stripe & Razorpay) (Phase 6)
+- **Context**: NEXPIRE operates across regions requiring regional payment gateway integration (Razorpay for India/INR, Stripe for North America & Global/USD) plus non-commercial bypass for food banks.
+- **Decision**:
+  - Unified checkout endpoint `POST /api/v1/payments/checkout-session` routing to Razorpay Orders API or Stripe Checkout Sessions based on request parameters/region.
+  - Automatic payment bypass for claims flag `is_subsidized=True` — instantly transitions claim to `PAID` with `payment_ref="SUBSIDIZED_BYPASS"`.
+  - Signature-verified webhooks for both gateways (`/webhooks/razorpay` and `/webhooks/stripe`) to atomically transition claims from `PENDING_PAYMENT` to `PAID` and release Redis reservation locks.
+- **Status**: Implemented & Verified.
+
+## ADR 008: Analytics & Waste Reduction Dashboard (Phase 7)
+- **Context**: Stakeholders, grocery partners, and NGOs require transparent reporting on food waste averted, CO2 offset, financial revenue recovered, and NGO allocation conversion rates.
+- **Decision**:
+  - `get_analytics_summary` aggregates platform metrics using standardized conversion factors (0.5 kg waste / item rescued; 2.5 kg CO2e / kg waste).
+  - Store-specific analytics endpoint `/api/v1/analytics/store/{store_id}` delivers per-store breakdown of active, expired, and rescued inventory.
+- **Status**: Implemented & Verified.
+
+
+
+
+

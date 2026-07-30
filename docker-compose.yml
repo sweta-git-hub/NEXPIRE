@@ -41,6 +41,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./scripts:/app/scripts
+      - ./output:/app/output
       - ./tests:/app/tests
     depends_on:
       db:
@@ -60,6 +61,7 @@ services:
       - .env
     volumes:
       - ./app:/app/app
+      - ./output:/app/output
       - ./tests:/app/tests
     depends_on:
       db:

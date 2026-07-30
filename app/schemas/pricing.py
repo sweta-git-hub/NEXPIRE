@@ -10,6 +10,7 @@ class PricePredictionRequest(BaseModel):
     original_selling_price: float = Field(ge=0.0)
     temperature_c: Optional[float] = 25.0
     historical_demand_factor: Optional[float] = 1.0
+    product_condition: Optional[str] = "Excellent"
 
 
 class PricePredictionResponse(BaseModel):

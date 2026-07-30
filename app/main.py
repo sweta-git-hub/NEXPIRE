@@ -2,6 +2,8 @@ import os
 import redis
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.db import check_db_connection, engine, Base
 import app.models  # Ensures models are imported so Base.metadata knows about them
@@ -53,9 +55,26 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 redis_client = redis.from_url(REDIS_URL)
 
 
+# Serve the frontend dashboard
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 @app.get("/")
 def root():
-    return {"service": "nexpire-api", "status": "running"}
+    return FileResponse("app/static/index.html")
+
+
+@app.get("/claim/new")
+def claim_new():
+    """Consumer claim page for new claims from auction or SMS links."""
+    return FileResponse("app/static/claim.html")
+
+
+@app.get("/claim/{token}")
+def claim_page(token: str):
+    """Consumer claim page — shows deal details and lets the buyer confirm.
+    Serves the dedicated claim.html (not the store dashboard).
+    """
+    return FileResponse("app/static/claim.html")
 
 
 @app.get("/health")

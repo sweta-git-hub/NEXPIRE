@@ -1,6 +1,17 @@
 # NEXPIRE Project Status
 
-## Current Phase: Phase 5 — Consumer Marketplace & Geo-routing (Completed)
+## Current Phase: Phase 6 — Multi-rail Payments (Stripe & Razorpay) (Completed)
+
+### Phase 6 Summary
+Phase 6 implements the Multi-rail Payment engine supporting both Razorpay (INR/paise) and Stripe (USD/cents) checkout flows, signature-verified webhooks, and an automatic payment bypass for subsidized NGO/shelter allocations.
+
+- **Payment Service** (`app/services/payment.py`): Multi-provider checkout order creation (Razorpay Orders API & Stripe Checkout Sessions) with automatic mock fallback when live credentials are not supplied. Webhook HMAC signature verification for both rails.
+- **Subsidized NGO Bypass**: NGO standing order allocations marked `is_subsidized=True` skip payment processing completely, immediately resolving to status `PAID` with payment reference `SUBSIDIZED_BYPASS`.
+- **REST Endpoints**:
+  - `POST /api/v1/payments/checkout-session`: Initiate Razorpay or Stripe payment for a reserved claim.
+  - `POST /api/v1/payments/webhooks/razorpay`: Handle Razorpay `payment.captured` webhooks & transition claim to `PAID`.
+  - `POST /api/v1/payments/webhooks/stripe`: Handle Stripe `checkout.session.completed` webhooks & transition claim to `PAID`.
+- **Testing**: 32 total test suites passing across all phases.
 
 ### Phase 5 Summary
 Phase 5 implements the Consumer Marketplace with geo-fenced batch discovery and high-concurrency Redis TTL reservation locking for atomic claim management.
@@ -40,7 +51,7 @@ Phase 3 implements the Notification Engine using Twilio (SMS & WhatsApp Business
 | Phase 3 | Notification Engine (SMS, WhatsApp, Twilio) | ✅ Completed |
 | Phase 4 | Standing Order Engine (NGO & Shelter priority) | ✅ Completed |
 | Phase 5 | Consumer Marketplace & Geo-routing | ✅ Completed |
-| Phase 6 | Multi-rail Payments (Stripe & Razorpay) | ⏳ Pending |
+| Phase 6 | Multi-rail Payments (Stripe & Razorpay) | ✅ Completed |
 | Phase 7 | Analytics Dashboard & Final Hardening | ⏳ Pending |
 
 

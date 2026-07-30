@@ -41,4 +41,14 @@
   - Asynchronous background dispatch task `dispatch_batch_notifications_task` in `app/tasks/dispatch.py` for Celery worker execution off the HTTP request path.
 - **Status**: Implemented & Verified.
 
+## ADR 006: Consumer Marketplace, Geo-routing & Redis TTL Locking (Phase 5)
+- **Context**: Consumers need a frictionless one-link claim flow with concurrency-safe reservations; geo-fenced discovery ensures alerts only reach reachable buyers.
+- **Decision**:
+  - `Claim` model with unique `claim_token` (URL-safe random) as the tokenized single-use claim link.
+  - Redis `SET NX EX` key `claim:lock:{batch_id}` as the single source of truth for batch reservation — prevents double-claiming under simultaneous alerts without a database lock.
+  - `ST_DWithin` PostGIS geography query for O(log n) radius search; Python haversine fallback for SQLite test environments.
+  - `reserved_until` timestamp stored on the claim row for persistence; Redis TTL is the enforcement gate.
+- **Status**: Implemented & Verified.
+
+
 

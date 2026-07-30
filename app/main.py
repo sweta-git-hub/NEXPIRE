@@ -10,7 +10,9 @@ from app.api.inventory import router as inventory_router
 from app.api.pricing import router as pricing_router
 from app.api.standing_orders import router as standing_orders_router
 from app.api.notifications import router as notifications_router
+from app.api.claims import router as claims_router
 from app.ml.predictor import get_predictor
+
 
 
 @asynccontextmanager
@@ -38,6 +40,8 @@ app.include_router(inventory_router)
 app.include_router(pricing_router)
 app.include_router(standing_orders_router)
 app.include_router(notifications_router)
+app.include_router(claims_router)
+
 
 
 

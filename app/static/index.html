@@ -2826,6 +2826,7 @@
       renderInventoryTable(filtered);
     }
 
+
     // ===== INIT: activate first tab =====
     (function init() {
       const firstBtn = document.querySelector('.tab-btn');
@@ -2834,5 +2835,447 @@
       loadAnalytics();
     })();
   </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  AI ASSISTANT WIDGET — Customer-facing chatbot                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <style>
+    /* ── Floating button ── */
+    #nxp-chat-fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      width: 62px; height: 62px; border-radius: 50%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 30px rgba(16,185,129,.5);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+    }
+    #nxp-chat-fab:hover { transform: scale(1.12); box-shadow: 0 12px 40px rgba(16,185,129,.65); }
+    #nxp-chat-fab svg { width: 28px; height: 28px; color: #fff; transition: opacity .2s; }
+    #nxp-chat-fab .fab-close { display: none; }
+    #nxp-chat-fab.open .fab-open  { display: none; }
+    #nxp-chat-fab.open .fab-close { display: block; }
+    #nxp-chat-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #f43f5e; color: #fff; font-size: .65rem;
+      font-weight: 700; width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #0a0f1c; transition: transform .3s;
+    }
+
+    /* ── Panel ── */
+    #nxp-chat-panel {
+      position: fixed; bottom: 104px; right: 28px; z-index: 9998;
+      width: min(420px, calc(100vw - 40px));
+      height: min(620px, calc(100vh - 140px));
+      background: rgba(8,13,24,.97);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(16,185,129,.15);
+      display: flex; flex-direction: column; overflow: hidden;
+      transform: scale(.92) translateY(20px); opacity: 0; pointer-events: none;
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .22s;
+    }
+    #nxp-chat-panel.open {
+      transform: scale(1) translateY(0); opacity: 1; pointer-events: all;
+    }
+
+    /* header */
+    #nxp-chat-header {
+      padding: 16px 18px; display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, rgba(16,185,129,.18) 0%, rgba(8,13,24,0) 100%);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .nxp-avatar {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg,#10b981,#059669);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 0 0 3px rgba(16,185,129,.25);
+    }
+    .nxp-chat-title { font-weight: 700; font-size: .92rem; color: #f1f5f9; }
+    .nxp-chat-sub   { font-size: .72rem; color: #10b981; margin-top: 1px; }
+    .nxp-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+      margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(16,185,129,.8);
+      animation: nxpPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes nxpPulse {
+      0%,100% { box-shadow: 0 0 6px rgba(16,185,129,.8); }
+      50%      { box-shadow: 0 0 16px rgba(16,185,129,1); }
+    }
+
+    /* messages */
+    #nxp-messages {
+      flex: 1; overflow-y: auto; padding: 14px 14px 8px;
+      display: flex; flex-direction: column; gap: 10px;
+      scroll-behavior: smooth;
+    }
+    #nxp-messages::-webkit-scrollbar { width: 4px; }
+    #nxp-messages::-webkit-scrollbar-track { background: transparent; }
+    #nxp-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+    .nxp-msg { display: flex; gap: 8px; align-items: flex-end; max-width: 100%; }
+    .nxp-msg.user { flex-direction: row-reverse; }
+
+    .nxp-bubble {
+      max-width: 82%; padding: 10px 13px; border-radius: 16px;
+      font-size: .82rem; line-height: 1.55; color: #e2e8f0;
+    }
+    .nxp-msg.bot  .nxp-bubble { background: rgba(255,255,255,.07); border-bottom-left-radius: 4px; }
+    .nxp-msg.user .nxp-bubble {
+      background: linear-gradient(135deg,#10b981 0%,#059669 100%);
+      color: #fff; border-bottom-right-radius: 4px;
+    }
+    .nxp-bubble strong { color: #fff; }
+    .nxp-bubble br+br  { display: block; margin: 4px 0; content: ''; }
+
+    /* typing indicator */
+    .nxp-typing { display: flex; gap: 4px; padding: 12px; }
+    .nxp-typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(16,185,129,.8); animation: nxpBounce .9s ease-in-out infinite;
+    }
+    .nxp-typing span:nth-child(2) { animation-delay: .15s; }
+    .nxp-typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes nxpBounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    /* product cards */
+    .nxp-cards { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .nxp-pcard {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px; padding: 11px 13px;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: start; gap: 6px;
+      transition: background .2s, border-color .2s;
+    }
+    .nxp-pcard:hover { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.3); }
+    .nxp-pcard-name  { font-size: .82rem; font-weight: 700; color: #f1f5f9; }
+    .nxp-pcard-cat   { font-size: .7rem; color: var(--text-muted,#6b7280); margin-top: 1px; }
+    .nxp-pcard-meta  { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .nxp-disc-badge  {
+      background: rgba(16,185,129,.18); color: #10b981;
+      font-size: .68rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; border: 1px solid rgba(16,185,129,.3);
+    }
+    .nxp-price-orig  { font-size: .7rem; color: #6b7280; text-decoration: line-through; }
+    .nxp-price-now   { font-size: .8rem; font-weight: 700; color: #10b981; }
+    .nxp-qty-badge   { font-size: .67rem; color: #94a3b8; }
+    .nxp-expiry      { font-size: .67rem; color: #f59e0b; }
+
+    .nxp-claim-btn {
+      margin-top: 6px; padding: 5px 12px; border-radius: 8px;
+      background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.35);
+      color: #10b981; font-size: .72rem; font-weight: 700;
+      cursor: pointer; transition: background .2s, transform .15s;
+      white-space: nowrap; align-self: end;
+    }
+    .nxp-claim-btn:hover {
+      background: rgba(16,185,129,.28); transform: scale(1.04);
+    }
+
+    /* quick replies */
+    #nxp-quick-replies { padding: 6px 14px 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .nxp-qr {
+      padding: 5px 11px; border-radius: 20px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: #cbd5e1; font-size: .72rem; cursor: pointer;
+      transition: background .18s, border-color .18s, color .18s;
+      white-space: nowrap;
+    }
+    .nxp-qr:hover { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: #10b981; }
+
+    /* input row */
+    #nxp-input-row {
+      padding: 10px 12px 14px; display: flex; gap: 8px; align-items: center;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    #nxp-input {
+      flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px; padding: 10px 14px; color: #f1f5f9;
+      font-size: .82rem; outline: none; font-family: inherit;
+      transition: border-color .2s, background .2s;
+    }
+    #nxp-input::placeholder { color: #4b5563; }
+    #nxp-input:focus { border-color: rgba(16,185,129,.5); background: rgba(255,255,255,.09); }
+    #nxp-send-btn {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg,#10b981,#059669);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    #nxp-send-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(16,185,129,.5); }
+    #nxp-send-btn svg { width: 18px; height: 18px; color: #fff; }
+  </style>
+
+  <!-- FAB Button -->
+  <button id="nxp-chat-fab" aria-label="Open NEXPIRE AI Assistant" title="NEXPIRE Assistant">
+    <span id="nxp-chat-badge" aria-hidden="true">●</span>
+    <!-- open icon: shopping bag / sparkle -->
+    <svg class="fab-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <!-- close icon -->
+    <svg class="fab-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+
+  <!-- Chat Panel -->
+  <div id="nxp-chat-panel" role="dialog" aria-label="NEXPIRE AI Assistant" aria-modal="true">
+    <!-- Header -->
+    <div id="nxp-chat-header">
+      <div class="nxp-avatar" aria-hidden="true">🤖</div>
+      <div>
+        <div class="nxp-chat-title">NEXPIRE Assistant</div>
+        <div class="nxp-chat-sub">Deals · Claims · Food Safety</div>
+      </div>
+      <div class="nxp-status-dot" title="Online" aria-label="Online"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="nxp-messages" aria-live="polite" aria-label="Chat messages"></div>
+
+    <!-- Quick Replies -->
+    <div id="nxp-quick-replies" aria-label="Quick reply suggestions"></div>
+
+    <!-- Input -->
+    <div id="nxp-input-row">
+      <input id="nxp-input" type="text" placeholder="Ask about deals, claims, food safety…"
+             aria-label="Type your message" autocomplete="off" maxlength="300"/>
+      <button id="nxp-send-btn" aria-label="Send message">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+    const fab     = document.getElementById('nxp-chat-fab');
+    const panel   = document.getElementById('nxp-chat-panel');
+    const msgs    = document.getElementById('nxp-messages');
+    const qrWrap  = document.getElementById('nxp-quick-replies');
+    const input   = document.getElementById('nxp-input');
+    const sendBtn = document.getElementById('nxp-send-btn');
+    const badge   = document.getElementById('nxp-chat-badge');
+
+    let isOpen = false;
+    let chatHistory = [];
+    let hasOpened = false;
+
+    /* ── Toggle ── */
+    fab.addEventListener('click', () => {
+      isOpen = !isOpen;
+      fab.classList.toggle('open', isOpen);
+      panel.classList.toggle('open', isOpen);
+      badge.style.display = 'none';
+      if (isOpen && !hasOpened) {
+        hasOpened = true;
+        loadWelcome();
+      }
+      if (isOpen) setTimeout(() => input.focus(), 320);
+    });
+
+    /* ── Send on Enter ── */
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    sendBtn.addEventListener('click', sendMessage);
+
+    /* ── Load welcome deals on first open ── */
+    async function loadWelcome() {
+      appendTyping();
+      try {
+        const res = await fetch('/api/v1/assistant/deals');
+        const data = await res.json();
+        removeTyping();
+        appendBotMessage(data.reply, data.products, data.quick_replies);
+      } catch(e) {
+        removeTyping();
+        appendBotMessage(
+          '👋 Welcome to **NEXPIRE**! I\'m your food-rescue assistant. Ask me about current deals, how to claim, or food safety.',
+          [], ['Show all discounts 🛒', 'How do I claim? 🤝', 'Is it safe to eat? 🍎']
+        );
+      }
+    }
+
+    /* ── Send message ── */
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      appendUserMessage(text);
+      chatHistory.push({ role: 'user', content: text });
+      appendTyping();
+
+      // Check for claim deeplink action
+      if (text.startsWith('__claim:')) {
+        const batchId = text.replace('__claim:', '');
+        removeTyping();
+        appendBotMessage(
+          `🎉 Great choice! To claim this product:\n\n1. Click the **Claim** button on the product card\n2. Enter your phone/email\n3. Head to the store within 3 minutes to complete your pickup!\n\nWould you like to see more deals?`,
+          [], ['Show all discounts 🛒', 'Show Dairy deals 🥛', 'How do I pay? 💳']
+        );
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/assistant/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history: chatHistory.slice(-6) })
+        });
+        const data = await res.json();
+        removeTyping();
+        chatHistory.push({ role: 'assistant', content: data.reply });
+        appendBotMessage(data.reply, data.products, data.quick_replies);
+      } catch(e) {
+        removeTyping();
+        appendBotMessage('Sorry, I had trouble connecting. Please try again!', [], _QUICK_DEFAULTS);
+      }
+    }
+
+    const _QUICK_DEFAULTS = ['Show all discounts 🛒', 'How do I claim? 🤝', 'Is it safe to eat? 🍎'];
+
+    /* ── Render helpers ── */
+    function appendUserMessage(text) {
+      const msg = document.createElement('div');
+      msg.className = 'nxp-msg user';
+      msg.innerHTML = `<div class="nxp-bubble">${escHtml(text)}</div>`;
+      msgs.appendChild(msg);
+      scrollBottom();
+    }
+
+    function appendBotMessage(markdown, products, quickReplies) {
+      const msg = document.createElement('div');
+      msg.className = 'nxp-msg bot';
+      const bubble = document.createElement('div');
+      bubble.className = 'nxp-bubble';
+      bubble.innerHTML = renderMarkdown(markdown);
+      msg.appendChild(bubble);
+      msgs.appendChild(msg);
+
+      if (products && products.length > 0) {
+        const cards = renderProductCards(products);
+        msgs.appendChild(cards);
+      }
+
+      setQuickReplies(quickReplies || []);
+      scrollBottom();
+    }
+
+    function renderProductCards(products) {
+      const wrap = document.createElement('div');
+      wrap.className = 'nxp-cards';
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'nxp-pcard';
+        const expDate = new Date(p.expiration_date);
+        const today = new Date();
+        const daysLeft = Math.ceil((expDate - today) / 86400000);
+        const expiryStr = daysLeft <= 1 ? '⚡ Expires today!' :
+                          daysLeft <= 3 ? `⚡ ${daysLeft} days left` :
+                          `Exp: ${p.expiration_date}`;
+        card.innerHTML = `
+          <div>
+            <div class="nxp-pcard-name">${escHtml(p.product_name)}</div>
+            <div class="nxp-pcard-cat">${escHtml(p.category)}</div>
+            <div class="nxp-pcard-meta">
+              <span class="nxp-disc-badge">-${p.discount_percentage}%</span>
+              <span class="nxp-price-orig">₹${p.original_price}</span>
+              <span class="nxp-price-now">₹${p.current_price}</span>
+              <span class="nxp-qty-badge">${p.quantity} left</span>
+            </div>
+            <div class="nxp-expiry">${expiryStr}</div>
+          </div>
+          <button class="nxp-claim-btn" data-bid="${p.id}" aria-label="Claim ${escHtml(p.product_name)}">
+            Claim →
+          </button>
+        `;
+        card.querySelector('.nxp-claim-btn').addEventListener('click', () => {
+          handleClaim(p.id, p.product_name);
+        });
+        wrap.appendChild(card);
+      });
+      return wrap;
+    }
+
+    function handleClaim(batchId, name) {
+      // Navigate to the claims tab if it exists, or open claim page
+      const claimsTab = document.querySelector('[data-tab="claims-tab"], .tab-btn[data-target="claims-tab"]');
+      if (claimsTab) claimsTab.click();
+
+      // Pre-fill batch ID in claims form if it exists
+      const batchInput = document.getElementById('claim-batch-id');
+      if (batchInput) {
+        batchInput.value = batchId;
+        batchInput.dispatchEvent(new Event('input'));
+      }
+
+      appendBotMessage(
+        `✅ To claim **${name}** (Batch #${batchId}):\n\n1. Enter your phone/email in the **Claims** tab above\n2. You have a **3-minute reservation window**\n3. Head to the store and collect your item!\n\nNeed help with anything else?`,
+        [], ['Show more deals 🛒', 'Payment info 💳', 'Food safety 🍎']
+      );
+    }
+
+    function setQuickReplies(replies) {
+      qrWrap.innerHTML = '';
+      replies.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'nxp-qr';
+        btn.textContent = r;
+        btn.addEventListener('click', () => {
+          input.value = r;
+          sendMessage();
+        });
+        qrWrap.appendChild(btn);
+      });
+    }
+
+    function appendTyping() {
+      const el = document.createElement('div');
+      el.className = 'nxp-msg bot';
+      el.id = 'nxp-typing-indicator';
+      el.innerHTML = `<div class="nxp-bubble nxp-typing"><span></span><span></span><span></span></div>`;
+      msgs.appendChild(el);
+      scrollBottom();
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('nxp-typing-indicator');
+      if (el) el.remove();
+    }
+
+    function scrollBottom() {
+      requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    function renderMarkdown(text) {
+      // Bold: **text**
+      // Numbered lists: 1. item
+      // Bullets: • item
+      return escHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
+
+    /* ── Show badge after 3s to draw attention ── */
+    setTimeout(() => {
+      if (!hasOpened) badge.style.display = 'flex';
+    }, 3000);
+
+  })();
+  </script>
+
 </body>
 </html>

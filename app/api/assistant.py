@@ -63,10 +63,10 @@ class ChatResponse(BaseModel):
 # Intent detection (lightweight rule-based — no external LLM dependency)
 # ---------------------------------------------------------------------------
 _GREET_PATTERNS = re.compile(
-    r"\b(hi|hello|hey|hiya|namaste|good morning|good evening|howdy)\b", re.I
+    r"(hi|hello|hey|hiya|namaste|good morning|good evening|howdy)", re.I
 )
 _DISCOUNT_PATTERNS = re.compile(
-    r"\b(discount|sale|offer|deal|cheap|save|saving|discounted|on sale|markdown)\b", re.I
+    r"(discount|sale|offer|deal|cheap|save|saving|markdown)", re.I
 )
 _CATEGORY_MAP = {
     "dairy":         "Dairy",
@@ -108,16 +108,16 @@ _CATEGORY_MAP = {
     "cosmetic":      "Perfume & Cosmetics",
 }
 _CLAIM_PATTERNS = re.compile(
-    r"\b(claim|reserve|buy|purchase|how to get|order|pickup|pick up|collect|how do i)\b", re.I
+    r"(claim|reserve|buy|purchase|how to get|order|pickup|pick up|collect|how do i)", re.I
 )
 _EXPIRY_PATTERNS = re.compile(
-    r"\b(expir|expiry|expires|shelf life|safe|still good|fresh|spoil)\b", re.I
+    r"(expir|shelf life|safe|still good|fresh|spoil)", re.I
 )
 _PAYMENT_PATTERNS = re.compile(
-    r"\b(pay|payment|upi|cash|card|subsidize|free|subsidy|ngo|price)\b", re.I
+    r"(pay|payment|upi|cash|card|subsidize|free|subsidy|ngo|price)", re.I
 )
 _HELP_PATTERNS = re.compile(
-    r"\b(help|what can you do|what do you do|support|guide|how does|how do)\b", re.I
+    r"(help|what can you do|what do you do|support|guide|how does|how do)", re.I
 )
 
 
@@ -138,9 +138,6 @@ def _detect_intent(message: str) -> tuple[str, Optional[str]]:
     if matched_category:
         return "search_category", matched_category
 
-    if _DISCOUNT_PATTERNS.search(msg_lower):
-        return "browse_discounts", None
-
     if _CLAIM_PATTERNS.search(msg_lower):
         return "claim_guide", None
 
@@ -152,6 +149,9 @@ def _detect_intent(message: str) -> tuple[str, Optional[str]]:
 
     if _HELP_PATTERNS.search(msg_lower):
         return "help", None
+
+    if _DISCOUNT_PATTERNS.search(msg_lower):
+        return "browse_discounts", None
 
     return "browse_discounts", None  # default: show discounts
 

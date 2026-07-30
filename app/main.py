@@ -2,16 +2,19 @@ import os
 import redis
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 from app.db import check_db_connection, engine, Base
 import app.models  # Ensures models are imported so Base.metadata knows about them
 from app.api.stores import router as stores_router
 from app.api.inventory import router as inventory_router
 from app.api.pricing import router as pricing_router
+from app.api.standing_orders import router as standing_orders_router
 from app.api.notifications import router as notifications_router
+from app.api.claims import router as claims_router
+from app.api.payments import router as payments_router
+from app.api.analytics import router as analytics_router
 from app.ml.predictor import get_predictor
+
 
 
 @asynccontextmanager
@@ -33,27 +36,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="NEXPIRE API", version="0.1.0", lifespan=lifespan)
 
-# Mount static files for Web UI
-static_dir = os.path.join(os.path.dirname(__file__), "static")
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
 # Register API Routers
 app.include_router(stores_router)
 app.include_router(inventory_router)
 app.include_router(pricing_router)
+app.include_router(standing_orders_router)
 app.include_router(notifications_router)
+app.include_router(claims_router)
+app.include_router(payments_router)
+app.include_router(analytics_router)
+
+
+
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 redis_client = redis.from_url(REDIS_URL)
 
 
-@app.get("/", response_class=FileResponse)
+@app.get("/")
 def root():
-    """Serves the NEXPIRE Dashboard Web UI."""
-    index_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
     return {"service": "nexpire-api", "status": "running"}
 
 

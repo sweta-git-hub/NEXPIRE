@@ -30,6 +30,11 @@ def db():
 
 
 @pytest.fixture(scope="function")
+def db_session(db):
+    yield db
+
+
+@pytest.fixture(scope="function", autouse=True)
 def client(db):
     def override_get_db():
         try:

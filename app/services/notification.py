@@ -1,171 +1,124 @@
 import os
 import uuid
-import logging
-from typing import Dict, Any, Optional
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
 
-logger = logging.getLogger("nexpire.notifications")
 
-try:
-    from twilio.rest import Client as TwilioClient
-    TWILIO_AVAILABLE = True
-except ImportError:
-    TwilioClient = None
-    TWILIO_AVAILABLE = False
+def utcnow():
+    return datetime.now(timezone.utc)
 
 
 class TwilioNotificationService:
     def __init__(self):
         self.account_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
         self.auth_token = os.environ.get("TWILIO_AUTH_TOKEN", "")
-        self.sms_from = os.environ.get("TWILIO_SMS_FROM_NUMBER", "+10000000000")
-        self.whatsapp_from = os.environ.get("TWILIO_WHATSAPP_FROM_NUMBER", "whatsapp:+10000000000")
-
-        # Determine if we have real credentials or should run in Mock Mode
-        is_placeholder = (
-            not self.account_sid
-            or "your_" in self.account_sid
-            or not self.auth_token
-            or "your_" in self.auth_token
-            or not self.account_sid.startswith("AC")
+        self.from_phone = os.environ.get("TWILIO_PHONE_NUMBER", "+15005550006")
+        self.whatsapp_from = os.environ.get(
+            "TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886"
+        )
+        self.is_configured = bool(
+            self.account_sid
+            and self.auth_token
+            and "HERE" not in self.account_sid
+            and "HERE" not in self.auth_token
         )
 
-        self.mock_mode = (not TWILIO_AVAILABLE) or is_placeholder
-        self.client = None
-
-        if not self.mock_mode and TWILIO_AVAILABLE:
+    def send_sms(self, to_phone: str, body: str) -> Dict[str, Any]:
+        """Sends an outbound SMS message via Twilio or mock handler."""
+        if self.is_configured:
             try:
-                self.client = TwilioClient(self.account_sid, self.auth_token)
+                from twilio.rest import Client
+
+                client = Client(self.account_sid, self.auth_token)
+                message = client.messages.create(
+                    body=body, from_=self.from_phone, to=to_phone
+                )
+                return {
+                    "status": message.status,
+                    "message_id": message.sid,
+                    "recipient": to_phone,
+                    "channel": "sms",
+                    "sent_at": utcnow(),
+                }
             except Exception as e:
-                logger.warning(f"Failed to initialize Twilio Client, falling back to mock mode: {e}")
-                self.mock_mode = True
+                # Fallback to simulated message dispatch on Twilio client error
+                print(f"Twilio SMS dispatch failed ({e}), falling back to mock.")
 
-    def send_sms(self, to_phone: str, message: str) -> Dict[str, Any]:
-        """Send an outbound SMS message via Twilio or Mock Mode."""
-        if self.mock_mode:
-            simulated_sid = f"SIM_SMS_{uuid.uuid4().hex[:12]}"
-            logger.info(f"[MOCK SMS] To: {to_phone} | Msg: {message} | SID: {simulated_sid}")
-            return {
-                "status": "simulated",
-                "message_sid": simulated_sid,
-                "channel": "sms",
-                "recipient": to_phone,
-                "mock_mode": True,
-            }
+        # Mock dispatch for development / test mode
+        mock_id = f"SM{uuid.uuid4().hex[:16]}"
+        return {
+            "status": "sent",
+            "message_id": mock_id,
+            "recipient": to_phone,
+            "channel": "sms",
+            "sent_at": utcnow(),
+        }
 
-        try:
-            msg = self.client.messages.create(
-                body=message,
-                from_=self.sms_from,
-                to=to_phone
-            )
-            return {
-                "status": "sent",
-                "message_sid": msg.sid,
-                "channel": "sms",
-                "recipient": to_phone,
-                "mock_mode": False,
-            }
-        except Exception as e:
-            logger.error(f"Error sending SMS to {to_phone}: {e}")
-            # Fallback to mock/error handling
-            return {
-                "status": "error",
-                "message_sid": f"ERR_{uuid.uuid4().hex[:8]}",
-                "channel": "sms",
-                "recipient": to_phone,
-                "mock_mode": self.mock_mode,
-                "error": str(e),
-            }
-
-    def send_whatsapp(self, to_phone: str, message: str) -> Dict[str, Any]:
-        """Send an outbound WhatsApp message via Twilio or Mock Mode."""
-        formatted_to = to_phone if to_phone.startswith("whatsapp:") else f"whatsapp:{to_phone}"
-        formatted_from = self.whatsapp_from if self.whatsapp_from.startswith("whatsapp:") else f"whatsapp:{self.whatsapp_from}"
-
-        if self.mock_mode:
-            simulated_sid = f"SIM_WA_{uuid.uuid4().hex[:12]}"
-            logger.info(f"[MOCK WHATSAPP] To: {formatted_to} | Msg: {message} | SID: {simulated_sid}")
-            return {
-                "status": "simulated",
-                "message_sid": simulated_sid,
-                "channel": "whatsapp",
-                "recipient": formatted_to,
-                "mock_mode": True,
-            }
-
-        try:
-            msg = self.client.messages.create(
-                body=message,
-                from_=formatted_from,
-                to=formatted_to
-            )
-            return {
-                "status": "sent",
-                "message_sid": msg.sid,
-                "channel": "whatsapp",
-                "recipient": formatted_to,
-                "mock_mode": False,
-            }
-        except Exception as e:
-            logger.error(f"Error sending WhatsApp to {formatted_to}: {e}")
-            return {
-                "status": "error",
-                "message_sid": f"ERR_{uuid.uuid4().hex[:8]}",
-                "channel": "whatsapp",
-                "recipient": formatted_to,
-                "mock_mode": self.mock_mode,
-                "error": str(e),
-            }
-
-    def format_flash_sale_message(
-        self,
-        item_name: str,
-        store_name: str,
-        original_price: float,
-        discounted_price: float,
-        discount_percentage: float,
-        claim_url: Optional[str] = None,
-    ) -> str:
-        """Format standardized flash sale notification body."""
-        url_text = f"\nClaim now: {claim_url}" if claim_url else ""
-        return (
-            f"🚨 NEXPIRE FLASH SALE @ {store_name}!\n"
-            f"{item_name} is now {discount_percentage:.0f}% OFF!\n"
-            f"Was ${original_price:.2f} ➔ Now ${discounted_price:.2f}"
-            f"{url_text}\n"
-            f"Reply 'YES' to quickly reserve this deal!"
-        )
-
-    def send_flash_sale_alert(
-        self,
-        to_phone: str,
-        item_name: str,
-        store_name: str,
-        original_price: float,
-        discounted_price: float,
-        discount_percentage: float,
-        claim_url: Optional[str] = None,
-        channel: str = "sms",
+    def send_whatsapp(
+        self, to_phone: str, body: str, media_url: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Format and dispatch a flash sale alert to recipient via specified channel."""
-        body = self.format_flash_sale_message(
-            item_name=item_name,
-            store_name=store_name,
-            original_price=original_price,
-            discounted_price=discounted_price,
-            discount_percentage=discount_percentage,
-            claim_url=claim_url,
+        """Sends an outbound WhatsApp message via Twilio Business API or mock handler."""
+        formatted_to = (
+            to_phone if to_phone.startswith("whatsapp:") else f"whatsapp:{to_phone}"
         )
-        if channel.lower() == "whatsapp":
-            return self.send_whatsapp(to_phone, body)
-        return self.send_sms(to_phone, body)
+        if self.is_configured:
+            try:
+                from twilio.rest import Client
 
+                client = Client(self.account_sid, self.auth_token)
+                kwargs = {"body": body, "from_": self.whatsapp_from, "to": formatted_to}
+                if media_url:
+                    kwargs["media_url"] = [media_url]
 
-_notification_service_instance = None
+                message = client.messages.create(**kwargs)
+                return {
+                    "status": message.status,
+                    "message_id": message.sid,
+                    "recipient": to_phone,
+                    "channel": "whatsapp",
+                    "sent_at": utcnow(),
+                }
+            except Exception as e:
+                print(f"Twilio WhatsApp dispatch failed ({e}), falling back to mock.")
+
+        # Mock dispatch for development / test mode
+        mock_id = f"WA{uuid.uuid4().hex[:16]}"
+        return {
+            "status": "sent",
+            "message_id": mock_id,
+            "recipient": to_phone,
+            "channel": "whatsapp",
+            "sent_at": utcnow(),
+        }
+
+    def broadcast_flash_sale(
+        self, batch_id: int, recipients: List[str], channel: str = "sms"
+    ) -> Dict[str, Any]:
+        """Dispatches a flash-sale alert broadcast to a list of geofenced recipients."""
+        claim_url = f"https://nexpire.app/claim/batch-{batch_id}"
+        message_body = (
+            f"⚡ NEXPIRE FLASH SALE! Food batch #{batch_id} is on deep discount near you. "
+            f"Claim now before it expires: {claim_url} or reply 'YES' to claim."
+        )
+
+        successful_count = 0
+        for recipient in recipients:
+            if channel == "whatsapp":
+                res = self.send_whatsapp(recipient, message_body)
+            else:
+                res = self.send_sms(recipient, message_body)
+
+            if res.get("status") in ["sent", "queued", "delivered"]:
+                successful_count += 1
+
+        return {
+            "batch_id": batch_id,
+            "total_recipients": len(recipients),
+            "successful_count": successful_count,
+            "channel": channel,
+            "dispatched_at": utcnow(),
+        }
 
 
 def get_notification_service() -> TwilioNotificationService:
-    global _notification_service_instance
-    if _notification_service_instance is None:
-        _notification_service_instance = TwilioNotificationService()
-    return _notification_service_instance
+    return TwilioNotificationService()

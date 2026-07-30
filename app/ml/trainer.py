@@ -17,7 +17,53 @@ MODEL_ARTIFACT_PATH = os.environ.get(
 
 def train_pricing_model(num_samples: int = 1500, artifact_path: str = MODEL_ARTIFACT_PATH):
     """Train Scikit-Learn multi-output regression model to predict risk_score and optimal_discount_pct."""
-    df = generate_synthetic_dataset(num_samples=num_samples)
+    import pandas as pd
+    import numpy as np
+    from pathlib import Path
+
+    # Check for generated synthetic datasets
+    base_path = Path("/app/output/full_dataset")
+    if not base_path.exists():
+        # local workspace fallbacks
+        base_path = Path(__file__).parent.parent.parent / "output" / "full_dataset"
+
+    sales_path = base_path / "sales_history.csv"
+    products_path = base_path / "products.csv"
+    weather_path = base_path / "weather_history.csv"
+
+    if sales_path.exists() and products_path.exists() and weather_path.exists():
+        print(f"Loading generated training data from {base_path}...")
+        sales_df = pd.read_csv(sales_path)
+        prod_df = pd.read_csv(products_path)
+        wx_df = pd.read_csv(weather_path)
+
+        # Merge datasets
+        df = sales_df.merge(prod_df, on="sku_id", how="inner")
+        df = df.merge(wx_df, on=["store_id", "date"], how="inner")
+
+        # Map feature columns
+        df["days_to_expiry"] = df["time_to_expiry_hours_at_sale"] / 24.0
+        df["quantity"] = df["units_sold"]
+        df["cost_price"] = df["unit_cost_inr"]
+        df["original_selling_price"] = df["standard_retail_price_inr"]
+        df["temperature_c"] = df["avg_temperature_c"]
+        df["historical_demand_factor"] = np.random.uniform(0.6, 1.4, size=len(df))
+
+        # Calculate target columns matching model dynamics
+        from app.ml.synthetic_data import CATEGORY_PERISHABILITY
+        perish_series = df["category"].map(CATEGORY_PERISHABILITY).fillna(1.0)
+        time_factor = np.exp(-0.25 * df["days_to_expiry"] / perish_series)
+        temp_factor = 1.0 + np.maximum(0.0, (df["temperature_c"] - 25.0) * 0.02)
+        qty_factor = 1.0 + np.minimum(0.5, (df["quantity"] / 100.0) * 0.2)
+        
+        df["risk_score"] = np.clip(time_factor * temp_factor * qty_factor + np.random.normal(0, 0.03, size=len(df)), 0.05, 0.99)
+        df["optimal_discount_pct"] = df["discount_depth_pct"]
+
+        # Select sample
+        df = df.sample(n=min(num_samples, len(df)), random_state=42).reset_index(drop=True)
+    else:
+        print("Generated training data not found. Falling back to synthetic simulation...")
+        df = generate_synthetic_dataset(num_samples=num_samples)
 
     feature_cols = [
         "days_to_expiry",

@@ -8,6 +8,8 @@ import app.models  # Ensures models are imported so Base.metadata knows about th
 from app.api.stores import router as stores_router
 from app.api.inventory import router as inventory_router
 from app.api.pricing import router as pricing_router
+from app.api.standing_orders import router as standing_orders_router
+from app.api.notifications import router as notifications_router
 from app.ml.predictor import get_predictor
 
 
@@ -34,6 +36,10 @@ app = FastAPI(title="NEXPIRE API", version="0.1.0", lifespan=lifespan)
 app.include_router(stores_router)
 app.include_router(inventory_router)
 app.include_router(pricing_router)
+app.include_router(standing_orders_router)
+app.include_router(notifications_router)
+
+
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 redis_client = redis.from_url(REDIS_URL)

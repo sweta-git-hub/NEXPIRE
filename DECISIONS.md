@@ -23,3 +23,22 @@
   - Automatic initial training on app startup if artifact is missing.
   - Ambient temperature integration via `app/services/weather.py` (OpenWeather API with 25.0°C default fallback).
 - **Status**: Implemented & Verified.
+
+## ADR 004: Standing Order Engine & NGO Priority Allocation (Phase 4)
+- **Context**: Shelters and NGOs require reliable, priority access to expiring food batches without competing in consumer payment loops.
+- **Decision**:
+  - Implement rule-based `StandingOrder` subscription model (`category_filter`, `min_quantity`, `priority_window_hours`).
+  - Create dedicated `StandingOrderMatch` priority allocation entities (`is_subsidized=True`, `status="RESERVED"`), bypassing payment processing entirely for shelter claims.
+  - Provide automated evaluation trigger endpoint (`POST /api/v1/standing-orders/evaluate`) to scan candidate active/discounted batches against standing order rules.
+- **Status**: Implemented & Verified.
+
+## ADR 005: Notification Engine Architecture & Inbound SMS Claiming (Phase 3)
+- **Context**: Need hyper-local outbound flash-sale notification dispatch (SMS & WhatsApp via Twilio) and frictionless inbound SMS reply claiming ("reply YES").
+- **Decision**:
+  - Implement `TwilioNotificationService` (`app/services/notification.py`) supporting both SMS and WhatsApp channels.
+  - Automatic fallback to mock message IDs when Twilio API credentials are unset or invalid in local testing.
+  - Inbound Twilio webhook handler (`POST /api/v1/notifications/twilio-inbound`) parsing "YES" or "CLAIM <batch_id>" to automatically reserve food rescue items.
+  - Asynchronous background dispatch task `dispatch_batch_notifications_task` in `app/tasks/dispatch.py` for Celery worker execution off the HTTP request path.
+- **Status**: Implemented & Verified.
+
+

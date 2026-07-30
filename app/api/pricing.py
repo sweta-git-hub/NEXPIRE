@@ -30,6 +30,7 @@ def predict_discount(request: PricePredictionRequest):
         original_selling_price=request.original_selling_price,
         temperature_c=request.temperature_c or 25.0,
         historical_demand_factor=request.historical_demand_factor or 1.0,
+        product_condition=request.product_condition or "Excellent",
     )
     return PricePredictionResponse(**result)
 

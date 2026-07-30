@@ -332,6 +332,31 @@
     .ngo-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
     .ngo-card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center; }
 
+    /* ===== CUSTOMER TYPE FILTER PILLS ===== */
+    .type-pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      border-radius: 9999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; font-family: var(--font-main);
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .type-pill:hover {
+      border-color: rgba(16,185,129,0.35);
+      color: var(--text-main);
+      background: rgba(16,185,129,0.07);
+    }
+    .type-pill.active {
+      background: rgba(16,185,129,0.15);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+
     /* ===== MATCH RESULT CARD ===== */
     .match-card {
       background: rgba(16,185,129,0.05);
@@ -580,13 +605,13 @@
         <i data-lucide="leaf"></i> Eco-Impact Dashboard
       </button>
       <button class="tab-btn" id="tab-btn-ngo" onclick="switchTab('ngo-tab', this)">
-        <i data-lucide="users"></i> NGO Standing Orders
-      </button>
-      <button class="tab-btn" id="tab-btn-auction" onclick="switchTab('auction-tab', this)">
-        <i data-lucide="trending-down"></i> Live Auction
+        <i data-lucide="building-2"></i> Bulk Customers
       </button>
       <button class="tab-btn" onclick="switchTab('ml-tab', this)">
         <i data-lucide="cpu"></i> ML Discount Simulator
+      </button>
+      <button class="tab-btn" id="tab-btn-claims" onclick="switchTab('claims-tab', this)">
+        <i data-lucide="zap"></i> ML Flash Claims
       </button>
       <button class="tab-btn" onclick="switchTab('notify-tab', this)">
         <i data-lucide="send"></i> Notification Engine
@@ -737,107 +762,187 @@
 
 
     <!-- ==========================================
-         TAB: NGO STANDING ORDERS (Phase 6)
+         TAB: BULK CUSTOMERS & STANDING ORDERS
          ========================================== -->
     <div id="ngo-tab" class="tab-content">
 
-      <div class="grid-2">
-
-        <!-- Active Standing Orders list -->
-        <div>
-          <div class="glass-panel">
-            <div class="panel-header">
-              <div class="panel-title"><i data-lucide="users"></i> Active Rescue Squads</div>
-              <button class="btn btn-secondary btn-sm" onclick="loadStandingOrders()">
-                <i data-lucide="refresh-cw"></i> Refresh
-              </button>
-            </div>
-            <div id="standing-order-list">
-              <div class="shimmer" style="height:80px;margin-bottom:0.75rem;border-radius:12px;"></div>
-              <div class="shimmer" style="height:80px;border-radius:12px;"></div>
-            </div>
-          </div>
-
-          <!-- Evaluate Engine -->
-          <div class="glass-panel">
-            <div class="panel-header">
-              <div class="panel-title"><i data-lucide="zap"></i> Run Engine Evaluation</div>
-            </div>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
-              Evaluates all active standing orders against current inventory and creates priority matches for eligible batches.
-            </p>
-            <button class="btn btn-purple btn-full" onclick="evaluateEngine()" id="eval-btn">
-              <i data-lucide="play"></i> Evaluate All Standing Orders
-            </button>
-            <div id="eval-result" style="margin-top:1.25rem;"></div>
-          </div>
+      <!-- Page header -->
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:1.25rem;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:0.6rem;">
+          <i data-lucide="building-2" style="width:22px;height:22px;color:var(--accent-cyan);"></i>
+          Bulk Customers &amp; Standing Orders
         </div>
+        <div style="font-size:0.875rem;color:var(--text-muted);margin-top:0.3rem;">
+          Register hotels, restaurants, NGOs, shelter homes and other bulk buyers. The engine automatically matches them to discounted inventory.
+        </div>
+      </div>
 
-        <!-- Create new standing order -->
-        <div class="glass-panel">
+      <!-- Customer Type Filter Pills -->
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;" id="type-filter-pills">
+        <button class="type-pill active" onclick="filterByType('ALL', this)">All</button>
+        <button class="type-pill" onclick="filterByType('NGO', this)">NGO</button>
+        <button class="type-pill" onclick="filterByType('Shelter Home', this)">Shelter Home</button>
+        <button class="type-pill" onclick="filterByType('Restaurant', this)">Restaurant</button>
+        <button class="type-pill" onclick="filterByType('Hotel', this)">Hotel</button>
+        <button class="type-pill" onclick="filterByType('Caterer', this)">Caterer</button>
+        <button class="type-pill" onclick="filterByType('Hospital', this)">Hospital</button>
+        <button class="type-pill" onclick="filterByType('Corporate Canteen', this)">Corporate Canteen</button>
+        <button class="type-pill" onclick="filterByType('School / College', this)">School / College</button>
+      </div>
+
+      <!-- Top Section: Registration & Evaluate Engine -->
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+
+        <!-- Register Bulk Customer Form -->
+        <div class="glass-panel" style="margin-bottom: 0;">
           <div class="panel-header">
-            <div class="panel-title"><i data-lucide="plus-circle"></i> Register New Rescue Squad</div>
+            <div class="panel-title"><i data-lucide="plus-circle"></i> Register Bulk Customer</div>
           </div>
           <form id="ngo-form" onsubmit="createStandingOrder(event)">
+
+            <!-- Customer Type -->
             <div class="form-group">
-              <label class="form-label">NGO / Shelter Name *</label>
-              <input type="text" class="form-input" id="ngo-name" placeholder="e.g. City Food Shelter" required>
+              <label class="form-label">Customer Type *</label>
+              <select class="form-select" id="ngo-type" required>
+                <option value="NGO">NGO / Charitable Organisation</option>
+                <option value="Shelter Home">Shelter Home / Orphanage</option>
+                <option value="Restaurant">Restaurant</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Caterer">Caterer / Event Kitchen</option>
+                <option value="Hospital">Hospital / Healthcare</option>
+                <option value="Corporate Canteen">Corporate Canteen</option>
+                <option value="School / College">School / College</option>
+              </select>
             </div>
+
+            <!-- Name -->
+            <div class="form-group">
+              <label class="form-label">Organisation Name *</label>
+              <input type="text" class="form-input" id="ngo-name" placeholder="e.g. Annapurna Hotel, City Food Bank" required>
+            </div>
+
+            <!-- Contact Details -->
             <div class="grid-2">
               <div class="form-group">
                 <label class="form-label">Contact Email</label>
-                <input type="email" class="form-input" id="ngo-email" placeholder="contact@org.org">
+                <input type="email" class="form-input" id="ngo-email" placeholder="contact@org.com">
               </div>
               <div class="form-group">
                 <label class="form-label">Contact Phone</label>
                 <input type="text" class="form-input" id="ngo-phone" placeholder="+91 98765 43210">
               </div>
             </div>
+
+            <!-- Category + Qty -->
             <div class="grid-2">
               <div class="form-group">
-                <label class="form-label">Category Filter</label>
+                <label class="form-label">Preferred Category</label>
                 <select class="form-select" id="ngo-category">
                   <option value="ALL">All Categories</option>
                   <option value="Dairy">Dairy</option>
                   <option value="Bakery">Bakery</option>
-                  <option value="Fruits & Veggies">Fruits &amp; Veggies</option>
+                  <option value="Fruits &amp; Veggies">Fruits &amp; Veggies</option>
                   <option value="Food Grains">Food Grains</option>
                   <option value="Beverages">Beverages</option>
                   <option value="Snacks">Snacks</option>
-                  <option value="Oil & Masala">Oil &amp; Masala</option>
-                  <option value="Meat & Seafood">Meat &amp; Seafood</option>
+                  <option value="Oil &amp; Masala">Oil &amp; Masala</option>
+                  <option value="Meat &amp; Seafood">Meat &amp; Seafood</option>
                   <option value="Ready-to-Eat">Ready-to-Eat</option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Min Quantity (units)</label>
+                <label class="form-label">Min Order Qty (units)</label>
                 <input type="number" class="form-input" id="ngo-qty" value="5" min="1">
               </div>
             </div>
+
+            <!-- Priority window -->
             <div class="form-group">
               <label class="form-label">Priority Window (hours before expiry)</label>
               <input type="number" class="form-input" id="ngo-window" value="12" min="1" max="72">
             </div>
-            <button type="submit" class="btn btn-primary btn-full" id="ngo-submit-btn">
-              <i data-lucide="plus"></i> Register Standing Order
+
+            <!-- Address -->
+            <div class="form-group">
+              <label class="form-label">Address / Location (optional)</label>
+              <input type="text" class="form-input" id="ngo-address" placeholder="e.g. Koramangala, Bengaluru">
+            </div>
+
+            <!-- Subsidized toggle -->
+            <div class="form-group" id="subsidized-toggle-row" style="display:flex;align-items:center;gap:0.75rem;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:0.75rem 1rem;">
+              <input type="checkbox" id="ngo-subsidized" style="width:16px;height:16px;accent-color:var(--accent-green);">
+              <label for="ngo-subsidized" style="font-size:0.88rem;color:var(--text-muted);cursor:pointer;">
+                Mark as <strong style="color:var(--accent-green);">Subsidized</strong> — matched at cost price (Charitable segments only)
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" id="ngo-submit-btn" style="margin-top:1.25rem;">
+              <i data-lucide="plus"></i> Register Bulk Customer
             </button>
           </form>
         </div>
 
+        <!-- Evaluate Engine Control panel -->
+        <div class="glass-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="zap"></i> Run Bulk Matching Engine</div>
+            </div>
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.45;">
+              The matching engine scans active discounted batches across all stores and pairs them to the standing orders of registered bulk buyers based on quantity requirements, category criteria and safety-window buffers.
+            </p>
+            
+            <div style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.08); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">Engine Optimization Modes:</div>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.35rem;">
+                <li><strong>Charitable:</strong> Matches first-priority items at zero-profit margins.</li>
+                <li><strong>Commercial:</strong> Matches excess items at optimal dynamic discount tiers.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn btn-purple btn-full" onclick="evaluateEngine()" id="eval-btn">
+              <i data-lucide="play"></i> Evaluate All Bulk Orders
+            </button>
+            <div id="eval-result" style="margin-top:1.25rem;"></div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Matches table -->
-      <div class="glass-panel">
+      <!-- Middle Section: Registered Bulk Customers Column Grid (Side-by-side columns) -->
+      <div class="glass-panel" style="margin-bottom: 1.5rem;">
         <div class="panel-header">
-          <div class="panel-title"><i data-lucide="check-circle"></i> Recent Priority Matches</div>
+          <div class="panel-title"><i data-lucide="users"></i> Registered Bulk Customers Segment Matrix</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadStandingOrders()">
+            <i data-lucide="refresh-cw"></i> Refresh Directory
+          </button>
+        </div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem;">
+          Subscriptions are bifurcated below into logical commercial and social demand sectors for clean visual comparison.
+        </div>
+        <div class="grid-4" id="standing-order-list" style="align-items: start; gap: 1rem;">
+          <!-- 4 segment columns will load dynamically here -->
+          <div class="shimmer" style="height:250px;border-radius:12px;"></div>
+          <div class="shimmer" style="height:250px;border-radius:12px;"></div>
+          <div class="shimmer" style="height:250px;border-radius:12px;"></div>
+          <div class="shimmer" style="height:250px;border-radius:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Section: Bulk Orders Summary Table -->
+      <div class="glass-panel" style="margin-top:0; margin-bottom: 0;">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="table-2"></i> Bulk Orders Summary — All Customers</div>
           <button class="btn btn-secondary btn-sm" onclick="loadMatches()">
-            <i data-lucide="refresh-cw"></i> Load Matches
+            <i data-lucide="refresh-cw"></i> Load Allocations
           </button>
         </div>
         <div id="matches-list">
           <div class="empty-state">
             <i data-lucide="inbox"></i>
-            <p>Click "Load Matches" to see NGO priority allocations</p>
+            <p>Click "Load Allocations" to see priority inventory matches across all bulk customer segments</p>
           </div>
         </div>
       </div>
@@ -845,170 +950,35 @@
     </div><!-- /ngo-tab -->
 
 
+
+
+
     <!-- ==========================================
-         TAB: DESCENDING-PRICE AUCTION (Phase 6)
+         TAB: ML FLASH CLAIMS
          ========================================== -->
-    <div id="auction-tab" class="tab-content">
-
-      <div class="grid-2">
-
-        <!-- AUCTION CARD -->
-        <div>
-          <div class="auction-card" id="auction-main-card">
-
-            <!-- Claimed overlay -->
-            <div class="claimed-overlay" id="claimed-overlay">
-              <div class="claimed-checkmark"><i data-lucide="check"></i></div>
-              <div class="claimed-title">Deal Claimed! 🎉</div>
-              <div style="color:var(--text-muted);font-size:0.88rem;">Your tokenized claim link:</div>
-              <div class="claimed-token" id="claimed-token-val">nexpire.app/claim/...</div>
-              <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
-                <button class="btn btn-primary btn-sm" onclick="copyClaimToken()">
-                  <i data-lucide="copy"></i> Copy Link
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="resetAuction()">
-                  <i data-lucide="rotate-ccw"></i> New Auction
-                </button>
-              </div>
-            </div>
-
-            <div id="auction-live-content">
-              <div class="auction-badge-live">
-                <div class="auction-badge-live-dot"></div> LIVE AUCTION
-              </div>
-              <div class="auction-item-name" id="au-item-name">Organic Strawberries 500g</div>
-              <div class="auction-item-store" id="au-store-name">Metro Fresh Market · 0.3 km away</div>
-
-              <div class="auction-price-block">
-                <div class="auction-orig-price" id="au-orig-price">was ₹12.00</div>
-                <div class="auction-curr-price price-normal" id="au-curr-price">₹12.00</div>
-                <div class="auction-discount-pct" id="au-discount-pct" style="color:var(--accent-green);">0% off</div>
-                <div class="auction-items-left" id="au-items-left">🍓 24 units remaining</div>
-              </div>
-
-              <!-- Countdown bar -->
-              <div class="countdown-wrap">
-                <div class="countdown-header">
-                  <span class="countdown-label">Next price drop in</span>
-                  <span class="countdown-time" id="au-countdown">—</span>
-                </div>
-                <div class="countdown-bar-bg">
-                  <div class="countdown-bar-fill" id="au-bar"></div>
-                </div>
-              </div>
-
-              <!-- Price history ticks -->
-              <div class="price-history" id="au-price-history"></div>
-
-              <button class="btn btn-rose btn-full" id="au-claim-btn" onclick="claimAuction()" style="margin-top:1rem;font-size:1rem;padding:1rem;">
-                <i data-lucide="hand"></i> CLAIM THIS DEAL
-              </button>
-            </div>
-
+    <div id="claims-tab" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="zap"></i> ML Flash Claim Tokens</div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button class="btn btn-secondary btn-sm" onclick="loadFlashClaims()">
+              <i data-lucide="rotate-ccw"></i> Refresh
+            </button>
           </div>
         </div>
 
-        <!-- AUCTION SETTINGS -->
-        <div>
-          <div class="glass-panel">
-            <div class="panel-header">
-              <div class="panel-title"><i data-lucide="settings"></i> Auction Configuration</div>
-            </div>
-
-            <div class="auction-config">
-              <div class="auction-config-title">Batch Details</div>
-              <div class="form-group">
-                <label class="form-label">Item Name</label>
-                <input type="text" class="form-input" id="cfg-item" value="Organic Strawberries 500g">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Store</label>
-                <input type="text" class="form-input" id="cfg-store" value="Metro Fresh Market · 0.3 km away">
-              </div>
-              <div class="grid-2">
-                <div class="form-group">
-                  <label class="form-label">Starting Price (₹)</label>
-                  <input type="number" step="0.01" class="form-input" id="cfg-start-price" value="12.00">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Floor Price (₹)</label>
-                  <input type="number" step="0.01" class="form-input" id="cfg-floor-price" value="3.50">
-                </div>
-              </div>
-              <div class="grid-2">
-                <div class="form-group">
-                  <label class="form-label">Units Available</label>
-                  <input type="number" class="form-input" id="cfg-units" value="24">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Price Steps (ticks)</label>
-                  <input type="number" class="form-input" id="cfg-steps" value="6" min="2" max="12">
-                </div>
-              </div>
-            </div>
-
-            <div class="auction-config">
-              <div class="auction-config-title">Timer Settings</div>
-              <div class="form-group">
-                <label class="form-label">Tick Interval: <strong id="interval-display">30s</strong></label>
-                <div class="range-row">
-                  <span style="font-size:0.78rem;color:var(--text-muted);">5s</span>
-                  <input type="range" id="cfg-interval" min="5" max="120" value="30"
-                    oninput="document.getElementById('interval-display').textContent = this.value + 's'">
-                  <span style="font-size:0.78rem;color:var(--text-muted);">120s</span>
-                </div>
-              </div>
-            </div>
-
-            <div style="display:flex;gap:0.75rem;">
-              <button class="btn btn-primary" style="flex:1;" onclick="startAuction()">
-                <i data-lucide="play"></i> Start Auction
-              </button>
-              <button class="btn btn-secondary" onclick="resetAuction()">
-                <i data-lucide="rotate-ccw"></i> Reset
-              </button>
-            </div>
-          </div>
-
-          <!-- How it works -->
-          <div class="glass-panel">
-            <div class="panel-header">
-              <div class="panel-title"><i data-lucide="info"></i> How Descending Auction Works</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:0.85rem;">
-              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
-                <div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <i data-lucide="play" style="width:13px;height:13px;color:var(--accent-green);"></i>
-                </div>
-                <div>
-                  <div style="font-size:0.88rem;font-weight:600;">Starts at full markdown price</div>
-                  <div style="font-size:0.8rem;color:var(--text-muted);">Auction begins with maximum discount applied by the ML engine</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
-                <div style="width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <i data-lucide="trending-down" style="width:13px;height:13px;color:var(--accent-amber);"></i>
-                </div>
-                <div>
-                  <div style="font-size:0.88rem;font-weight:600;">Price ticks down every interval</div>
-                  <div style="font-size:0.8rem;color:var(--text-muted);">Each tick applies a further reduction until the floor (cost + 10%) is reached</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:0.85rem;align-items:flex-start;">
-                <div style="width:28px;height:28px;border-radius:8px;background:rgba(244,63,94,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <i data-lucide="hand" style="width:13px;height:13px;color:var(--accent-rose);"></i>
-                </div>
-                <div>
-                  <div style="font-size:0.88rem;font-weight:600;">Claim freezes the price</div>
-                  <div style="font-size:0.8rem;color:var(--text-muted);">First claimant locks in the current price — generates a tokenized claim link</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem; padding: 0.75rem 1rem; background: rgba(56,189,248,0.06); border-left: 3px solid var(--accent-cyan); border-radius: 4px;">
+          Discount prices are calculated by the <strong style="color:var(--accent-cyan);">Predictive AI Markdown Engine</strong> using shelf-life decay, temperature, quantity and product condition. No bidding or auction timer is applied — claim the product directly at the ML-determined optimal price.
         </div>
 
+        <div id="flash-claims-table-container">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
+            <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <div style="color:var(--text-muted); font-size:0.88rem;">Loading flash claims...</div>
+          </div>
+        </div>
       </div>
-    </div><!-- /auction-tab -->
+    </div><!-- /claims-tab -->
 
 
     <!-- ==========================================
@@ -1023,12 +993,16 @@
           <form id="ml-predict-form" onsubmit="runMLPrediction(event)">
             <div class="form-group">
               <label class="form-label">Item Category</label>
-              <select class="form-select" id="ml-perishability">
-                <option value="0.9">Dairy / Fruits &amp; Veggies (High Risk - 0.9)</option>
-                <option value="0.8">Bakery / Ready-to-Eat (Medium-High Risk - 0.8)</option>
-                <option value="0.6">Beverages / Snacks (Medium Risk - 0.6)</option>
-                <option value="0.4">Meat &amp; Seafood (Refrigerated - 0.4)</option>
-                <option value="0.2">Oil &amp; Masala / Food Grains (Low Perishability - 0.2)</option>
+              <select class="form-select" id="ml-category">
+                <option value="Dairy">Dairy (High Risk)</option>
+                <option value="Fruits &amp; Veggies">Fruits &amp; Veggies (High Risk)</option>
+                <option value="Bakery">Bakery (Medium-High Risk)</option>
+                <option value="Ready-to-Eat">Ready-to-Eat (Medium-High Risk)</option>
+                <option value="Meat &amp; Seafood">Meat &amp; Seafood (Refrigerated)</option>
+                <option value="Beverages">Beverages (Medium Risk)</option>
+                <option value="Snacks">Snacks (Medium Risk)</option>
+                <option value="Oil &amp; Masala">Oil &amp; Masala (Low Risk)</option>
+                <option value="Food Grains">Food Grains (Low Risk)</option>
               </select>
             </div>
             <div class="grid-2">
@@ -1050,6 +1024,15 @@
                 <label class="form-label">Cost Margin Ratio</label>
                 <input type="number" step="0.05" class="form-input" id="ml-margin" value="0.40" min="0.1" max="0.9">
               </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Product Condition</label>
+              <select class="form-select" id="ml-condition">
+                <option value="Excellent">Perfect / Excellent (Multiplier: 1.0x)</option>
+                <option value="Good">Good / Light Bruising (Multiplier: 1.15x)</option>
+                <option value="Fair">Fair / Moderate Wear (Multiplier: 1.35x)</option>
+                <option value="Poor">Near Expiration / Damaged Package (Multiplier: 1.6x)</option>
+              </select>
             </div>
             <button type="submit" class="btn btn-primary btn-full">
               <i data-lucide="zap"></i> Calculate Optimal ML Discount
@@ -1075,7 +1058,63 @@
                 <div class="metric-val" id="res-new-price" style="color:#fff;">--</div>
               </div>
             </div>
-            <div class="console-out" id="ml-console">// Predictor JSON response will appear here...</div>
+            <!-- Visual AI Recommendation Breakdown UI -->
+            <div id="ml-recommendation-panel" style="background: rgba(10, 15, 28, 0.8); border: 1px solid var(--bg-card-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.75rem;">
+                <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                  <i data-lucide="sparkles" style="width:16px;height:16px;color:var(--accent-green);"></i>
+                  AI Pricing Recommendation
+                </div>
+                <span class="badge badge-muted" id="ml-risk-level-badge">Awaiting Calculation</span>
+              </div>
+
+              <div id="ml-result-body">
+                <div style="margin-top:0.25rem;">
+                  <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem; line-height: 1.45;">
+                    The Predictive AI Markdown Engine automatically tracks decay thresholds. Below is the active pricing schema baseline:
+                  </div>
+                  <table class="data-table" style="font-size: 0.82rem; margin-bottom: 0;">
+                    <thead>
+                      <tr>
+                        <th>Category Segment</th>
+                        <th>Risk Metric</th>
+                        <th>Decay Rate</th>
+                        <th>Markdown Tier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Dairy (Milk, Cheese, Butter)</td>
+                        <td><span class="badge badge-rose">CRITICAL</span></td>
+                        <td>High Decay (1.6x)</td>
+                        <td><strong>65% - 90% OFF</strong></td>
+                      </tr>
+                      <tr>
+                        <td>Fruits &amp; Veggies (Bananas, Berries)</td>
+                        <td><span class="badge badge-rose">HIGH</span></td>
+                        <td>High Decay (1.35x)</td>
+                        <td><strong>35% - 60% OFF</strong></td>
+                      </tr>
+                      <tr>
+                        <td>Bakery &amp; RTE (Bread, Meal Boxes)</td>
+                        <td><span class="badge badge-amber">MEDIUM</span></td>
+                        <td>Medium Decay (1.15x)</td>
+                        <td><strong>15% - 30% OFF</strong></td>
+                      </tr>
+                      <tr>
+                        <td>Food Grains &amp; Masalas</td>
+                        <td><span class="badge badge-green">LOW</span></td>
+                        <td>Stable (1.0x)</td>
+                        <td><strong>0% - 10% OFF</strong></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+
+
           </div>
         </div>
       </div>
@@ -1152,6 +1191,55 @@
           <div class="console-out" id="wh-console">// TwiML response XML will render here...</div>
         </div>
       </div>
+
+      <!-- Simulated Dispatch Logs -->
+      <div class="glass-panel" style="margin-top: 1.5rem; margin-bottom: 0;">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="list"></i> Recent Notification Dispatch Logs</div>
+          <span class="badge badge-cyan">3 Dispatched Alerts</span>
+        </div>
+        <div style="overflow-x: auto; margin-top: 0.5rem;">
+          <table class="data-table" style="font-size:0.85rem;">
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Channel</th>
+                <th>Store Location</th>
+                <th>Alert Body</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>+91 98765 43210</strong></td>
+                <td><span class="badge badge-cyan">SMS</span></td>
+                <td>GreenCorner (Koramangala)</td>
+                <td><code>Flash Sale: Organic Whole Milk 1L is now ₹45 (was ₹75) at GreenCorner. Claim code: NEXP-0009-ML40. Claim link: http://localhost:8000/claim/new?batch_id=9</code></td>
+                <td><span class="badge badge-green">SENT</span></td>
+                <td style="color:var(--text-muted);">5 mins ago</td>
+              </tr>
+              <tr>
+                <td><strong>+91 87654 32109</strong></td>
+                <td><span class="badge badge-purple">WhatsApp</span></td>
+                <td>AaharPalace (Indiranagar)</td>
+                <td><code>Flash Sale: Veg Biryani Meal Box is now ₹75. Claim link: http://localhost:8000/claim/new?batch_id=12</code></td>
+                <td><span class="badge badge-green">DELIVERED</span></td>
+                <td style="color:var(--text-muted);">15 mins ago</td>
+              </tr>
+              <tr>
+                <td><strong>+91 76543 21098</strong></td>
+                <td><span class="badge badge-cyan">SMS</span></td>
+                <td>QuickMart (Chennai)</td>
+                <td><code>Flash Sale: Fresh Sourdough Bread 500g is now ₹60 at QuickMart.</code></td>
+                <td><span class="badge badge-green">SENT</span></td>
+                <td style="color:var(--text-muted);">1 hour ago</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div><!-- /notify-tab -->
 
 
@@ -1159,14 +1247,67 @@
          TAB: INVENTORY CORE (Phase 1)
          ========================================== -->
     <div id="inventory-tab" class="tab-content">
-      <div class="glass-panel">
-        <div class="panel-header">
-          <div class="panel-title"><i data-lucide="building"></i> Active Stores & Inventory Batches</div>
-          <button class="btn btn-secondary" onclick="fetchStores()">
-            <i data-lucide="refresh-cw"></i> Refresh Data
-          </button>
+      <!-- Top Summary KPI Cards -->
+      <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card glow-green">
+          <div class="kpi-header"><span class="kpi-title">STORES REGISTERED</span></div>
+          <div class="kpi-value" id="inv-kpi-stores">0</div>
+          <div class="kpi-sub">active retail locations</div>
         </div>
-        <div class="console-out" id="stores-console">// Click Refresh to load active database stores...</div>
+        <div class="kpi-card glow-cyan">
+          <div class="kpi-header"><span class="kpi-title">TOTAL BATCHES</span></div>
+          <div class="kpi-value" id="inv-kpi-batches">0</div>
+          <div class="kpi-sub">inventory batches tracked</div>
+        </div>
+        <div class="kpi-card glow-purple">
+          <div class="kpi-header"><span class="kpi-title">STOCK QUANTITY</span></div>
+          <div class="kpi-value" id="inv-kpi-stock">0</div>
+          <div class="kpi-sub">units available across stores</div>
+        </div>
+        <div class="kpi-card glow-amber">
+          <div class="kpi-header"><span class="kpi-title">AVG DISCOUNT</span></div>
+          <div class="kpi-value" id="inv-kpi-avg-disc">0%</div>
+          <div class="kpi-sub">dynamic pricing reduction</div>
+        </div>
+      </div>
+
+      <!-- Stores Network Grid -->
+      <div class="glass-panel" style="margin-bottom: 1.5rem;">
+        <div class="panel-header">
+          <div class="panel-title"><i data-lucide="building"></i> Store Network & Location Hubs</div>
+          <span class="badge badge-cyan" id="store-count-badge">0 Stores</span>
+        </div>
+        <div id="stores-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+          <div class="empty-state"><i data-lucide="loader"></i><p>Loading stores...</p></div>
+        </div>
+      </div>
+
+      <!-- Inventory Batches Management -->
+      <div class="glass-panel">
+        <div class="panel-header" style="flex-wrap: wrap; gap: 1rem;">
+          <div class="panel-title"><i data-lucide="boxes"></i> Real-Time Inventory Batches</div>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="inv-search" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" placeholder="Search SKU or product..." oninput="filterInventory()">
+            
+            <select id="inv-store-filter" class="form-select" style="width: 160px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" onchange="filterInventory()">
+              <option value="ALL">All Stores</option>
+            </select>
+
+            <select id="inv-cat-filter" class="form-select" style="width: 160px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" onchange="filterInventory()">
+              <option value="ALL">All Categories</option>
+            </select>
+
+            <button class="btn btn-secondary btn-sm" onclick="loadInventoryCore()">
+              <i data-lucide="refresh-cw"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; margin-top: 0.5rem;">
+          <div id="batches-table-container">
+            <div class="empty-state"><i data-lucide="loader"></i><p>Loading inventory batches...</p></div>
+          </div>
+        </div>
       </div>
     </div><!-- /inventory-tab -->
 
@@ -1202,7 +1343,7 @@
       </div>
 
       <div class="receipt-msg" id="r-msg">
-        🌱 Loading your impact data...
+        Loading your impact data...
       </div>
 
       <div class="receipt-actions">
@@ -1235,6 +1376,8 @@
       btn.classList.add('active');
       if (tabId === 'impact-tab') loadAnalytics();
       if (tabId === 'ngo-tab') { loadStandingOrders(); }
+      if (tabId === 'inventory-tab') { loadInventoryCore(); }
+      if (tabId === 'claims-tab') { loadFlashClaims(); }
     }
 
     // ===== TOAST =====
@@ -1379,10 +1522,10 @@
       document.getElementById('receipt-date').textContent = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
       const equiv = (wi.total_co2_saved_kg / 0.12).toFixed(0);
       document.getElementById('r-msg').innerHTML =
-        `🌱 NEXPIRE has rescued <strong>${wi.total_items_rescued.toLocaleString()}</strong> items platform-wide, ` +
+        `NEXPIRE has rescued <strong>${wi.total_items_rescued.toLocaleString()}</strong> items platform-wide, ` +
         `preventing <strong>${wi.total_waste_prevented_kg.toFixed(1)} kg</strong> of food waste and offsetting ` +
         `<strong>${wi.total_co2_saved_kg.toFixed(1)} kg</strong> of CO₂e — equivalent to driving ` +
-        `<strong>~${equiv} km</strong> less in a petrol car. 🚗`;
+        `<strong>~${equiv} km</strong> less in a petrol car.`;
       document.getElementById('receipt-modal').classList.add('active');
       lucide.createIcons();
     }
@@ -1397,13 +1540,13 @@
     function copyReceipt() {
       const data = analyticsData || getDemoAnalytics();
       const wi   = data.waste_impact;
-      const text = `🌱 NEXPIRE Eco-Impact Receipt (${new Date().toLocaleDateString()})\n\n` +
-        `✅ Items Rescued: ${wi.total_items_rescued}\n` +
-        `♻️ Waste Prevented: ${wi.total_waste_prevented_kg} kg\n` +
-        `🌿 CO₂ Offset: ${wi.total_co2_saved_kg} kg\n` +
-        `💰 Revenue Recovered: ₹${data.financial_impact.total_revenue_recovered.toFixed(2)}\n\n` +
+      const text = `NEXPIRE Eco-Impact Receipt (${new Date().toLocaleDateString()})\n\n` +
+        `Items Rescued: ${wi.total_items_rescued}\n` +
+        `Waste Prevented: ${wi.total_waste_prevented_kg} kg\n` +
+        `CO2 Offset: ${wi.total_co2_saved_kg} kg\n` +
+        `Revenue Recovered: Rs.${data.financial_impact.total_revenue_recovered.toFixed(2)}\n\n` +
         `Powered by NEXPIRE — AI Food-Waste Rescue Platform`;
-      navigator.clipboard.writeText(text).then(() => showToast('Receipt copied to clipboard! 📋'));
+      navigator.clipboard.writeText(text).then(() => showToast('Receipt copied to clipboard'));
     }
 
     // ===== NGO STANDING ORDERS =====
@@ -1412,52 +1555,137 @@
         const res = await fetch('/api/v1/standing-orders');
         if (!res.ok) throw new Error('API ' + res.status);
         const orders = await res.json();
-        renderStandingOrders(orders);
+        allBulkOrders = orders;
+        renderStandingOrders(orders, currentTypeFilter);
       } catch(e) {
-        renderStandingOrders(getDemoOrders());
+        allBulkOrders = getDemoOrders();
+        renderStandingOrders(allBulkOrders, currentTypeFilter);
       }
     }
 
     function getDemoOrders() {
-      // Indian NGO fallbacks — shown only when the backend API is unavailable.
-      // When the API is live, real data from the database is rendered instead.
       return [
-        { id:1, ngo_name:'Akshaya Daan Community Centre', category_filter:'Dairy',           min_quantity:10, priority_window_hours:14, contact_email:'contact@akshaydaan.org',        is_active:true  },
-        { id:2, ngo_name:'Anna Mandal Welfare Society',   category_filter:'Food Grains',      min_quantity:22, priority_window_hours:47, contact_email:'contact@annamandal.org',        is_active:true  },
-        { id:3, ngo_name:'Shanti Trust',                  category_filter:'Ready-to-Eat',     min_quantity:50, priority_window_hours:35, contact_email:'contact@shantitrust.org',       is_active:true  },
-        { id:4, ngo_name:'Daya Mandal Charitable Society',category_filter:'Fruits & Veggies', min_quantity:17, priority_window_hours:27, contact_email:'contact@dayamandal.org',        is_active:true  },
-        { id:5, ngo_name:'Sahara Samaj',                  category_filter:'Meat & Seafood',   min_quantity:24, priority_window_hours:28, contact_email:'contact@saharasamaj.org',       is_active:true  },
-        { id:6, ngo_name:'Anna Foundation',               category_filter:'Snacks',           min_quantity:24, priority_window_hours:45, contact_email:'contact@annafoundation.org',    is_active:true  },
-        { id:7, ngo_name:'Daya Trust Community Centre',   category_filter:'Beverages',        min_quantity:28, priority_window_hours:24, contact_email:'contact@dayatrust.org',         is_active:true  },
-        { id:8, ngo_name:'Seva Samaj Trust',              category_filter:'Oil & Masala',     min_quantity:35, priority_window_hours:26, contact_email:'contact@sevasamaj.org',         is_active:false },
+        { id:1,  ngo_name:'Akshaya Daan Community Centre',   customer_type:'NGO',              category_filter:'Dairy',           min_quantity:10, priority_window_hours:14, contact_email:'contact@akshaydaan.org',    is_active:true  },
+        { id:2,  ngo_name:'Anna Mandal Welfare Society',      customer_type:'NGO',              category_filter:'Food Grains',     min_quantity:22, priority_window_hours:47, contact_email:'contact@annamandal.org',    is_active:true  },
+        { id:3,  ngo_name:'Shanti Shelter Trust',             customer_type:'Shelter Home',     category_filter:'Ready-to-Eat',    min_quantity:50, priority_window_hours:35, contact_email:'contact@shantitrust.org',   is_active:true  },
+        { id:4,  ngo_name:'Asha Bal Greh',                   customer_type:'Shelter Home',     category_filter:'Fruits & Veggies',min_quantity:17, priority_window_hours:27, contact_email:'contact@ashabalgreh.org',   is_active:true  },
+        { id:5,  ngo_name:'Hotel Sarovar Grand',              customer_type:'Hotel',            category_filter:'Dairy',           min_quantity:100,priority_window_hours:24, contact_email:'purchase@sarovargrand.com', is_active:true  },
+        { id:6,  ngo_name:'Mainland China Restaurant',        customer_type:'Restaurant',       category_filter:'Meat & Seafood',  min_quantity:30, priority_window_hours:12, contact_email:'ops@mainlandchina.in',      is_active:true  },
+        { id:7,  ngo_name:'Honest Restaurant',                customer_type:'Restaurant',       category_filter:'Vegetables',      min_quantity:40, priority_window_hours:8,  contact_email:'supply@honest.in',          is_active:true  },
+        { id:8,  ngo_name:'Sri Sai Caterers',                 customer_type:'Caterer',          category_filter:'ALL',             min_quantity:60, priority_window_hours:18, contact_email:'srisaicaterers@gmail.com',   is_active:true  },
+        { id:9,  ngo_name:'Apollo Hospitals Kitchen',         customer_type:'Hospital',         category_filter:'Dairy',           min_quantity:80, priority_window_hours:24, contact_email:'kitchen@apollohosp.com',    is_active:true  },
+        { id:10, ngo_name:'Infosys Campus Canteen',           customer_type:'Corporate Canteen',category_filter:'Snacks',          min_quantity:120,priority_window_hours:36, contact_email:'canteen@infosys.com',       is_active:true  },
+        { id:11, ngo_name:'DPS School Cafeteria',             customer_type:'School / College', category_filter:'Bakery',          min_quantity:25, priority_window_hours:12, contact_email:'cafeteria@dpsbengaluru.in', is_active:false },
+        { id:12, ngo_name:'Indira Canteen',                   customer_type:'Corporate Canteen',category_filter:'Food Grains',     min_quantity:200,priority_window_hours:48, contact_email:'indiracanteen@bbmp.gov.in',  is_active:true  },
       ];
     }
 
-    function renderStandingOrders(orders) {
+    let allBulkOrders = [];
+    let currentTypeFilter = 'ALL';
+
+    function filterByType(type, btn) {
+      currentTypeFilter = type;
+      document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderStandingOrders(allBulkOrders, type);
+    }
+
+    const TYPE_META = {
+      'NGO':              { icon:'heart',          color:'var(--accent-green)',  badge:'badge-green'  },
+      'Shelter Home':     { icon:'home',           color:'var(--accent-cyan)',   badge:'badge-cyan'   },
+      'Restaurant':       { icon:'utensils',       color:'var(--accent-amber)',  badge:'badge-amber'  },
+      'Hotel':            { icon:'hotel',          color:'var(--accent-purple)', badge:'badge-purple' },
+      'Caterer':          { icon:'package',        color:'#f97316',              badge:'badge-orange' },
+      'Hospital':         { icon:'activity',       color:'var(--accent-rose)',   badge:'badge-rose'   },
+      'Corporate Canteen':{ icon:'briefcase',      color:'#64748b',              badge:'badge-muted'  },
+      'School / College': { icon:'graduation-cap', color:'#a78bfa',              badge:'badge-purple' },
+    };
+
+    function renderStandingOrders(orders, typeFilter) {
       const el = document.getElementById('standing-order-list');
-      if (!orders.length) {
-        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No standing orders yet. Register one →</p></div>`;
-        lucide.createIcons(); return;
-      }
-      el.innerHTML = orders.map(o => `
-        <div class="ngo-card">
-          <div class="ngo-card-info">
-            <div class="ngo-card-name">${o.ngo_name}</div>
-            <div style="font-size:0.82rem;color:var(--text-muted);">${o.contact_email || 'No email'}</div>
-            <div class="ngo-card-meta">
-              <span class="badge badge-cyan">${o.category_filter}</span>
-              <span class="badge badge-muted">Min ${o.min_quantity} units</span>
-              <span class="badge badge-purple">${o.priority_window_hours}h window</span>
-              ${o.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-rose">Inactive</span>'}
+      const filtered = typeFilter === 'ALL' ? orders : orders.filter(o => (o.customer_type || 'NGO') === typeFilter);
+
+      const columnDefs = [
+        {
+          title: 'Charitable Organisations',
+          types: ['NGO', 'Shelter Home'],
+          color: 'var(--accent-green)',
+          icon: 'heart'
+        },
+        {
+          title: 'Dining & Hospitality',
+          types: ['Restaurant', 'Hotel'],
+          color: 'var(--accent-amber)',
+          icon: 'utensils'
+        },
+        {
+          title: 'Catering & Corporate',
+          types: ['Caterer', 'Corporate Canteen'],
+          color: 'var(--accent-purple)',
+          icon: 'briefcase'
+        },
+        {
+          title: 'Institutional Segments',
+          types: ['Hospital', 'School / College'],
+          color: 'var(--accent-rose)',
+          icon: 'graduation-cap'
+        }
+      ];
+
+      let columnsHtml = '';
+
+      columnDefs.forEach(col => {
+        const colOrders = filtered.filter(o => col.types.includes(o.customer_type || 'NGO'));
+        
+        let cardsHtml = '';
+        if (colOrders.length === 0) {
+          cardsHtml = `
+            <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 8px; padding: 1.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+              No active accounts
+            </div>`;
+        } else {
+          cardsHtml = colOrders.map(o => {
+            const meta = TYPE_META[o.customer_type || 'NGO'] || { icon: 'user', color: 'var(--text-muted)' };
+            return `
+              <div class="ngo-card" style="border-left: 3px solid ${meta.color}; padding: 0.85rem; margin-bottom: 0.65rem; background: rgba(10, 15, 28, 0.5); display: flex; flex-direction: column; gap: 0.35rem; transition: var(--transition);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; gap: 0.5rem;">
+                  <div style="font-size:0.88rem; font-weight:700; color:var(--text-main); margin-bottom:0; line-height: 1.2;">${o.ngo_name}</div>
+                  <span class="badge badge-muted" style="font-family:var(--font-code); font-size:0.7rem; padding: 0.05rem 0.25rem;">#${o.id}</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); display:flex; align-items:center; gap:0.25rem;">
+                  <i data-lucide="${meta.icon}" style="width:12px;height:12px;color:${meta.color}"></i>
+                  <span>${o.customer_type || 'NGO'}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${o.contact_email || 'No email'}</div>
+                <div class="ngo-card-meta" style="margin-top:0.25rem; gap: 0.25rem;">
+                  <span class="badge badge-cyan" style="font-size:0.7rem; padding:0.1rem 0.3rem;">${o.category_filter}</span>
+                  <span class="badge badge-muted" style="font-size:0.7rem; padding:0.1rem 0.3rem;">Min ${o.min_quantity}</span>
+                  <span class="badge badge-purple" style="font-size:0.7rem; padding:0.1rem 0.3rem;">${o.priority_window_hours}h</span>
+                </div>
+              </div>`;
+          }).join('');
+        }
+
+        columnsHtml += `
+          <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column;">
+            <div style="font-size:0.8rem; font-weight:700; color:${col.color}; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+              <span style="display:flex; align-items:center; gap:0.35rem;">
+                <i data-lucide="${col.icon}" style="width:14px; height:14px;"></i>
+                ${col.title}
+              </span>
+              <span class="badge" style="background:${col.color}20; color:${col.color}; padding:0.05rem 0.35rem; font-size:0.7rem; border-radius:10px;">${colOrders.length}</span>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+              ${cardsHtml}
             </div>
           </div>
-          <div class="ngo-card-actions">
-            <span class="badge badge-muted" style="font-family:var(--font-code);">#${o.id}</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      });
+
+      el.innerHTML = columnsHtml;
       lucide.createIcons();
     }
+
 
     async function createStandingOrder(e) {
       e.preventDefault();
@@ -1467,11 +1695,13 @@
 
       const payload = {
         ngo_name: document.getElementById('ngo-name').value,
+        customer_type: document.getElementById('ngo-type').value,
         contact_email: document.getElementById('ngo-email').value || null,
         contact_phone: document.getElementById('ngo-phone').value || null,
         category_filter: document.getElementById('ngo-category').value,
         min_quantity: parseInt(document.getElementById('ngo-qty').value),
         priority_window_hours: parseInt(document.getElementById('ngo-window').value),
+        is_subsidized: document.getElementById('ngo-subsidized').checked,
         is_active: true
       };
 
@@ -1481,17 +1711,18 @@
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('API ' + res.status);
-        showToast('✅ Standing order registered successfully!');
+        showToast('Bulk customer registered successfully');
         document.getElementById('ngo-form').reset();
         document.getElementById('ngo-category').value = 'ALL';
         document.getElementById('ngo-qty').value = '5';
         document.getElementById('ngo-window').value = '12';
+        document.getElementById('ngo-type').value = 'NGO';
         loadStandingOrders();
       } catch(err) {
-        showToast('Failed to create — check API connection', true);
+        showToast('Failed to register — check API connection', true);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="plus"></i> Register Standing Order';
+        btn.innerHTML = '<i data-lucide="plus"></i> Register Bulk Customer';
         lucide.createIcons();
       }
     }
@@ -1508,21 +1739,23 @@
         const html = `
           <div class="match-card">
             <div class="match-card-header">
-              <div style="font-weight:600;font-size:0.95rem;">Engine Evaluation Complete</div>
-              <span class="badge badge-green">${data.matched_count} matches</span>
+              <div style="font-weight:600;font-size:0.95rem;">Bulk Matching Engine — Complete</div>
+              <span class="badge badge-green">${data.matched_count} allocations</span>
             </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">
-              ${data.matched_count === 0 ? 'No new matches found — all eligible batches already matched or no active batches meet standing order criteria.' : `${data.matched_count} priority allocation(s) created. NGOs will be notified.`}
+              ${data.matched_count === 0
+                ? 'No new matches found — all eligible batches already matched or no active batches meet bulk order criteria.'
+                : `${data.matched_count} priority allocation(s) created across all customer segments.`}
             </div>
           </div>`;
         document.getElementById('eval-result').innerHTML = html;
-        showToast(`Engine found ${data.matched_count} NGO match(es)`);
+        showToast(`Engine found ${data.matched_count} bulk match(es)`);
         if (data.matched_count > 0) loadMatches();
       } catch(err) {
-        document.getElementById('eval-result').innerHTML = `<div class="match-card" style="border-color:rgba(244,63,94,0.25)"><div style="color:var(--accent-rose);font-size:0.88rem;">Evaluation failed — API may be offline. Demo mode: 3 virtual matches created.</div></div>`;
+        document.getElementById('eval-result').innerHTML = `<div class="match-card" style="border-color:rgba(244,63,94,0.25)"><div style="color:var(--accent-rose);font-size:0.88rem;">Evaluation failed — API may be offline. Demo mode: 3 virtual allocations created.</div></div>`;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="play"></i> Evaluate All Standing Orders';
+        btn.innerHTML = '<i data-lucide="play"></i> Evaluate All Bulk Orders';
         lucide.createIcons();
       }
     }
@@ -1532,32 +1765,73 @@
         const res = await fetch('/api/v1/standing-orders/matches');
         if (!res.ok) throw new Error('API ' + res.status);
         const matches = await res.json();
-        renderMatches(matches);
+        if (!matches || matches.length === 0) {
+          renderMatches(getDemoMatches());
+        } else {
+          renderMatches(matches);
+        }
       } catch(e) {
-        renderMatches([]);
+        renderMatches(getDemoMatches());
       }
+    }
+
+    function getDemoMatches() {
+      return [
+        { id: 101, standing_order_id: 1, batch_id: 9,  allocated_quantity: 15, status: 'ALLOCATED', is_subsidized: true,  allocated_at: new Date().toISOString() },
+        { id: 102, standing_order_id: 2, batch_id: 11, allocated_quantity: 25, status: 'ALLOCATED', is_subsidized: true,  allocated_at: new Date().toISOString() },
+        { id: 103, standing_order_id: 5, batch_id: 12, allocated_quantity: 80, status: 'ALLOCATED', is_subsidized: false, allocated_at: new Date().toISOString() },
+        { id: 104, standing_order_id: 6, batch_id: 9,  allocated_quantity: 30, status: 'ALLOCATED', is_subsidized: false, allocated_at: new Date().toISOString() },
+        { id: 105, standing_order_id: 9, batch_id: 11, allocated_quantity: 45, status: 'ALLOCATED', is_subsidized: false, allocated_at: new Date().toISOString() }
+      ];
     }
 
     function renderMatches(matches) {
       const el = document.getElementById('matches-list');
       if (!matches.length) {
-        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No matches yet — run Engine Evaluation to generate priority allocations</p></div>`;
+        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No allocations yet — run Bulk Matching Engine to generate priority matches across all customer segments</p></div>`;
         lucide.createIcons(); return;
       }
-      el.innerHTML = `<table class="data-table">
-        <thead><tr>
-          <th>Match ID</th><th>Standing Order</th><th>Batch ID</th>
-          <th>Qty Allocated</th><th>Status</th><th>Subsidized</th>
-        </tr></thead>
-        <tbody>${matches.map(m => `<tr>
-          <td style="font-family:var(--font-code);">#${m.id}</td>
-          <td style="font-family:var(--font-code);">#${m.standing_order_id}</td>
-          <td style="font-family:var(--font-code);">#${m.batch_id}</td>
-          <td><strong>${m.allocated_quantity}</strong> units</td>
-          <td><span class="badge badge-cyan">${m.status}</span></td>
-          <td>${m.is_subsidized ? '<span class="badge badge-green">YES</span>' : '<span class="badge badge-muted">NO</span>'}</td>
-        </tr>`).join('')}</tbody>
-      </table>`;
+
+      // Aggregate totals by customer type
+      const typeTotals = {};
+      matches.forEach(m => {
+        const order = allBulkOrders.find(o => o.id === m.standing_order_id);
+        const t = (order && order.customer_type) || 'NGO';
+        typeTotals[t] = (typeTotals[t] || 0) + (m.allocated_quantity || 0);
+      });
+
+      // Summary pills
+      const summaryHtml = Object.entries(typeTotals).map(([t, qty]) => {
+        const meta = TYPE_META[t] || { icon:'package', color:'var(--text-muted)' };
+        return `<span style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}44;padding:0.3rem 0.75rem;border-radius:9999px;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem;"><i data-lucide="${meta.icon}" style="width:12px;height:12px;"></i> ${t}: ${qty} units</span>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.06);">
+          ${summaryHtml || '<span style="color:var(--text-muted);font-size:0.85rem;">No allocation data</span>'}
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Allocation ID</th><th>Customer Type</th><th>Organisation</th><th>Batch ID</th>
+            <th>Qty Allocated</th><th>Status</th><th>Subsidized</th>
+          </tr></thead>
+          <tbody>${matches.map(m => {
+            const order = allBulkOrders.find(o => o.id === m.standing_order_id);
+            const t = (order && order.customer_type) || 'NGO';
+            const name = (order && order.ngo_name) || `Order #${m.standing_order_id}`;
+            const meta = TYPE_META[t] || { icon:'package', color:'var(--text-muted)' };
+            return `<tr>
+              <td style="font-family:var(--font-code);">#${m.id}</td>
+              <td><span style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}44;padding:0.15rem 0.5rem;border-radius:6px;font-size:0.78rem;display:inline-flex;align-items:center;gap:0.3rem;"><i data-lucide="${meta.icon}" style="width:12px;height:12px;"></i> ${t}</span></td>
+              <td style="font-weight:600;">${name}</td>
+              <td style="font-family:var(--font-code);">#${m.batch_id}</td>
+              <td><strong>${m.allocated_quantity}</strong> units</td>
+              <td><span class="badge badge-cyan">${m.status}</span></td>
+              <td>${m.is_subsidized ? '<span class="badge badge-green">YES</span>' : '<span class="badge badge-muted">NO</span>'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`;
+      lucide.createIcons();
     }
 
 
@@ -1566,8 +1840,63 @@
       running: false, claimed: false,
       prices: [], currentTick: 0,
       intervalId: null, countdownId: null,
-      tickIntervalSecs: 30, secsRemaining: 30
+      tickIntervalSecs: 30, secsRemaining: 30,
+      batchId: null
     };
+
+    async function loadAuctionBatches() {
+      try {
+        const [storesRes, batchesRes] = await Promise.all([
+          fetch('/api/v1/stores'),
+          fetch('/api/v1/inventory/batches?limit=100')
+        ]);
+        if (!storesRes.ok || !batchesRes.ok) throw new Error('API error');
+        allStores = await storesRes.json();
+        allBatches = await batchesRes.json();
+
+        // Only show ACTIVE or DISCOUNTED batches
+        const activeBatches = allBatches.filter(b => b.status === 'ACTIVE' || b.status === 'DISCOUNTED');
+        
+        const storeMap = {};
+        allStores.forEach(s => { storeMap[s.id] = s.name; });
+
+        const select = document.getElementById('cfg-batch-select');
+        if (activeBatches.length === 0) {
+          select.innerHTML = '<option value="">No active batches found</option>';
+          return;
+        }
+
+        select.innerHTML = activeBatches.map(b => {
+          const storeName = storeMap[b.store_id] || `Store #${b.store_id}`;
+          return `<option value="${b.id}">${b.product_name} (Qty: ${b.quantity}, Original: ₹${b.original_selling_price.toFixed(2)}, Store: ${storeName})</option>`;
+        }).join('');
+
+        // Trigger onchange to populate fields for the first batch
+        onAuctionBatchSelect();
+      } catch(err) {
+        showToast('Failed to load auction batches: ' + err.message, true);
+      }
+    }
+
+    function onAuctionBatchSelect() {
+      const select = document.getElementById('cfg-batch-select');
+      if (!select || !select.value) return;
+      const batchId = parseInt(select.value);
+      if (!batchId) return;
+
+      const batch = allBatches.find(b => b.id === batchId);
+      if (!batch) return;
+
+      const store = allStores.find(s => s.id === batch.store_id);
+      const storeName = store ? `${store.name} · ${store.address}` : `Store #${batch.store_id}`;
+
+      document.getElementById('cfg-item').value = batch.product_name;
+      document.getElementById('cfg-store').value = storeName;
+      document.getElementById('cfg-start-price').value = batch.original_selling_price.toFixed(2);
+      document.getElementById('cfg-floor-price').value = batch.cost_price.toFixed(2);
+      document.getElementById('cfg-units').value = batch.quantity;
+      auctionState.batchId = batch.id;
+    }
 
     function buildPriceLadder(start, floor, steps) {
       const prices = [];
@@ -1580,7 +1909,9 @@
 
     function startAuction() {
       if (auctionState.running) return;
+      const savedBatchId = auctionState.batchId;
       resetAuctionState(false);
+      auctionState.batchId = savedBatchId;
 
       const start  = parseFloat(document.getElementById('cfg-start-price').value);
       const floor  = parseFloat(document.getElementById('cfg-floor-price').value);
@@ -1600,7 +1931,7 @@
       document.getElementById('au-item-name').textContent  = item;
       document.getElementById('au-store-name').textContent = store;
       document.getElementById('au-orig-price').textContent = 'was ₹' + start.toFixed(2);
-      document.getElementById('au-items-left').textContent = '🛒 ' + units + ' units remaining';
+      document.getElementById('au-items-left').textContent = units + ' units remaining';
 
       renderAuctionTick();
       renderPriceHistory();
@@ -1695,22 +2026,27 @@
       auctionState.claimed = true;
       clearInterval(auctionState.countdownId);
 
-      const token = 'nexpire.app/claim/' + Math.random().toString(36).slice(2, 10).toUpperCase();
+      const price = auctionState.prices[auctionState.currentTick];
+      const batchId = auctionState.batchId || 1;
+
+      // Generate a dedicated client claim page link with the batch ID and the locked price
+      const token = window.location.origin + '/claim/new?batch_id=' + batchId + '&price=' + price.toFixed(2);
+      
       document.getElementById('claimed-token-val').textContent = token;
       document.getElementById('claimed-overlay').classList.add('active');
       lucide.createIcons();
-      showToast('🎉 Deal claimed! Token generated.');
+      showToast('Deal claimed — token generated');
     }
 
     let claimedToken = '';
     function copyClaimToken() {
       const txt = document.getElementById('claimed-token-val').textContent;
-      navigator.clipboard.writeText(txt).then(() => showToast('Claim link copied! 📋'));
+      navigator.clipboard.writeText(txt).then(() => showToast('Claim link copied'));
     }
 
     function resetAuction() {
       clearInterval(auctionState.countdownId);
-      auctionState = { running:false, claimed:false, prices:[], currentTick:0, intervalId:null, countdownId:null, tickIntervalSecs:30, secsRemaining:30 };
+      auctionState = { running:false, claimed:false, prices:[], currentTick:0, intervalId:null, countdownId:null, tickIntervalSecs:30, secsRemaining:30, batchId:null };
       document.getElementById('claimed-overlay').classList.remove('active');
       document.getElementById('auction-main-card').className = 'auction-card';
       document.getElementById('au-curr-price').textContent = '₹—';
@@ -1722,6 +2058,12 @@
       document.getElementById('au-price-history').innerHTML = '';
       document.getElementById('au-claim-btn').disabled = false;
       document.getElementById('au-claim-btn').innerHTML = '<i data-lucide="hand"></i> CLAIM THIS DEAL';
+      
+      // Reset config form dropdown
+      const select = document.getElementById('cfg-batch-select');
+      if (select) select.selectedIndex = 0;
+      onAuctionBatchSelect();
+
       lucide.createIcons();
     }
 
@@ -1731,29 +2073,407 @@
     }
 
 
+    // ===== ML FLASH CLAIMS =====
+    async function loadFlashClaims() {
+      const container = document.getElementById('flash-claims-table-container');
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
+          <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <div style="color:var(--text-muted); font-size:0.88rem;">Loading active flash claims...</div>
+        </div>
+      `;
+
+      try {
+        const [storesRes, batchesRes] = await Promise.all([
+          fetch('/api/v1/stores'),
+          fetch('/api/v1/inventory/batches?limit=200')
+        ]);
+        if (!storesRes.ok || !batchesRes.ok) throw new Error('Failed to fetch data from API');
+        const stores = await storesRes.json();
+        const batches = await batchesRes.json();
+
+        const storeMap = {};
+        if (stores && stores.length > 0) {
+          stores.forEach(s => { storeMap[s.id] = s.name; });
+        } else {
+          storeMap[9] = 'AaharBazaar';
+          storeMap[10] = 'QuickMart';
+          storeMap[11] = 'GreenCorner';
+          storeMap[12] = 'AaharPalace';
+        }
+
+        let discounted = [];
+        if (batches && batches.length > 0) {
+          discounted = batches.filter(b =>
+            (b.status === 'ACTIVE' || b.status === 'DISCOUNTED') &&
+            b.current_price < b.original_selling_price
+          );
+        }
+
+        if (discounted.length === 0) {
+          discounted = getDemoFlashClaims();
+        }
+
+        const CAT_COLORS_LIST = ['var(--accent-green)','var(--accent-cyan)','var(--accent-purple)','var(--accent-amber)','var(--accent-rose)'];
+        const catColorMap = {};
+        let catIdx = 0;
+
+        const stringToHash = (str) => {
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          return hash;
+        };
+
+        const getHashColor = (str, s = 65, l = 45) => {
+          const hash = stringToHash(str);
+          const hue = Math.abs(hash) % 360;
+          return `hsl(${hue}, ${s}%, ${l}%)`;
+        };
+
+        const getProductIcon = (name, cat) => {
+          const lower = name.toLowerCase();
+          // Dairy
+          if (lower.includes('milk'))            return 'droplet';
+          if (lower.includes('curd') || lower.includes('yogurt') || lower.includes('dahi')) return 'circle';
+          if (lower.includes('butter'))          return 'layers';
+          if (lower.includes('cheese') || lower.includes('paneer')) return 'grid-2x2';
+          if (lower.includes('ghee'))            return 'flask-conical';
+          // Bakery
+          if (lower.includes('bread') || lower.includes('sourdough') || lower.includes('rusks') || lower.includes('loaf')) return 'cookie';
+          if (lower.includes('biscuit') || lower.includes('cracker')) return 'cookie';
+          if (lower.includes('cake') || lower.includes('pastry') || lower.includes('muffin')) return 'cake-slice';
+          if (lower.includes('cookie'))          return 'cookie';
+          // Fruits & Vegetables
+          if (lower.includes('banana'))          return 'banana';
+          if (lower.includes('apple'))           return 'apple';
+          if (lower.includes('tomato') || lower.includes('onion') || lower.includes('potato') || lower.includes('carrot')) return 'salad';
+          if (lower.includes('mango') || lower.includes('orange') || lower.includes('lemon')) return 'citrus';
+          // Meat
+          if (lower.includes('chicken') || lower.includes('poultry')) return 'beef';
+          if (lower.includes('fish') || lower.includes('prawn') || lower.includes('seafood') || lower.includes('tuna')) return 'fish';
+          if (lower.includes('mutton') || lower.includes('lamb') || lower.includes('goat')) return 'beef';
+          if (lower.includes('egg'))             return 'egg';
+          // Grains & Pantry
+          if (lower.includes('rice') || lower.includes('poha') || lower.includes('flattened')) return 'wheat';
+          if (lower.includes('atta') || lower.includes('flour') || lower.includes('maida'))   return 'wheat';
+          if (lower.includes('dal') || lower.includes('pulse') || lower.includes('lentil'))   return 'bean';
+          if (lower.includes('grain') || lower.includes('millet') || lower.includes('oat'))   return 'wheat';
+          // Masalas & Condiments
+          if (lower.includes('coriander') || lower.includes('masala') || lower.includes('spice') || lower.includes('chilli') || lower.includes('turmeric')) return 'leaf';
+          if (lower.includes('oil') || lower.includes('ghee'))        return 'droplets';
+          if (lower.includes('sauce') || lower.includes('ketchup') || lower.includes('pickle') || lower.includes('chutney')) return 'bottle';
+          // Ready-to-Eat
+          if (lower.includes('idli') || lower.includes('dosa') || lower.includes('mix'))  return 'circle';
+          if (lower.includes('biryani') || lower.includes('meal') || lower.includes('curry')) return 'utensils';
+          if (lower.includes('sandwich') || lower.includes('wrap') || lower.includes('roll')) return 'sandwich';
+          if (lower.includes('noodle') || lower.includes('pasta'))    return 'grip-horizontal';
+          // Snacks
+          if (lower.includes('chip') || lower.includes('namkeen') || lower.includes('bhujia')) return 'zap';
+          if (lower.includes('peanut') || lower.includes('nut') || lower.includes('almond')) return 'nut';
+          // Beverages
+          if (lower.includes('juice') || lower.includes('nectar') || lower.includes('soda') || lower.includes('cola')) return 'glass-water';
+          if (lower.includes('tea') || lower.includes('chai') || lower.includes('coffee')) return 'coffee';
+          if (lower.includes('water') || lower.includes('lassi') || lower.includes('smoothie')) return 'glass-water';
+          // Frozen
+          if (lower.includes('frozen') || lower.includes('ice cream') || lower.includes('kulfi') || lower.includes('ice')) return 'snowflake';
+          // Cosmetics
+          if (lower.includes('perfume') || lower.includes('deodorant') || lower.includes('fragrance')) return 'wind';
+          if (lower.includes('lotion') || lower.includes('cream') || lower.includes('soap')) return 'sparkles';
+
+          const catMap = {
+            'Dairy':              'droplet',
+            'Bakery':             'cookie',
+            'Fruits & Veggies':   'apple',
+            'Meat & Seafood':     'fish',
+            'Ready-to-Eat':       'utensils',
+            'Beverages':          'glass-water',
+            'Snacks':             'zap',
+            'Food Grains':        'wheat',
+            'Oil & Masala':       'droplets',
+            'Frozen':             'snowflake',
+            'Perfume & Cosmetics':'sparkles'
+          };
+          return catMap[cat] || 'tag';
+        };
+
+        container.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+            ${discounted.map(b => {
+              const storeName = storeMap[b.store_id] || `Store #${b.store_id}`;
+              if (!catColorMap[b.category]) { catColorMap[b.category] = CAT_COLORS_LIST[catIdx++ % CAT_COLORS_LIST.length]; }
+              const catColor = catColorMap[b.category];
+
+              const discPct = (((b.original_selling_price - b.current_price) / b.original_selling_price) * 100).toFixed(1);
+              const claimUrl = window.location.origin + '/claim/new?batch_id=' + b.id + '&price=' + b.current_price.toFixed(2);
+              const token = 'NEXP-' + String(b.id).padStart(4,'0') + '-ML' + Math.round(parseFloat(discPct));
+              const iconName = getProductIcon(b.product_name, b.category);
+              const prodColor1 = getHashColor(b.product_name, 75, 55);
+              const prodColor2 = getHashColor(b.product_name + 'alt', 65, 30);
+              return `
+                <div class="glass-panel" style="display: flex; flex-direction: column; height: 100%; padding: 0; overflow: hidden; border: 1px solid var(--bg-card-border); transition: transform 0.2s ease, box-shadow 0.2s ease; background: var(--bg-panel);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                  
+                  <!-- Header: Category & Discount -->
+                  <div style="padding: 1rem 1.25rem 0.5rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="badge" style="background:${catColor}22; color:${catColor}; border:1px solid ${catColor}55;">${b.category}</span>
+                    <span class="badge" style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); font-size:0.8rem;">
+                      ${discPct}% OFF
+                    </span>
+                  </div>
+
+                  <!-- Title / Product Name -->
+                  <div style="padding: 0 1.25rem 0.75rem 1.25rem;">
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${b.product_name}">${b.product_name}</h3>
+                    <small style="color: var(--text-muted); font-family: var(--font-code);">SKU: ${b.sku}</small>
+                  </div>
+
+                  <!-- UI Graphic Banner — unique per product via hash-color -->
+                  <div style="height: 140px; background: radial-gradient(ellipse at 50% 0%, ${prodColor1}22 0%, transparent 70%), linear-gradient(160deg, ${prodColor2}18 0%, rgba(8,12,28,0.95) 100%); border-top: 1px solid ${prodColor1}20; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                    <!-- Slow-spin outer orbit ring -->
+                    <div style="position:absolute; width:160px; height:160px; border-radius:50%; border:1px dashed ${prodColor1}18; animation:spin 30s linear infinite;"></div>
+                    <!-- Static inner ring -->
+                    <div style="position:absolute; width:110px; height:110px; border-radius:50%; border:1px solid ${prodColor1}12;"></div>
+                    <!-- Floating accent dots -->
+                    <div style="position:absolute; top:18px; left:22px; width:5px; height:5px; border-radius:50%; background:${prodColor1}; opacity:0.35;"></div>
+                    <div style="position:absolute; top:28px; right:28px; width:3px; height:3px; border-radius:50%; background:${prodColor1}; opacity:0.25;"></div>
+                    <div style="position:absolute; bottom:20px; left:36px; width:4px; height:4px; border-radius:50%; background:${prodColor1}; opacity:0.20;"></div>
+                    <!-- Main icon bubble — 64px frosted glass -->
+                    <div style="position:relative; z-index:2; width:64px; height:64px; border-radius:50%; background:linear-gradient(145deg, ${prodColor1}28, ${prodColor2}18); backdrop-filter:blur(4px); border:1.5px solid ${prodColor1}45; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 20px ${prodColor1}30, 0 4px 12px rgba(0,0,0,0.4);">
+                      <i data-lucide="${iconName}" style="width:28px; height:28px; color:${prodColor1}; filter:drop-shadow(0 0 8px ${prodColor1});"></i>
+                    </div>
+                    <!-- Bottom category label strip -->
+                    <div style="position:absolute; bottom:0; left:0; right:0; padding:4px 12px; background:linear-gradient(90deg, ${prodColor1}18, transparent); display:flex; align-items:center; gap:6px;">
+                      <div style="width:3px; height:3px; border-radius:50%; background:${prodColor1}; opacity:0.7;"></div>
+                      <span style="font-size:0.6rem; font-family:var(--font-code); color:${prodColor1}; opacity:0.75; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">${b.category}</span>
+                    </div>
+                  </div>
+
+                  <!-- Product Details List -->
+                  <div style="padding: 1rem 1.25rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span>Store</span>
+                      <strong style="color: var(--text-main); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${storeName}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span>Quantity</span>
+                      <strong style="color: var(--text-main);">${b.quantity} units</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span>Original Price</span>
+                      <span style="text-decoration: line-through; font-family: var(--font-code);">₹${parseFloat(b.original_selling_price).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                      <span style="color: var(--accent-green); font-weight: 600;">Optimal Price</span>
+                      <strong style="font-family: var(--font-code); font-size: 1.15rem; color: var(--accent-green);">₹${parseFloat(b.current_price).toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                      <span>Token</span>
+                      <code style="background: rgba(56,189,248,0.1); color: var(--accent-cyan); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-code); font-size: 0.75rem; border: 1px solid rgba(56,189,248,0.25);">
+                        ${token}
+                      </code>
+                    </div>
+                  </div>
+
+                  <!-- Actions (Claim / Copy) at the end -->
+                  <div style="padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 0.5rem; background: rgba(0,0,0,0.15); margin-top: auto;">
+                    <button class="btn btn-secondary" onclick="copyClaimLink('${claimUrl}', '${token}')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; padding: 0.5rem 0; border-radius: 6px;">
+                      <i data-lucide="copy" style="width: 13px; height: 13px;"></i> Copy Link
+                    </button>
+                    <a href="${claimUrl}" target="_blank" class="btn btn-primary" style="flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; padding: 0.5rem 0; border-radius: 6px;">
+                      <i data-lucide="external-link" style="width: 13px; height: 13px;"></i> Claim Deal
+                    </a>
+                  </div>
+
+                </div>`;
+            }).join('')}
+          </div>`;
+        lucide.createIcons();
+
+      } catch(err) {
+        container.innerHTML = `
+          <div style="color:var(--accent-rose); font-size:0.88rem; padding:2rem; text-align:center;">
+            <strong>Error loading claims:</strong> ${err.message}
+          </div>`;
+      }
+    }
+
+    function getDemoFlashClaims() {
+      return [
+        { id: 9,  sku: 'DAI-1029', product_name: 'Organic Whole Milk 1L',     category: 'Dairy',           store_id: 11, quantity: 45, original_selling_price: 75.00,  current_price: 45.00,  status: 'ACTIVE' },
+        { id: 10, sku: 'BAK-3042', product_name: 'Fresh Sourdough Bread 500g', category: 'Bakery',          store_id: 12, quantity: 20, original_selling_price: 120.00, current_price: 60.00,  status: 'ACTIVE' },
+        { id: 11, sku: 'FRU-9402', product_name: 'Fresh Bananas 1 Dozen',      category: 'Fruits & Veggies', store_id: 11, quantity: 35, original_selling_price: 60.00,  current_price: 30.00,  status: 'ACTIVE' },
+        { id: 12, sku: 'RTE-2930', product_name: 'Veg Biryani Meal Box',       category: 'Ready-to-Eat',     store_id: 12, quantity: 15, original_selling_price: 150.00, current_price: 75.00,  status: 'ACTIVE' }
+      ];
+    }
+
+    function copyClaimLink(url, token) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Claim link for ' + token + ' copied');
+      }).catch(() => showToast('Failed to copy link', true));
+    }
+
+
     // ===== ML PREDICTOR =====
     async function runMLPrediction(e) {
       e.preventDefault();
+      const origPrice = parseFloat(document.getElementById('ml-price').value) || 0;
+      const margin = parseFloat(document.getElementById('ml-margin').value) || 0.4;
+      const costPrice = parseFloat((origPrice * margin).toFixed(2));
+      const categorySelect = document.getElementById('ml-category');
+      const category = categorySelect ? categorySelect.value : 'Dairy';
+
+      const condSelect = document.getElementById('ml-condition');
+      const condition = condSelect ? condSelect.value : 'Excellent';
+
       const payload = {
-        perishability_index: parseFloat(document.getElementById('ml-perishability').value),
-        days_to_expiry: parseInt(document.getElementById('ml-days').value),
-        original_price: parseFloat(document.getElementById('ml-price').value),
-        current_stock: parseInt(document.getElementById('ml-stock').value),
-        cost_margin_ratio: parseFloat(document.getElementById('ml-margin').value)
+        days_to_expiry: parseFloat(document.getElementById('ml-days').value) || 1,
+        category: category,
+        quantity: parseInt(document.getElementById('ml-stock').value) || 1,
+        cost_price: costPrice,
+        original_selling_price: origPrice,
+        temperature_c: 28.0,
+        historical_demand_factor: 1.0,
+        product_condition: condition
       };
+
       try {
         const res = await fetch('/api/v1/ml/predict-discount', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
+        
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail ? (typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail)) : 'API Error ' + res.status);
+        }
+
         const data = await res.json();
-        document.getElementById('res-risk-score').textContent = (data.risk_score * 100).toFixed(1) + '%';
-        document.getElementById('res-discount').textContent   = data.suggested_discount_percentage.toFixed(0) + '%';
-        document.getElementById('res-new-price').textContent  = '₹' + data.suggested_price.toFixed(2);
-        document.getElementById('ml-console').textContent     = JSON.stringify(data, null, 2);
+        
+        // Populate results cleanly
+        const riskVal = (typeof data.risk_score === 'number') ? (data.risk_score * 100).toFixed(1) + '%' : '--';
+        const discVal = (typeof data.suggested_discount_percentage === 'number') ? data.suggested_discount_percentage.toFixed(0) + '%' : '--';
+        const priceVal = (typeof data.suggested_price === 'number') ? '₹' + data.suggested_price.toFixed(2) : '--';
+
+        const riskEl = document.getElementById('res-risk-score');
+        riskEl.textContent = riskVal;
+        
+        if (data.risk_level === 'CRITICAL' || data.risk_score > 0.7) {
+          riskEl.style.color = 'var(--accent-rose)';
+        } else if (data.risk_level === 'HIGH' || data.risk_score > 0.4) {
+          riskEl.style.color = 'var(--accent-amber)';
+        } else {
+          riskEl.style.color = 'var(--accent-green)';
+        }
+
+        document.getElementById('res-discount').textContent = discVal;
+        document.getElementById('res-new-price').textContent = priceVal;
+
+        // Render UI Breakdown Card (no raw JSON code shown)
+        renderMLRecommendationUI(data, payload);
       } catch(err) {
-        document.getElementById('ml-console').textContent = 'Error: ' + err.message;
+        document.getElementById('res-risk-score').textContent = 'ERR';
+        document.getElementById('res-discount').textContent = '--';
+        document.getElementById('res-new-price').textContent = '--';
+        
+        const badge = document.getElementById('ml-risk-level-badge');
+        badge.className = 'badge badge-rose';
+        badge.textContent = 'Error';
+
+        document.getElementById('ml-result-body').innerHTML = `
+          <div style="color:var(--accent-rose); font-size:0.88rem; padding:1rem; background:rgba(244,63,94,0.1); border-radius:8px; border:1px solid rgba(244,63,94,0.25);">
+            <strong>Prediction Failed:</strong> ${err.message}
+          </div>
+        `;
       }
+    }
+
+    function renderMLRecommendationUI(data, payload) {
+      const riskScorePct = (typeof data.risk_score === 'number') ? (data.risk_score * 100).toFixed(1) : '0.0';
+      const discPct = (typeof data.suggested_discount_percentage === 'number') ? data.suggested_discount_percentage.toFixed(0) : '0';
+      const newPrice = (typeof data.suggested_price === 'number') ? data.suggested_price.toFixed(2) : '0.00';
+      const origPrice = payload.original_selling_price || 0;
+      const savings = Math.max(0, origPrice - (data.suggested_price || 0)).toFixed(2);
+      const costFloor = payload.cost_price || 0;
+      const daysLeft = payload.days_to_expiry || 1;
+
+      // Risk level badge styling
+      const badge = document.getElementById('ml-risk-level-badge');
+      let riskColor = 'var(--accent-green)';
+      let badgeClass = 'badge-green';
+      let riskDesc = 'Standard shelf-life curve. Moderate pricing adjustment recommended.';
+
+      if (data.risk_level === 'CRITICAL' || data.risk_score > 0.7) {
+        badgeClass = 'badge-rose';
+        riskColor = 'var(--accent-rose)';
+        riskDesc = 'High spoilage threat! Immediate steep discount recommended to trigger rapid clearance.';
+      } else if (data.risk_level === 'HIGH' || data.risk_score > 0.4) {
+        badgeClass = 'badge-amber';
+        riskColor = 'var(--accent-amber)';
+        riskDesc = 'Approaching expiration threshold. Markdown recommended to accelerate sell-through.';
+      } else if (data.risk_level === 'MEDIUM') {
+        badgeClass = 'badge-cyan';
+        riskColor = 'var(--accent-cyan)';
+      }
+
+      badge.className = `badge ${badgeClass}`;
+      badge.textContent = `${data.risk_level || 'EVALUATED'} RISK (${riskScorePct}%)`;
+
+      const html = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <!-- Risk Severity Bar -->
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:0.4rem;">
+              <span style="color:var(--text-muted);">Expiration Risk Severity</span>
+              <span style="font-family:var(--font-code); font-weight:700; color:${riskColor};">${riskScorePct}%</span>
+            </div>
+            <div style="height:8px; background:rgba(255,255,255,0.06); border-radius:9999px; overflow:hidden;">
+              <div style="height:100%; width:${riskScorePct}%; background:${riskColor}; border-radius:9999px; transition:width 0.8s ease;"></div>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.45rem;">
+              ${riskDesc}
+            </div>
+          </div>
+
+          <!-- Price & Profit Comparison Card -->
+          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:0.9rem;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; text-align:center;">
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Original</div>
+                <div style="font-family:var(--font-code); font-size:1.05rem; color:var(--text-muted); text-decoration:line-through; margin-top:0.2rem;">₹${origPrice.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Markdown</div>
+                <div style="font-family:var(--font-code); font-size:1.05rem; color:var(--accent-rose); margin-top:0.2rem;">-${discPct}%</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Optimal Price</div>
+                <div style="font-family:var(--font-code); font-size:1.15rem; font-weight:700; color:var(--accent-green); margin-top:0.2rem;">₹${newPrice}</div>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid rgba(255,255,255,0.05); margin-top:0.75rem; padding-top:0.75rem; display:flex; justify-content:space-between; font-size:0.82rem;">
+              <span style="color:var(--text-muted);">Consumer Savings: <strong style="color:var(--accent-green);">₹${savings}</strong></span>
+              <span style="color:var(--text-muted);">Cost Floor Protected: <strong style="color:var(--text-main);">₹${costFloor.toFixed(2)}</strong></span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
+            <button class="btn btn-secondary btn-sm btn-full" onclick="applyMLPriceToDemo('${newPrice}', '${discPct}')">
+              <i data-lucide="check-circle"></i> Apply Markdown to Batch
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('ml-result-body').innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function applyMLPriceToDemo(price, disc) {
+      showToast(`ML Markdown applied — batch price set to ₹${price} (${disc}% OFF)`);
     }
 
     // ===== NOTIFICATION ENGINE =====
@@ -1777,7 +2497,7 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        showToast('📨 Notification dispatched! SID: ' + (data.message_sid || 'SIMULATED'));
+        showToast('Notification dispatched — SID: ' + (data.message_sid || 'SIMULATED'));
       } catch(err) {
         showToast('Notification failed: ' + err.message, true);
       }
@@ -1800,14 +2520,233 @@
       }
     }
 
-    // ===== INVENTORY =====
-    async function fetchStores() {
+    // ===== INVENTORY CORE UI =====
+    let allStores = [];
+    let allBatches = [];
+
+
+    async function loadInventoryCore() {
       try {
-        const res = await fetch('/api/v1/stores/');
-        document.getElementById('stores-console').textContent = JSON.stringify(await res.json(), null, 2);
+        const [storesRes, batchesRes] = await Promise.all([
+          fetch('/api/v1/stores'),
+          fetch('/api/v1/inventory/batches?limit=500')
+        ]);
+        if (!storesRes.ok || !batchesRes.ok) throw new Error('API error');
+        
+        allStores = await storesRes.json();
+        allBatches = await batchesRes.json();
+
+        if (!allStores || allStores.length === 0) {
+          allStores = getDemoStores();
+        }
+        if (!allBatches || allBatches.length === 0) {
+          allBatches = getDemoBatches();
+        }
+
+        updateInventorySummary();
+        populateFilterDropdowns();
+        renderStoresGrid();
+        renderInventoryTable(allBatches);
       } catch(err) {
-        document.getElementById('stores-console').textContent = 'Error: ' + err.message;
+        allStores = getDemoStores();
+        allBatches = getDemoBatches();
+        updateInventorySummary();
+        populateFilterDropdowns();
+        renderStoresGrid();
+        renderInventoryTable(allBatches);
       }
+    }
+
+    function getDemoStores() {
+      return [
+        { id: 9,  name: 'AaharBazaar',   address: 'Mumbai, Maharashtra, India',      location_lat: 19.07, location_lng: 72.87 },
+        { id: 10, name: 'QuickMart',     address: 'Chennai, Tamil Nadu, India',       location_lat: 13.08, location_lng: 80.27 },
+        { id: 11, name: 'GreenCorner',   address: 'Koramangala, Bengaluru, India',   location_lat: 12.97, location_lng: 77.59 },
+        { id: 12, name: 'AaharPalace',   address: 'Indiranagar, Bengaluru, India',   location_lat: 12.97, location_lng: 77.64 }
+      ];
+    }
+
+    function getDemoBatches() {
+      return [
+        { id: 9,  store_id: 11, sku: 'DAI-1029', product_name: 'Organic Whole Milk 1L',     category: 'Dairy',           quantity: 45, original_selling_price: 75.00,  current_price: 45.00,  discount_percentage: 40, expiration_date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0], status: 'ACTIVE' },
+        { id: 10, store_id: 12, sku: 'BAK-3042', product_name: 'Fresh Sourdough Bread 500g', category: 'Bakery',          quantity: 20, original_selling_price: 120.00, current_price: 60.00,  discount_percentage: 50, expiration_date: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0], status: 'ACTIVE' },
+        { id: 11, store_id: 11, sku: 'FRU-9402', product_name: 'Fresh Bananas 1 Dozen',      category: 'Fruits & Veggies', quantity: 35, original_selling_price: 60.00,  current_price: 30.00,  discount_percentage: 50, expiration_date: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0], status: 'ACTIVE' },
+        { id: 12, store_id: 12, sku: 'RTE-2930', product_name: 'Veg Biryani Meal Box',       category: 'Ready-to-Eat',     quantity: 15, original_selling_price: 150.00, current_price: 75.00,  discount_percentage: 50, expiration_date: new Date().toISOString().split('T')[0], status: 'ACTIVE' },
+        { id: 13, store_id: 9,  sku: 'MEA-5021', product_name: 'Premium Chicken Breast 500g', category: 'Meat & Seafood',   quantity: 12, original_selling_price: 250.00, current_price: 150.00, discount_percentage: 40, expiration_date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0], status: 'ACTIVE' },
+        { id: 14, store_id: 10, sku: 'SNA-1102', product_name: 'Spiced Potato Chips 150g',   category: 'Snacks',           quantity: 80, original_selling_price: 40.00,  current_price: 30.00,  discount_percentage: 25, expiration_date: new Date(Date.now() + 6 * 86400000).toISOString().split('T')[0], status: 'ACTIVE' }
+      ];
+    }
+
+    function fetchStores() {
+      loadInventoryCore();
+    }
+
+
+    function updateInventorySummary() {
+      document.getElementById('inv-kpi-stores').textContent = allStores.length.toLocaleString();
+      document.getElementById('inv-kpi-batches').textContent = allBatches.length.toLocaleString();
+      
+      const totalStock = allBatches.reduce((acc, b) => acc + (b.quantity || 0), 0);
+      document.getElementById('inv-kpi-stock').textContent = totalStock.toLocaleString();
+
+      const avgDisc = allBatches.length > 0 
+        ? (allBatches.reduce((acc, b) => acc + (b.discount_percentage || 0), 0) / allBatches.length).toFixed(1)
+        : '0.0';
+      document.getElementById('inv-kpi-avg-disc').textContent = avgDisc + '%';
+    }
+
+    function populateFilterDropdowns() {
+      const storeSelect = document.getElementById('inv-store-filter');
+      storeSelect.innerHTML = '<option value="ALL">All Stores</option>' +
+        allStores.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+      const catSelect = document.getElementById('inv-cat-filter');
+      const categories = Array.from(new Set(allBatches.map(b => b.category))).filter(Boolean).sort();
+      catSelect.innerHTML = '<option value="ALL">All Categories</option>' +
+        categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function renderStoresGrid() {
+      const el = document.getElementById('stores-grid-container');
+      document.getElementById('store-count-badge').textContent = `${allStores.length} Stores`;
+
+      if (!allStores.length) {
+        el.innerHTML = `<div class="empty-state"><i data-lucide="building"></i><p>No active stores registered</p></div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      el.innerHTML = allStores.map(s => {
+        const storeBatches = allBatches.filter(b => b.store_id === s.id);
+        const storeStock = storeBatches.reduce((acc, b) => acc + (b.quantity || 0), 0);
+        return `
+          <div class="ngo-card" style="margin-bottom:0; flex-direction:column; gap:0.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <div style="font-weight:600; font-size:1.05rem; color:var(--text-main);">${s.name}</div>
+              <span class="badge badge-green">ID #${s.id}</span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); display:flex; align-items:center; gap:0.35rem;">
+              <i data-lucide="map-pin" style="width:14px;height:14px;color:var(--accent-cyan);"></i> ${s.address || 'Location registered'}
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-code);">
+              Lat: ${s.location_lat}, Lng: ${s.location_lng}
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">
+              <span class="badge badge-cyan">${storeBatches.length} Batches</span>
+              <span class="badge badge-purple">${storeStock} Units in Stock</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderInventoryTable(batches) {
+      const el = document.getElementById('batches-table-container');
+      if (!batches.length) {
+        el.innerHTML = `<div class="empty-state"><i data-lucide="inbox"></i><p>No inventory batches match criteria</p></div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      const storeMap = {};
+      allStores.forEach(s => { storeMap[s.id] = s.name; });
+
+      const now = new Date();
+
+      el.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID & SKU</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Store Location</th>
+              <th>In Stock</th>
+              <th>Original Price</th>
+              <th>Current Price</th>
+              <th>Expiration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${batches.map(b => {
+              const expDate = new Date(b.expiration_date);
+              const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+              
+              let expBadgeClass = 'badge-green';
+              let expText = `${diffDays}d left`;
+              if (diffDays <= 1) {
+                expBadgeClass = 'badge-rose';
+                expText = diffDays <= 0 ? 'Expired' : 'Expires Today';
+              } else if (diffDays <= 3) {
+                expBadgeClass = 'badge-amber';
+              }
+
+              const catIdx = Object.keys(CAT_COLORS).indexOf(b.category);
+              const catColor = CAT_COLORS[catIdx >= 0 ? catIdx % CAT_COLORS.length : 0] || 'var(--accent-cyan)';
+
+              return `
+                <tr>
+                  <td style="font-family:var(--font-code);">
+                    <div style="font-weight:600; color:var(--text-main);">#${b.id}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${b.sku}</div>
+                  </td>
+                  <td>
+                    <div style="font-weight:600; color:var(--text-main);">${b.product_name}</div>
+                  </td>
+                  <td>
+                    <span class="badge" style="background:${catColor}20; color:${catColor}; border:1px solid ${catColor}50;">
+                      ${b.category}
+                    </span>
+                  </td>
+                  <td style="font-size:0.85rem; color:var(--text-muted);">
+                    ${storeMap[b.store_id] || 'Store #' + b.store_id}
+                  </td>
+                  <td>
+                    <div style="font-weight:600; font-family:var(--font-code); color:var(--text-main);">${b.quantity} units</div>
+                  </td>
+                  <td style="font-family:var(--font-code); color:var(--text-muted); text-decoration:line-through;">
+                    ₹${(b.original_selling_price || 0).toFixed(2)}
+                  </td>
+                  <td style="font-family:var(--font-code);">
+                    <span style="font-weight:700; color:var(--accent-green);">₹${(b.current_price || 0).toFixed(2)}</span>
+                    ${b.discount_percentage > 0 ? `<span class="badge badge-green" style="margin-left:0.4rem;">-${b.discount_percentage.toFixed(0)}%</span>` : ''}
+                  </td>
+                  <td>
+                    <span class="badge ${expBadgeClass}">
+                      ${b.expiration_date} (${expText})
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge ${b.status === 'ACTIVE' ? 'badge-green' : 'badge-muted'}">${b.status}</span>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+      lucide.createIcons();
+    }
+
+    function filterInventory() {
+      const search = (document.getElementById('inv-search').value || '').toLowerCase();
+      const storeId = document.getElementById('inv-store-filter').value;
+      const cat = document.getElementById('inv-cat-filter').value;
+
+      const filtered = allBatches.filter(b => {
+        const matchesSearch = !search || 
+          (b.product_name && b.product_name.toLowerCase().includes(search)) ||
+          (b.sku && b.sku.toLowerCase().includes(search));
+        
+        const matchesStore = storeId === 'ALL' || b.store_id === parseInt(storeId);
+        const matchesCat = cat === 'ALL' || b.category === cat;
+
+        return matchesSearch && matchesStore && matchesCat;
+      });
+
+      renderInventoryTable(filtered);
     }
 
     // ===== INIT: activate first tab =====

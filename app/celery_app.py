@@ -15,6 +15,9 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    # Suppress CPendingDeprecationWarning from Celery 5 → 6 migration:
+    # explicitly retain the current "retry on startup" behaviour.
+    broker_connection_retry_on_startup=True,
 )
 
 # Include task modules

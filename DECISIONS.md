@@ -50,5 +50,14 @@
   - `reserved_until` timestamp stored on the claim row for persistence; Redis TTL is the enforcement gate.
 - **Status**: Implemented & Verified.
 
+## ADR 007: Multi-rail Payments (Stripe & Razorpay) (Phase 6)
+- **Context**: NEXPIRE operates across regions requiring regional payment gateway integration (Razorpay for India/INR, Stripe for North America & Global/USD) plus non-commercial bypass for food banks.
+- **Decision**:
+  - Unified checkout endpoint `POST /api/v1/payments/checkout-session` routing to Razorpay Orders API or Stripe Checkout Sessions based on request parameters/region.
+  - Automatic payment bypass for claims flag `is_subsidized=True` — instantly transitions claim to `PAID` with `payment_ref="SUBSIDIZED_BYPASS"`.
+  - Signature-verified webhooks for both gateways (`/webhooks/razorpay` and `/webhooks/stripe`) to atomically transition claims from `PENDING_PAYMENT` to `PAID` and release Redis reservation locks.
+- **Status**: Implemented & Verified.
+
+
 
 

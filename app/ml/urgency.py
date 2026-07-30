@@ -122,6 +122,7 @@ def compute_urgency(
     days_to_expiry: float,
     category: str,
     lookup: Dict[str, Any],
+    hours_to_expiry: Optional[float] = None,
 ) -> Tuple[float, bool]:
     """Compute a normalized urgency score in [0, 1] for a given batch.
 
@@ -131,10 +132,9 @@ def compute_urgency(
 
     Args:
         days_to_expiry: Days remaining until expiry. Must be >= 0.
-                        Negative values are treated as expired (urgency = 1.0).
-        category: Product category string (must match a key in lookup["categories"]).
-                  If unknown, falls back to _default_fallback.
-        lookup: The loaded shelf-life config dict from load_shelf_life_lookup().
+        category: Product category string.
+        lookup: The loaded shelf-life config dict.
+        hours_to_expiry: Optional hours remaining until expiry (if provided, takes precedence).
 
     Returns:
         Tuple of:
@@ -151,6 +151,9 @@ def compute_urgency(
         >>> compute_urgency(60, "Dairy", lookup)
         (1.0, True)        # milk at 60 days is impossible => flagged as invalid
     """
+    if hours_to_expiry is not None and hours_to_expiry >= 0:
+        days_to_expiry = hours_to_expiry / 24.0
+
     categories = lookup.get("categories", {})
     cat_config = categories.get(category)
 

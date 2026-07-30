@@ -58,6 +58,14 @@
   - Signature-verified webhooks for both gateways (`/webhooks/razorpay` and `/webhooks/stripe`) to atomically transition claims from `PENDING_PAYMENT` to `PAID` and release Redis reservation locks.
 - **Status**: Implemented & Verified.
 
+## ADR 008: Analytics & Waste Reduction Dashboard (Phase 7)
+- **Context**: Stakeholders, grocery partners, and NGOs require transparent reporting on food waste averted, CO2 offset, financial revenue recovered, and NGO allocation conversion rates.
+- **Decision**:
+  - `get_analytics_summary` aggregates platform metrics using standardized conversion factors (0.5 kg waste / item rescued; 2.5 kg CO2e / kg waste).
+  - Store-specific analytics endpoint `/api/v1/analytics/store/{store_id}` delivers per-store breakdown of active, expired, and rescued inventory.
+- **Status**: Implemented & Verified.
+
+
 
 
 

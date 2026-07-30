@@ -8,12 +8,10 @@ from app.ml.predictor import PricingPredictor, get_predictor
 def test_synthetic_dataset_generator():
     df = generate_synthetic_dataset(num_samples=100)
     assert len(df) == 100
-    assert "risk_score" in df.columns
-    assert "optimal_discount_pct" in df.columns
-    assert df["risk_score"].min() >= 0.0
-    assert df["risk_score"].max() <= 1.0
-    assert df["optimal_discount_pct"].min() >= 0.0
-    assert df["optimal_discount_pct"].max() <= 90.0
+    assert "urgency_score" in df.columns
+    assert "sell_probability" in df.columns
+    assert df["urgency_score"].min() >= 0.0
+    assert df["urgency_score"].max() <= 1.0
 
 
 def test_ml_trainer_and_predictor(tmp_path):

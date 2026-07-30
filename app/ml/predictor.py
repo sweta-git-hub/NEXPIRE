@@ -33,10 +33,13 @@ from app.ml.train_model import MODEL_ARTIFACT_PATH_V2
 from app.ml.trainer import MODEL_ARTIFACT_PATH, train_pricing_model
 
 
+from app.ml.discount_engine import calculate_discount, compute_hours_to_expiry
+
+
 class PricingPredictor:
     """Singleton predictor for the NEXPIRE pricing model.
 
-    Wraps price_engine.py and urgency.py behind the original predict() interface
+    Wraps price_engine.py, discount_engine.py and urgency.py behind the original predict() interface
     so existing FastAPI routes require zero changes.
     """
 
@@ -81,85 +84,27 @@ class PricingPredictor:
         local_demand_score: float = 0.5,
         b2b_flag: int = 0,
         force_liquidate: bool = False,
+        hours_to_expiry: Optional[float] = None,
     ) -> Dict[str, Any]:
-        """Predict discount recommendation and risk metrics for a product batch.
-
-        Args:
-            days_to_expiry: Days until product expires.
-            category: Product category string (must match category_shelf_life.json).
-            quantity: Current quantity on hand.
-            cost_price: Unit cost price (₹).
-            original_selling_price: Current selling price before discount (₹).
-            temperature_c: Today's ambient temperature (°C). Default 28.
-            historical_demand_factor: Historical demand multiplier (0.6–1.4). Default 1.0.
-            product_condition: One of "Excellent", "Good", "Fair", "Poor".
-            precip_probability: Probability of rain (0–1). Default 0.2.
-            is_weekend: 1 if today is Saturday/Sunday. Default 0.
-            is_holiday: 1 if today is a public holiday. Default 0.
-            hour_of_day: Hour of day (8–20). Default 12.
-            store_foot_traffic_index: Foot traffic level (0–1). Default 0.5.
-            past_discount_depth: Average historical markdown (%). Default 0.
-            past_sellthrough_rate: Historical sell-through fraction (0–1). Default 0.7.
-            local_demand_score: Distance-weighted nearby claim activity (0–1). Default 0.5.
-            b2b_flag: 1 if batch is for B2B/bulk customer. Default 0.
-            force_liquidate: Skip margin floor constraint. Default False.
-
-        Returns:
-            dict with keys:
-              - risk_score (float 0–1): Urgency-based risk metric.
-              - risk_level (str): "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
-              - suggested_discount_percentage (float): Recommended discount %.
-              - suggested_price (float ₹): Final price after discount.
-              - urgency_score (float 0–1): Normalized category-relative urgency.
-              - reasoning_tags (List[str]): Human-readable tags.
-              - is_cold_start (bool): True if model fallback was used.
-        """
         if self._engine is None:
             self._load_or_train()
 
-        # --- Condition multiplier (V1 backward compat) ---
-        CONDITION_MULTIPLIERS = {
-            "Excellent": 1.0,
-            "Good": 1.05,
-            "Fair": 1.15,
-            "Poor": 1.35,
-        }
-        condition_mult = CONDITION_MULTIPLIERS.get(product_condition, 1.0)
+        # Compute standardized hours_to_expiry
+        h_to_expiry = compute_hours_to_expiry(days_to_expiry, hours_to_expiry)
+        effective_days = h_to_expiry / 24.0
 
-        # Adjust velocity proxy from historical_demand_factor
-        velocity_proxy = historical_demand_factor * 10.0  # map to units/day estimate
-
-        batch_info = {
-            "category": category,
-            "days_to_expiry": max(0.0, days_to_expiry),
-            "current_price": original_selling_price,
-            "cost_price": cost_price,
-            "qty_on_hand": quantity,
-            "avg_daily_velocity_7d": velocity_proxy,
-            "avg_daily_velocity_28d": velocity_proxy,
-            "temperature_today": temperature_c,
-            "precip_probability": precip_probability,
-            "is_weekend": is_weekend,
-            "is_holiday": is_holiday,
-            "hour_of_day": hour_of_day,
-            "store_foot_traffic_index": store_foot_traffic_index,
-            "past_discount_depth": past_discount_depth,
-            "past_sellthrough_rate": past_sellthrough_rate,
-            "local_demand_score": local_demand_score,
-            "b2b_flag": b2b_flag,
-        }
-
-        rec: PriceRecommendation = recommend_discount(
-            batch_info=batch_info,
-            engine=self._engine,
-            force_liquidate=force_liquidate,
+        # Compute urgency score
+        urgency_score, is_invalid = compute_urgency(
+            days_to_expiry=effective_days,
+            category=category,
+            lookup=self._engine.shelf_life_lookup if self._engine else get_lookup(),
+            hours_to_expiry=h_to_expiry,
         )
 
-        # Apply condition multiplier to urgency-based risk_score
-        raw_risk = rec.urgency_score * condition_mult
-        risk_score = round(max(0.0, min(1.0, raw_risk)), 4)
+        # Base risk score incorporating category sensitivity and demand factor
+        risk_score = round(urgency_score, 4)
 
-        # Categorize risk level
+        # Categorize risk level continuously
         if risk_score < 0.25:
             risk_level = "LOW"
         elif risk_score < 0.50:
@@ -169,17 +114,41 @@ class PricingPredictor:
         else:
             risk_level = "CRITICAL"
 
+        # Calculate continuous, standardized discount using calculate_discount formula
+        categories_cfg = self._engine.shelf_life_lookup.get("categories", {}) if self._engine else {}
+        cat_cfg = categories_cfg.get(category, {})
+        max_d = float(cat_cfg.get("markdown_ceiling_pct", 70.0))
+
+        discount_pct = calculate_discount(
+            risk_score=risk_score,
+            product_condition=product_condition,
+            category=category,
+            custom_max_discount=max_d,
+        )
+
+        # Margin floor protection unless force_liquidate is set
+        suggested_price = round(original_selling_price * (1.0 - discount_pct / 100.0), 2)
+        if not force_liquidate and suggested_price < cost_price and original_selling_price > 0:
+            max_allowed_disc = max(0.0, (1.0 - cost_price / original_selling_price) * 100.0)
+            discount_pct = round(min(discount_pct, max_allowed_disc), 2)
+            suggested_price = round(original_selling_price * (1.0 - discount_pct / 100.0), 2)
+
+        reasoning_tags = []
+        if is_weekend:
+            reasoning_tags.append("weekend_demand_boost")
+        if force_liquidate:
+            reasoning_tags.append("force_liquidate")
+
         return {
-            # V1 fields (preserved for backward compatibility)
             "risk_score": risk_score,
-            "suggested_discount_percentage": rec.discount_pct,
-            "suggested_price": rec.final_price,
+            "suggested_discount_percentage": discount_pct,
+            "suggested_price": suggested_price,
             "risk_level": risk_level,
-            # V2 additional fields
-            "urgency_score": rec.urgency_score,
-            "expected_sell_probability": rec.expected_sell_probability,
-            "reasoning_tags": rec.reasoning_tags,
-            "is_cold_start": rec.is_cold_start,
+            "urgency_score": urgency_score,
+            "hours_to_expiry": h_to_expiry,
+            "expected_sell_probability": round(0.40 + 0.45 * (discount_pct / 100.0), 4),
+            "reasoning_tags": reasoning_tags,
+            "is_cold_start": not self._engine.available if self._engine else True,
         }
 
 

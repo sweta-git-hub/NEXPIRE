@@ -55,6 +55,7 @@ import numpy as np
 import pandas as pd
 
 from app.ml.urgency import compute_urgency, load_shelf_life_lookup
+from app.ml.discount_engine import calculate_discount, DAMAGE_MULTIPLIERS
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -164,39 +165,29 @@ def _cold_start_discount(
     urgency_score: float,
     cat_config: Dict[str, Any],
     force_liquidate: bool = False,
+    product_condition: str = "Excellent",
+    category: str = "Dairy",
 ) -> Tuple[float, float]:
     """Fallback discount selection when model is unavailable or category is unknown.
 
-    Uses a simple elasticity-lookup table: the colder the data, the rougher
-    the heuristic. Tags the result with cold_start_fallback.
+    Uses calculate_discount formula function.
 
     Returns:
         Tuple (discount_pct, estimated_sell_probability)
     """
-    markdown_ceiling = float(cat_config.get("markdown_ceiling_pct", 40.0))
-
-    if urgency_score > 0.90:
-        discount = min(markdown_ceiling, 70.0)
-        sell_prob = 0.75
-    elif urgency_score > 0.70:
-        discount = min(markdown_ceiling * 0.75, 50.0)
-        sell_prob = 0.60
-    elif urgency_score > 0.50:
-        discount = min(markdown_ceiling * 0.50, 30.0)
-        sell_prob = 0.50
-    elif urgency_score > 0.30:
-        discount = min(markdown_ceiling * 0.25, 20.0)
-        sell_prob = 0.45
-    else:
-        discount = 0.0
-        sell_prob = 0.40
+    markdown_ceiling = float(cat_config.get("markdown_ceiling_pct", 70.0))
+    discount = calculate_discount(
+        risk_score=urgency_score,
+        product_condition=product_condition,
+        category=category,
+        custom_max_discount=markdown_ceiling,
+    )
+    sell_prob = 0.40 + 0.45 * (discount / 100.0)
 
     if force_liquidate:
         discount = min(markdown_ceiling, 70.0)
         sell_prob = max(sell_prob, 0.80)
 
-    # Snap to nearest discrete step of 10
-    discount = round(discount / 10) * 10
     return float(discount), float(sell_prob)
 
 
@@ -285,10 +276,15 @@ def recommend_discount(
     category = batch_info.get("category", "")
     current_price = float(batch_info.get("current_price", 100.0))
     cost_price = float(batch_info.get("cost_price", 50.0))
-    days_to_expiry = float(batch_info.get("days_to_expiry", 1.0))
+    hours_to_expiry = batch_info.get("hours_to_expiry")
+    if hours_to_expiry is None and "days_to_expiry" in batch_info:
+        hours_to_expiry = float(batch_info["days_to_expiry"]) * 24.0
+    
+    days_to_expiry = hours_to_expiry / 24.0 if hours_to_expiry is not None else float(batch_info.get("days_to_expiry", 1.0))
     temperature = float(batch_info.get("temperature_today", 28.0))
     precip = float(batch_info.get("precip_probability", 0.2))
     is_weekend = bool(batch_info.get("is_weekend", 0))
+    product_condition = str(batch_info.get("product_condition", "Excellent"))
 
     # --- Step 1: Urgency normalization ---
     lookup = engine.shelf_life_lookup
@@ -297,7 +293,7 @@ def recommend_discount(
     weather_sensitivity = float(cat_config.get("weather_sensitivity", 0.2))
     markdown_ceiling = float(cat_config.get("markdown_ceiling_pct", 40.0))
 
-    urgency_score, is_invalid = compute_urgency(days_to_expiry, category, lookup)
+    urgency_score, is_invalid = compute_urgency(days_to_expiry, category, lookup, hours_to_expiry=hours_to_expiry)
 
     if is_invalid:
         tags.append(TAG_INVALID_DAYS_INPUT)
@@ -351,7 +347,7 @@ def recommend_discount(
     # --- Cold-start fallback ---
     if not engine.available:
         tags.append(TAG_COLD_START_FALLBACK)
-        discount, sell_prob = _cold_start_discount(urgency_score, cat_config, force_liquidate)
+        discount, sell_prob = _cold_start_discount(urgency_score, cat_config, force_liquidate, product_condition=product_condition, category=category)
         final_price = round(current_price * (1.0 - discount / 100.0), 2)
         if not force_liquidate and final_price < cost_price:
             discount = max(

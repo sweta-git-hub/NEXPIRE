@@ -65,7 +65,12 @@
   - Store-specific analytics endpoint `/api/v1/analytics/store/{store_id}` delivers per-store breakdown of active, expired, and rescued inventory.
 - **Status**: Implemented & Verified.
 
-
+## ADR 009: Local Rule-Based Assistant and Persisted Theme Preference
+- **Context**: The dashboard referenced an AI assistant and light-mode controls that were missing from the active application branch, causing assistant API requests to return 404 and leaving no usable theme switch.
+- **Decision**:
+  - Register the local, rule-based assistant router at `/api/v1/assistant`; it provides deterministic product discovery and FAQs without requiring an external LLM service or credentials.
+  - Restore the dashboard assistant widget and light/dark theme toggle, persisting the user preference in `localStorage` and updating Chart.js colors on change.
+- **Status**: Implemented & Verified.
 
 
 

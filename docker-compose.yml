@@ -3,15 +3,15 @@ services:
     image: postgis/postgis:16-3.4
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-resq}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resq}
-      POSTGRES_DB: ${POSTGRES_DB:-resq_chain}
+      POSTGRES_USER: ${POSTGRES_USER:-nexpire}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexpire}
+      POSTGRES_DB: ${POSTGRES_DB:-nexpire}
     ports:
       - "5432:5432"
     volumes:
-      - resq_db_data:/var/lib/postgresql/data
+      - nexpire_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resq}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexpire}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -77,4 +77,4 @@ services:
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
-  resq_db_data:
+  nexpire_db_data:

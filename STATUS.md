@@ -2,6 +2,12 @@
 
 ## Current Phase: ALL PHASES COMPLETED (Phase 0 - Phase 7)
 
+### Post-Phase 7 Maintenance
+- Restored the NEXPIRE Assistant API and dashboard chat widget after they were absent from the active discount-engine branch. The widget now loads live discounted batches and supports category, claiming, payment, safety, and help queries.
+- Restored the light/dark theme toggle. The choice is persisted in local storage and dashboard charts update their foreground and grid colors with the selected theme.
+- Verification: focused assistant and analytics tests pass; live `/api/v1/assistant/deals` and `/api/v1/assistant/chat` endpoints return current deal data.
+- Known unrelated test failure: `tests/test_payments.py::test_razorpay_webhook_updates_claim` currently receives HTTP 400 where the test expects HTTP 200. No payment code changed in this maintenance repair.
+
 ### Phase 7 Summary
 Phase 7 delivers the Analytics & Waste Reduction Dashboard, quantifying environmental impact (food waste prevented in kg, CO2 emissions offset in kg), financial recovery metrics, NGO standing order allocations, and claim conversion rates across individual stores and platform-wide.
 
@@ -62,5 +68,3 @@ Phase 3 implements the Notification Engine using Twilio (SMS & WhatsApp Business
 | Phase 5 | Consumer Marketplace & Geo-routing | ✅ Completed |
 | Phase 6 | Multi-rail Payments (Stripe & Razorpay) | ✅ Completed |
 | Phase 7 | Analytics Dashboard & Final Hardening | ✅ Completed |
-
-

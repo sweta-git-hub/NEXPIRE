@@ -12,30 +12,355 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <!-- Theme: apply saved preference before first paint to prevent flash -->
+  <script>
+    (function(){
+      try {
+        if (localStorage.getItem('nexpire-theme') === 'light') {
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <style>
-    /* ===== DESIGN TOKENS ===== */
+    /* ===== DESIGN TOKENS (Locked Brand Palette & Shape System) ===== */
     :root {
       --bg-dark: #0b0f19;
       --bg-card: rgba(18, 26, 43, 0.7);
       --bg-card-border: rgba(255, 255, 255, 0.08);
+      
+      /* Primary Brand Accent (Locked per design-taste-frontend §4.2) */
       --accent-green: #10b981;
-      --accent-green-glow: rgba(16, 185, 129, 0.3);
+      --accent-green-glow: rgba(16, 185, 129, 0.2);
       --accent-emerald: #059669;
+
+      /* Semantic Accents only (Info, Error, Warning) */
       --accent-cyan: #06b6d4;
-      --accent-cyan-glow: rgba(6, 182, 212, 0.25);
-      --accent-purple: #8b5cf6;
-      --accent-purple-glow: rgba(139, 92, 246, 0.25);
+      --accent-cyan-glow: rgba(6, 182, 212, 0.15);
       --accent-rose: #f43f5e;
+      --accent-rose-glow: rgba(244, 63, 94, 0.15);
       --accent-amber: #f59e0b;
-      --accent-amber-glow: rgba(245, 158, 11, 0.25);
+      --accent-amber-glow: rgba(245, 158, 11, 0.15);
+      --accent-purple: #8b5cf6;
+      --accent-purple-glow: rgba(139, 92, 246, 0.15);
+
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
+      
+      /* Typography (Muted & Display paired) */
       --font-main: 'Outfit', sans-serif;
-      --font-code: 'Space Grotesk', monospace;
-      --radius-card: 16px;
+      --font-display: 'Space Grotesk', sans-serif; /* Geometric display sans-serif */
+      --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; /* True monospace for data/SKUs */
+      
+      /* Shape Consistency Lock (design-taste-frontend §4.4) */
+      --radius-card: 12px;
       --radius-sm: 8px;
+      --radius-badge: 6px;
+      --radius-pill: 9999px;
+
       --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
-      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Specific transitions instead of generic transition: all (web-design-guidelines §Animation) */
+      --trans-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --trans-transform: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      --trans-shadow: box-shadow 0.2s ease-in-out;
+    }
+
+    /* ===== LIGHT THEME OVERRIDES ===== */
+    body.light-theme {
+      --bg-dark: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.82);
+      --bg-card-border: rgba(15, 23, 42, 0.09);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+
+      /* Slightly deeper accent tones for legibility on white */
+      --accent-green: #059669;
+      --accent-green-glow: rgba(5, 150, 105, 0.18);
+      --accent-emerald: #047857;
+      --accent-cyan: #0891b2;
+      --accent-cyan-glow: rgba(8, 145, 178, 0.12);
+      --accent-rose: #e11d48;
+      --accent-rose-glow: rgba(225, 29, 72, 0.12);
+      --accent-amber: #d97706;
+      --accent-amber-glow: rgba(217, 119, 6, 0.12);
+      --accent-purple: #7c3aed;
+      --accent-purple-glow: rgba(124, 58, 237, 0.12);
+    }
+
+    body.light-theme {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%);
+    }
+
+    /* ── Header ── */
+    body.light-theme header {
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom-color: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .brand-title {
+      background: linear-gradient(90deg, #0f172a, #059669);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Ambient Orbs ── */
+    body.light-theme .glow-orb { opacity: 0.5; }
+    body.light-theme .glow-1 { background: rgba(16, 185, 129, 0.06); }
+    body.light-theme .glow-2 { background: rgba(6, 182, 212, 0.05); }
+    body.light-theme .glow-3 { background: rgba(139, 92, 246, 0.04); }
+
+    /* ── Tabs ── */
+    body.light-theme .tab-btn:hover { background: rgba(15, 23, 42, 0.04); }
+    body.light-theme .tab-btn.active {
+      color: #0f172a;
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(8, 145, 178, 0.10));
+      border-color: rgba(5, 150, 105, 0.35);
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.10);
+    }
+
+    /* ── KPI & Metric Cards ── */
+    body.light-theme .kpi-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(15, 23, 42, 0.07);
+    }
+    body.light-theme .kpi-card:hover { border-color: rgba(15, 23, 42, 0.15); }
+    body.light-theme .metric-card {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(15, 23, 42, 0.07);
+    }
+
+    /* ── Glass Panels ── */
+    body.light-theme .glass-panel {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+
+    /* ── Forms & Inputs ── */
+    body.light-theme .form-input,
+    body.light-theme .form-select,
+    body.light-theme .form-textarea {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(15, 23, 42, 0.12);
+      color: #0f172a;
+    }
+    body.light-theme .form-input:focus-visible,
+    body.light-theme .form-select:focus-visible,
+    body.light-theme .form-textarea:focus-visible {
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+    }
+    body.light-theme .form-select option { background: #fff; color: #0f172a; }
+
+    /* ── Buttons ── */
+    body.light-theme .btn-secondary {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.12);
+      color: #334155;
+    }
+    body.light-theme .btn-secondary:hover { background: rgba(15, 23, 42, 0.08); }
+
+    /* ── Badges ── */
+    body.light-theme .badge-muted {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    /* ── Data Tables ── */
+    body.light-theme .data-table th { color: #475569; }
+    body.light-theme .data-table tr:hover td { background: rgba(15, 23, 42, 0.02); }
+
+    /* ── Console Output ── */
+    body.light-theme .console-out {
+      background: #1e293b;
+      border-color: rgba(15, 23, 42, 0.15);
+      color: #a7f3d0;
+    }
+
+    /* ── NGO / Auction Cards ── */
+    body.light-theme .ngo-card { background: rgba(255, 255, 255, 0.85); }
+    body.light-theme .auction-card { background: rgba(255, 255, 255, 0.92); }
+
+    /* ── Type Pills ── */
+    body.light-theme .type-pill {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .type-pill:hover {
+      background: rgba(5, 150, 105, 0.06);
+      border-color: rgba(5, 150, 105, 0.3);
+    }
+    body.light-theme .type-pill.active {
+      background: rgba(5, 150, 105, 0.1);
+    }
+
+    /* ── Auction Config / Bars ── */
+    body.light-theme .auction-config { background: rgba(15, 23, 42, 0.02); }
+    body.light-theme .conv-bar-bg,
+    body.light-theme .countdown-bar-bg,
+    body.light-theme .cat-bar-bg { background: rgba(15, 23, 42, 0.06); }
+
+    /* ── Price Ticks ── */
+    body.light-theme .price-tick {
+      background: rgba(15, 23, 42, 0.04);
+      color: #475569;
+    }
+    body.light-theme .price-tick.current {
+      background: rgba(5, 150, 105, 0.1);
+      border-color: rgba(5, 150, 105, 0.3);
+    }
+
+    /* ── Claimed Overlay ── */
+    body.light-theme .claimed-overlay { background: rgba(248, 250, 252, 0.95); }
+    body.light-theme .claimed-token {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    /* ── Modal ── */
+    body.light-theme .modal-backdrop { background: rgba(15, 23, 42, 0.45); }
+    body.light-theme .modal-card {
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      border-color: rgba(5, 150, 105, 0.25);
+      box-shadow: 0 0 40px rgba(5, 150, 105, 0.1), 0 20px 50px rgba(15, 23, 42, 0.12);
+    }
+    body.light-theme .modal-close {
+      background: rgba(15, 23, 42, 0.05);
+    }
+    body.light-theme .modal-close:hover {
+      background: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .receipt-top { border-bottom-color: rgba(15, 23, 42, 0.1); }
+    body.light-theme .receipt-headline {
+      background: linear-gradient(90deg, #059669, #0891b2);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Shimmer ── */
+    body.light-theme .shimmer {
+      background: linear-gradient(90deg, rgba(15,23,42,0.03) 25%, rgba(15,23,42,0.06) 50%, rgba(15,23,42,0.03) 75%);
+      background-size: 200% 100%;
+    }
+
+    /* ── Toast ── */
+    body.light-theme #toast {
+      background: rgba(5, 150, 105, 0.1);
+      border-color: rgba(5, 150, 105, 0.3);
+      backdrop-filter: blur(12px);
+    }
+    body.light-theme #toast.error {
+      background: rgba(225, 29, 72, 0.1);
+      border-color: rgba(225, 29, 72, 0.3);
+    }
+
+    /* ── Divider / Cat-row borders ── */
+    body.light-theme .divider { background: rgba(15, 23, 42, 0.08); }
+    body.light-theme .cat-row { border-bottom-color: rgba(15, 23, 42, 0.06); }
+
+    /* ── Inline style overrides (dark panel backgrounds used in HTML) ── */
+    body.light-theme [style*="background: rgba(10, 15, 28"],
+    body.light-theme [style*="background: rgba(8, 13, 24"],
+    body.light-theme [style*="background: rgba(255,255,255,0.03)"],
+    body.light-theme [style*="background: rgba(255,255,255,0.02)"],
+    body.light-theme [style*="background: rgba(255,255,255,0.01)"] {
+      background: rgba(255, 255, 255, 0.7) !important;
+      border-color: rgba(15, 23, 42, 0.08) !important;
+    }
+
+    /* ── AI Assistant Widget (light overrides) ── */
+    body.light-theme #nxp-chat-badge { border-color: #f8fafc; }
+    body.light-theme #nxp-chat-panel {
+      background: rgba(255, 255, 255, 0.97);
+      border-color: rgba(15, 23, 42, 0.1);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(5, 150, 105, 0.1);
+    }
+    body.light-theme #nxp-chat-header {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(255,255,255,0) 100%);
+      border-bottom-color: rgba(15, 23, 42, 0.06);
+    }
+    body.light-theme .nxp-chat-title { color: #0f172a; }
+    body.light-theme .nxp-msg.bot .nxp-bubble {
+      background: rgba(15, 23, 42, 0.05);
+      color: #334155;
+    }
+    body.light-theme .nxp-bubble strong { color: #0f172a; }
+    body.light-theme .nxp-pcard {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .nxp-pcard:hover {
+      background: rgba(5, 150, 105, 0.05);
+      border-color: rgba(5, 150, 105, 0.2);
+    }
+    body.light-theme .nxp-pcard-name { color: #0f172a; }
+    body.light-theme .nxp-price-now { color: #059669; }
+    body.light-theme .nxp-disc-badge {
+      background: rgba(5, 150, 105, 0.1);
+      color: #059669;
+      border-color: rgba(5, 150, 105, 0.25);
+    }
+    body.light-theme .nxp-claim-btn {
+      background: rgba(5, 150, 105, 0.08);
+      border-color: rgba(5, 150, 105, 0.25);
+      color: #059669;
+    }
+    body.light-theme .nxp-claim-btn:hover { background: rgba(5, 150, 105, 0.15); }
+    body.light-theme .nxp-qr {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.1);
+      color: #475569;
+    }
+    body.light-theme .nxp-qr:hover {
+      background: rgba(5, 150, 105, 0.08);
+      border-color: rgba(5, 150, 105, 0.3);
+      color: #059669;
+    }
+    body.light-theme #nxp-input {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.1);
+      color: #0f172a;
+    }
+    body.light-theme #nxp-input::placeholder { color: #94a3b8; }
+    body.light-theme #nxp-input:focus {
+      border-color: rgba(5, 150, 105, 0.4);
+      background: rgba(15, 23, 42, 0.02);
+    }
+    body.light-theme #nxp-input-row {
+      border-top-color: rgba(15, 23, 42, 0.06);
+    }
+    body.light-theme .nxp-typing span { background: rgba(5, 150, 105, 0.6); }
+
+    /* ── Theme Toggle Button ── */
+    .theme-toggle {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      transform: scale(1.06);
+    }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .icon-sun  { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    body.light-theme .theme-toggle {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .theme-toggle:hover {
+      background: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .theme-toggle .icon-sun  { display: block; }
+    body.light-theme .theme-toggle .icon-moon { display: none; }
+
+    /* ── Smooth transition for theme switching ── */
+    body {
+      transition: background 0.4s ease, color 0.3s ease;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,16 +370,23 @@
       color: var(--text-main);
       font-family: var(--font-main);
       min-height: 100vh;
+      min-height: 100dvh; /* Viewport stability for mobile layout jumps */
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
     }
 
-    /* ===== AMBIENT ORBS ===== */
+    /* ===== AMBIENT ORBS (Slow micro-motions) ===== */
     .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: 0; pointer-events: none; }
-    .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.12); }
-    .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.10); }
-    .glow-3 { top: 50%; left: -5%; width: 300px; height: 300px; background: rgba(139, 92, 246, 0.08); }
+    
+    @media (prefers-reduced-motion: no-preference) {
+      .glow-1 { top: -10%; left: 20%; width: 400px; height: 400px; background: rgba(16, 185, 129, 0.08); }
+      .glow-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.06); }
+      .glow-3 { top: 50%; left: -5%; width: 300px; height: 300px; background: rgba(139, 92, 246, 0.05); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .glow-orb { display: none; }
+    }
 
     /* ===== HEADER ===== */
     header {
@@ -75,7 +407,7 @@
     }
     .brand-logo svg { color: #fff; width: 20px; height: 20px; }
     .brand-title {
-      font-family: var(--font-code); font-size: 1.5rem; font-weight: 700;
+      font-family: var(--font-display); font-size: 1.5rem; font-weight: 700;
       letter-spacing: -0.5px;
       background: linear-gradient(90deg, #ffffff, #a7f3d0);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -106,15 +438,20 @@
       padding-bottom: 0.75rem;
     }
     .tab-btn {
-      background: transparent; border: none;
+      background: transparent; border: 1px solid transparent;
       color: var(--text-muted); font-family: var(--font-main);
       font-size: 0.88rem; font-weight: 500;
-      padding: 0.55rem 1rem; border-radius: 8px; cursor: pointer;
+      padding: 0.55rem 1rem; border-radius: var(--radius-sm); cursor: pointer;
       display: flex; align-items: center; gap: 0.45rem;
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .tab-btn svg { width: 15px; height: 15px; }
     .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .tab-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
+    }
     .tab-btn.active {
       color: #fff;
       background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,182,212,0.18));
@@ -136,7 +473,7 @@
       margin-bottom: 1.75rem;
     }
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .panel-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.55rem; }
+    .panel-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.55rem; text-wrap: balance; }
     .panel-title svg { color: var(--accent-green); width: 18px; height: 18px; flex-shrink: 0; }
 
     /* ===== GRIDS ===== */
@@ -152,7 +489,7 @@
       padding: 1.5rem;
       display: flex; flex-direction: column; gap: 0.75rem;
       position: relative; overflow: hidden;
-      transition: var(--transition);
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
     }
     .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
     .kpi-card::before {
@@ -176,8 +513,9 @@
     .kpi-icon svg { width: 20px; height: 20px; }
 
     .kpi-val {
-      font-family: var(--font-code); font-size: 2.2rem; font-weight: 700;
+      font-family: var(--font-display); font-size: 2.2rem; font-weight: 700;
       line-height: 1; letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
     }
     .kpi-val.green  { color: var(--accent-green); }
     .kpi-val.cyan   { color: var(--accent-cyan); }
@@ -193,7 +531,7 @@
       border-radius: 12px; padding: 1.25rem;
       display: flex; flex-direction: column; gap: 0.5rem;
     }
-    .metric-val { font-family: var(--font-code); font-size: 1.8rem; font-weight: 700; color: var(--accent-green); }
+    .metric-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--accent-green); font-variant-numeric: tabular-nums; }
     .metric-lbl { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* ===== CHART RING CONTAINER ===== */
@@ -204,7 +542,7 @@
     .ring-item { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
     .ring-item canvas { width: 110px !important; height: 110px !important; }
     .ring-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; text-align: center; }
-    .ring-val { font-family: var(--font-code); font-size: 1.1rem; font-weight: 700; color: var(--text-main); text-align: center; }
+    .ring-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-main); text-align: center; font-variant-numeric: tabular-nums; }
 
     /* ===== CONVERSION RATE BAR ===== */
     .conversion-bar-wrap { margin-top: 0.5rem; }
@@ -236,7 +574,7 @@
     .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
     .data-table th, .data-table td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--bg-card-border); }
     .data-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
-    .data-table td { font-size: 0.9rem; }
+    .data-table td { font-size: 0.9rem; font-variant-numeric: tabular-nums; }
     .data-table tr:hover td { background: rgba(255,255,255,0.02); }
 
     /* ===== FORM CONTROLS ===== */
@@ -248,11 +586,11 @@
       border: 1px solid var(--bg-card-border);
       border-radius: var(--radius-sm);
       color: var(--text-main); font-family: var(--font-main); font-size: 0.92rem;
-      transition: border 0.2s ease;
+      transition: var(--trans-colors), var(--trans-shadow);
     }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
+    .form-input:focus-visible, .form-select:focus-visible, .form-textarea:focus-visible {
       outline: none; border-color: var(--accent-green);
-      box-shadow: 0 0 10px var(--accent-green-glow);
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
     }
     .form-select option { background: #0d1527; }
 
@@ -260,46 +598,61 @@
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
       padding: 0.7rem 1.4rem; border-radius: var(--radius-sm);
-      font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none;
-      font-family: var(--font-main); transition: var(--transition);
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent;
+      font-family: var(--font-main); 
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
     }
     .btn svg { width: 16px; height: 16px; }
+    
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
+    }
+
     .btn-primary {
       background: linear-gradient(135deg, var(--accent-green), var(--accent-emerald));
       color: #fff; box-shadow: 0 4px 15px var(--accent-green-glow);
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-green-glow); }
+    .btn-primary:active { transform: translateY(-1px); }
+    
     .btn-secondary {
       background: rgba(255,255,255,0.07); color: var(--text-main);
       border: 1px solid var(--bg-card-border);
     }
     .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+    .btn-secondary:active { transform: translateY(0); }
+    
     .btn-cyan {
       background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
       color: #fff; box-shadow: 0 4px 15px var(--accent-cyan-glow);
     }
     .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-cyan-glow); }
+    
     .btn-purple {
       background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
       color: #fff; box-shadow: 0 4px 15px var(--accent-purple-glow);
     }
     .btn-purple:hover { transform: translateY(-2px); }
+    
     .btn-rose {
       background: linear-gradient(135deg, var(--accent-rose), #be123c);
       color: #fff; box-shadow: 0 4px 15px rgba(244,63,94,0.3);
     }
     .btn-rose:hover { transform: translateY(-2px); }
+    
     .btn-amber {
       background: linear-gradient(135deg, var(--accent-amber), #d97706);
       color: #1a1a1a; box-shadow: 0 4px 15px var(--accent-amber-glow);
     }
     .btn-amber:hover { transform: translateY(-2px); }
-    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; border-radius: var(--radius-badge); }
     .btn-full { width: 100%; }
 
     /* ===== BADGES ===== */
     .badge {
-      padding: 0.22rem 0.6rem; border-radius: 6px;
+      padding: 0.22rem 0.6rem; border-radius: var(--radius-badge);
       font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
     .badge-green  { background: rgba(16,185,129,0.2);  color: var(--accent-green);  border: 1px solid rgba(16,185,129,0.35); }
@@ -311,7 +664,7 @@
 
     /* ===== CONSOLE OUTPUT ===== */
     .console-out {
-      background: #050811; border: 1px solid var(--bg-card-border); border-radius: 10px;
+      background: #050811; border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm);
       padding: 1rem; font-family: var(--font-code); font-size: 0.82rem;
       color: #a7f3d0; max-height: 260px; overflow-y: auto; white-space: pre-wrap;
       line-height: 1.6;
@@ -321,12 +674,13 @@
     .ngo-card {
       background: rgba(8, 13, 24, 0.7);
       border: 1px solid var(--bg-card-border);
-      border-radius: 12px; padding: 1.25rem;
+      border-radius: var(--radius-sm); padding: 1.25rem;
       display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 1rem; transition: var(--transition);
+      gap: 1rem; 
+      transition: var(--trans-colors), var(--trans-transform), var(--trans-shadow);
       margin-bottom: 0.85rem;
     }
-    .ngo-card:hover { border-color: rgba(16,185,129,0.25); }
+    .ngo-card:hover { border-color: rgba(16,185,129,0.25); transform: translateY(-1px); }
     .ngo-card-info { flex: 1; }
     .ngo-card-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.35rem; }
     .ngo-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
@@ -337,17 +691,22 @@
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
       color: var(--text-muted);
-      border-radius: 9999px;
+      border-radius: var(--radius-pill);
       padding: 0.35rem 0.85rem;
       font-size: 0.82rem; font-weight: 500;
       cursor: pointer; font-family: var(--font-main);
-      transition: all 0.18s ease;
+      transition: var(--trans-colors);
       white-space: nowrap;
     }
     .type-pill:hover {
       border-color: rgba(16,185,129,0.35);
       color: var(--text-main);
       background: rgba(16,185,129,0.07);
+    }
+    .type-pill:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-green-glow);
+      border-color: var(--accent-green);
     }
     .type-pill.active {
       background: rgba(16,185,129,0.15);
@@ -372,7 +731,7 @@
       border: 1px solid var(--bg-card-border);
       border-radius: 20px; padding: 2.5rem;
       text-align: center; position: relative; overflow: hidden;
-      transition: var(--transition);
+      transition: var(--trans-colors), var(--trans-shadow);
     }
     .auction-card.urgent { border-color: rgba(244,63,94,0.5); box-shadow: 0 0 40px rgba(244,63,94,0.15); }
     .auction-card.warming { border-color: rgba(245,158,11,0.4); box-shadow: 0 0 40px rgba(245,158,11,0.1); }
@@ -431,7 +790,7 @@
       padding: 0.25rem 0.6rem; border-radius: 6px;
       font-size: 0.78rem; font-family: var(--font-code);
       background: rgba(255,255,255,0.06); color: var(--text-muted);
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .price-tick.current {
       background: rgba(16,185,129,0.15); color: var(--accent-green);
@@ -464,7 +823,11 @@
       width: 72px; height: 72px; border-radius: 50%;
       background: rgba(16,185,129,0.15); border: 2px solid var(--accent-green);
       display: flex; align-items: center; justify-content: center;
-      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .claimed-checkmark {
+        animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      }
     }
     .claimed-checkmark svg { width: 32px; height: 32px; color: var(--accent-green); }
     @keyframes popIn { 0%{transform:scale(0)}100%{transform:scale(1)} }
@@ -481,24 +844,32 @@
       position: fixed; inset: 0; z-index: 100;
       background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
     }
-    .modal-backdrop.active { opacity: 1; pointer-events: all; }
     .modal-card {
       background: linear-gradient(145deg, #0f1e35, #0a1220);
       border: 1px solid rgba(16,185,129,0.35);
       border-radius: 24px; padding: 2.5rem;
       max-width: 500px; width: 90%; position: relative;
       box-shadow: 0 0 60px rgba(16,185,129,0.2), 0 30px 60px rgba(0,0,0,0.5);
-      transform: scale(0.92); transition: transform 0.3s ease;
+      transform: scale(0.92);
     }
+    @media (prefers-reduced-motion: no-preference) {
+      .modal-backdrop {
+        transition: opacity 0.3s ease;
+      }
+      .modal-card {
+        transition: transform 0.3s ease;
+      }
+    }
+    .modal-backdrop.active { opacity: 1; pointer-events: all; }
     .modal-backdrop.active .modal-card { transform: scale(1); }
     .modal-close {
       position: absolute; top: 1.25rem; right: 1.25rem;
       background: rgba(255,255,255,0.06); border: none; cursor: pointer;
       width: 32px; height: 32px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center; color: var(--text-muted);
-      transition: var(--transition);
+      transition: var(--trans-colors);
     }
     .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text-main); }
     .modal-close svg { width: 16px; height: 16px; }
@@ -551,8 +922,13 @@
     /* ===== LOADING SHIMMER ===== */
     .shimmer {
       background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+      background-size: 200% 100%;
       border-radius: 8px; height: 16px;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .shimmer {
+        animation: shimmer 1.5s infinite;
+      }
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
@@ -564,7 +940,12 @@
       background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
       color: var(--accent-green); backdrop-filter: blur(12px);
       transform: translateY(20px); opacity: 0;
-      transition: all 0.3s ease; pointer-events: none;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      #toast {
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
     }
     #toast.show { transform: translateY(0); opacity: 1; }
     #toast.error { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent-rose); }
@@ -586,12 +967,22 @@
       </div>
     </div>
     <div style="display:flex;gap:1rem;align-items:center;">
-      <a href="/docs" target="_blank" style="text-decoration:none;">
-        <button class="btn btn-secondary btn-sm"><i data-lucide="file-text"></i> API Docs</button>
+      <a href="/docs" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+        <i data-lucide="file-text" aria-hidden="true"></i> API Docs
       </a>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+        <!-- Moon icon (shown in dark mode) -->
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- Sun icon (shown in light mode) -->
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
       <div class="status-badge" id="health-badge">
         <div class="status-dot"></div>
-        <span id="health-text">Checking...</span>
+        <span id="health-text">Checking…</span>
       </div>
     </div>
   </header>
@@ -600,24 +991,24 @@
   <main>
 
     <!-- Navigation Tabs -->
-    <div class="tabs" id="main-tabs">
-      <button class="tab-btn" id="tab-btn-impact" onclick="switchTab('impact-tab', this)">
-        <i data-lucide="leaf"></i> Eco-Impact Dashboard
+    <div class="tabs" id="main-tabs" role="tablist" aria-label="NEXPIRE Navigation Tabs">
+      <button class="tab-btn active" id="tab-btn-impact" role="tab" aria-selected="true" aria-controls="impact-tab" onclick="switchTab('impact-tab', this)">
+        <i data-lucide="leaf" aria-hidden="true"></i> Eco-Impact Dashboard
       </button>
-      <button class="tab-btn" id="tab-btn-ngo" onclick="switchTab('ngo-tab', this)">
-        <i data-lucide="building-2"></i> Bulk Customers
+      <button class="tab-btn" id="tab-btn-ngo" role="tab" aria-selected="false" aria-controls="ngo-tab" onclick="switchTab('ngo-tab', this)">
+        <i data-lucide="building-2" aria-hidden="true"></i> Bulk Customers
       </button>
-      <button class="tab-btn" onclick="switchTab('ml-tab', this)">
-        <i data-lucide="cpu"></i> ML Discount Simulator
+      <button class="tab-btn" id="tab-btn-ml" role="tab" aria-selected="false" aria-controls="ml-tab" onclick="switchTab('ml-tab', this)">
+        <i data-lucide="cpu" aria-hidden="true"></i> ML Discount Simulator
       </button>
-      <button class="tab-btn" id="tab-btn-claims" onclick="switchTab('claims-tab', this)">
-        <i data-lucide="zap"></i> ML Flash Claims
+      <button class="tab-btn" id="tab-btn-claims" role="tab" aria-selected="false" aria-controls="claims-tab" onclick="switchTab('claims-tab', this)">
+        <i data-lucide="zap" aria-hidden="true"></i> ML Flash Claims
       </button>
-      <button class="tab-btn" onclick="switchTab('notify-tab', this)">
-        <i data-lucide="send"></i> Notification Engine
+      <button class="tab-btn" id="tab-btn-notify" role="tab" aria-selected="false" aria-controls="notify-tab" onclick="switchTab('notify-tab', this)">
+        <i data-lucide="send" aria-hidden="true"></i> Notification Engine
       </button>
-      <button class="tab-btn" onclick="switchTab('inventory-tab', this)">
-        <i data-lucide="store"></i> Inventory Core
+      <button class="tab-btn" id="tab-btn-inventory" role="tab" aria-selected="false" aria-controls="inventory-tab" onclick="switchTab('inventory-tab', this)">
+        <i data-lucide="store" aria-hidden="true"></i> Inventory Core
       </button>
     </div>
 
@@ -625,7 +1016,7 @@
     <!-- ==========================================
          TAB: ECO-IMPACT DASHBOARD (Phase 6)
          ========================================== -->
-    <div id="impact-tab" class="tab-content">
+    <div id="impact-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-impact" tabindex="0">
 
       <!-- Hero KPI row -->
       <div class="grid-4" style="margin-bottom:1.75rem;" id="kpi-grid">
@@ -764,7 +1155,7 @@
     <!-- ==========================================
          TAB: BULK CUSTOMERS & STANDING ORDERS
          ========================================== -->
-    <div id="ngo-tab" class="tab-content">
+    <div id="ngo-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-ngo" tabindex="0">
 
       <!-- Page header -->
       <div style="margin-bottom:1.5rem;">
@@ -905,7 +1296,7 @@
             <button class="btn btn-purple btn-full" onclick="evaluateEngine()" id="eval-btn">
               <i data-lucide="play"></i> Evaluate All Bulk Orders
             </button>
-            <div id="eval-result" style="margin-top:1.25rem;"></div>
+            <div id="eval-result" style="margin-top:1.25rem;" aria-live="polite"></div>
           </div>
         </div>
 
@@ -939,7 +1330,7 @@
             <i data-lucide="refresh-cw"></i> Load Allocations
           </button>
         </div>
-        <div id="matches-list">
+        <div id="matches-list" aria-live="polite">
           <div class="empty-state">
             <i data-lucide="inbox"></i>
             <p>Click "Load Allocations" to see priority inventory matches across all bulk customer segments</p>
@@ -956,7 +1347,7 @@
     <!-- ==========================================
          TAB: ML FLASH CLAIMS
          ========================================== -->
-    <div id="claims-tab" class="tab-content">
+    <div id="claims-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-claims" tabindex="0">
       <div class="glass-panel">
         <div class="panel-header">
           <div class="panel-title"><i data-lucide="zap"></i> ML Flash Claim Tokens</div>
@@ -971,10 +1362,10 @@
           Discount prices are calculated by the <strong style="color:var(--accent-cyan);">Predictive AI Markdown Engine</strong> using shelf-life decay, temperature, quantity and product condition. No bidding or auction timer is applied — claim the product directly at the ML-determined optimal price.
         </div>
 
-        <div id="flash-claims-table-container">
+        <div id="flash-claims-table-container" aria-live="polite">
           <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
             <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
-            <div style="color:var(--text-muted); font-size:0.88rem;">Loading flash claims...</div>
+            <div style="color:var(--text-muted); font-size:0.88rem;">Loading flash claims…</div>
           </div>
         </div>
       </div>
@@ -984,7 +1375,7 @@
     <!-- ==========================================
          TAB: ML DISCOUNT SIMULATOR (Phase 2)
          ========================================== -->
-    <div id="ml-tab" class="tab-content">
+    <div id="ml-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-ml" tabindex="0">
       <div class="grid-2">
         <div class="glass-panel">
           <div class="panel-header">
@@ -1068,7 +1459,7 @@
                 <span class="badge badge-muted" id="ml-risk-level-badge">Awaiting Calculation</span>
               </div>
 
-              <div id="ml-result-body">
+              <div id="ml-result-body" aria-live="polite">
                 <div style="margin-top:0.25rem;">
                   <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem; line-height: 1.45;">
                     The Predictive AI Markdown Engine automatically tracks decay thresholds. Below is the active pricing schema baseline:
@@ -1124,7 +1515,7 @@
     <!-- ==========================================
          TAB: NOTIFICATION ENGINE (Phase 3)
          ========================================== -->
-    <div id="notify-tab" class="tab-content">
+    <div id="notify-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-notify" tabindex="0">
       <div class="grid-2">
         <div class="glass-panel">
           <div class="panel-header">
@@ -1188,7 +1579,7 @@
             </button>
           </form>
           <div class="panel-title" style="font-size:0.9rem;margin-bottom:0.5rem;">TwiML XML Webhook Response:</div>
-          <div class="console-out" id="wh-console">// TwiML response XML will render here...</div>
+          <div class="console-out" id="wh-console">// TwiML response XML will render here…</div>
         </div>
       </div>
 
@@ -1246,7 +1637,7 @@
     <!-- ==========================================
          TAB: INVENTORY CORE (Phase 1)
          ========================================== -->
-    <div id="inventory-tab" class="tab-content">
+    <div id="inventory-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-inventory" tabindex="0">
       <!-- Top Summary KPI Cards -->
       <div class="kpi-grid" style="margin-bottom: 1.5rem;">
         <div class="kpi-card glow-green">
@@ -1278,7 +1669,7 @@
           <span class="badge badge-cyan" id="store-count-badge">0 Stores</span>
         </div>
         <div id="stores-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
-          <div class="empty-state"><i data-lucide="loader"></i><p>Loading stores...</p></div>
+          <div class="empty-state"><i data-lucide="loader" aria-hidden="true"></i><p>Loading stores…</p></div>
         </div>
       </div>
 
@@ -1287,7 +1678,7 @@
         <div class="panel-header" style="flex-wrap: wrap; gap: 1rem;">
           <div class="panel-title"><i data-lucide="boxes"></i> Real-Time Inventory Batches</div>
           <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-            <input type="text" id="inv-search" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" placeholder="Search SKU or product..." oninput="filterInventory()">
+            <input type="text" id="inv-search" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" placeholder="Search SKU or product…" oninput="filterInventory()">
             
             <select id="inv-store-filter" class="form-select" style="width: 160px; padding: 0.45rem 0.8rem; font-size: 0.85rem;" onchange="filterInventory()">
               <option value="ALL">All Stores</option>
@@ -1305,7 +1696,7 @@
 
         <div style="overflow-x: auto; margin-top: 0.5rem;">
           <div id="batches-table-container">
-            <div class="empty-state"><i data-lucide="loader"></i><p>Loading inventory batches...</p></div>
+            <div class="empty-state"><i data-lucide="loader" aria-hidden="true"></i><p>Loading inventory batches…</p></div>
           </div>
         </div>
       </div>
@@ -1319,7 +1710,7 @@
        ========================================== -->
   <div class="modal-backdrop" id="receipt-modal" onclick="closeReceiptModal(event)">
     <div class="modal-card">
-      <button class="modal-close" onclick="closeReceiptModalDirect()"><i data-lucide="x"></i></button>
+      <button class="modal-close" onclick="closeReceiptModalDirect()" aria-label="Close modal"><i data-lucide="x" aria-hidden="true"></i></button>
 
       <div class="receipt-top">
         <div class="receipt-logo"><i data-lucide="leaf"></i></div>
@@ -1343,7 +1734,7 @@
       </div>
 
       <div class="receipt-msg" id="r-msg">
-        Loading your impact data...
+        Loading your impact data…
       </div>
 
       <div class="receipt-actions">
@@ -1368,12 +1759,15 @@
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // ===== TAB SWITCHER =====
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active');
+        el.setAttribute('aria-selected', 'false');
+      });
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       if (tabId === 'impact-tab') loadAnalytics();
       if (tabId === 'ngo-tab') { loadStandingOrders(); }
       if (tabId === 'inventory-tab') { loadInventoryCore(); }
@@ -1691,7 +2085,7 @@
       e.preventDefault();
       const btn = document.getElementById('ngo-submit-btn');
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader"></i> Registering...';
+      btn.innerHTML = '<i data-lucide="loader"></i> Registering…';
 
       const payload = {
         ngo_name: document.getElementById('ngo-name').value,
@@ -1730,7 +2124,7 @@
     async function evaluateEngine() {
       const btn = document.getElementById('eval-btn');
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader"></i> Evaluating...';
+      btn.innerHTML = '<i data-lucide="loader"></i> Evaluating…';
       document.getElementById('eval-result').innerHTML = '';
       try {
         const res = await fetch('/api/v1/standing-orders/evaluate', { method: 'POST' });
@@ -2079,7 +2473,7 @@
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:3rem 0;">
           <div style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent-green); border-radius:50%; animation:spin 1s linear infinite;"></div>
-          <div style="color:var(--text-muted); font-size:0.88rem;">Loading active flash claims...</div>
+          <div style="color:var(--text-muted); font-size:0.88rem;">Loading active flash claims…</div>
         </div>
       `;
 
@@ -2749,6 +3143,49 @@
       renderInventoryTable(filtered);
     }
 
+
+
+    // ===== THEME TOGGLE =====
+    (function initTheme() {
+      const saved = localStorage.getItem('nexpire-theme');
+      if (saved === 'light') {
+        document.body.classList.add('light-theme');
+      } else if (saved === 'dark') {
+        document.body.classList.remove('light-theme');
+      }
+      // If no saved preference, stay dark (the default)
+
+      const toggleBtn = document.getElementById('theme-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const isLight = document.body.classList.toggle('light-theme');
+          localStorage.setItem('nexpire-theme', isLight ? 'light' : 'dark');
+
+          // Update Chart.js charts if they exist (grid/text colors)
+          if (typeof Chart !== 'undefined') {
+            const lightGrid = 'rgba(15, 23, 42, 0.08)';
+            const darkGrid  = 'rgba(255, 255, 255, 0.06)';
+            const lightText = '#64748b';
+            const darkText  = '#9ca3af';
+            Chart.helpers.each(Chart.instances, (chart) => {
+              if (chart.config.type === 'line' || chart.config.type === 'bar') {
+                const scales = chart.options.scales;
+                if (scales && scales.x) {
+                  scales.x.grid.color = isLight ? lightGrid : darkGrid;
+                  scales.x.ticks.color = isLight ? lightText : darkText;
+                }
+                if (scales && scales.y) {
+                  scales.y.grid.color = isLight ? lightGrid : darkGrid;
+                  scales.y.ticks.color = isLight ? lightText : darkText;
+                }
+              }
+              chart.update('none');
+            });
+          }
+        });
+      }
+    })();
+
     // ===== INIT: activate first tab =====
     (function init() {
       const firstBtn = document.querySelector('.tab-btn');
@@ -2757,5 +3194,447 @@
       loadAnalytics();
     })();
   </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  AI ASSISTANT WIDGET — Customer-facing chatbot                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <style>
+    /* ── Floating button ── */
+    #nxp-chat-fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      width: 62px; height: 62px; border-radius: 50%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 30px rgba(16,185,129,.5);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+    }
+    #nxp-chat-fab:hover { transform: scale(1.12); box-shadow: 0 12px 40px rgba(16,185,129,.65); }
+    #nxp-chat-fab svg { width: 28px; height: 28px; color: #fff; transition: opacity .2s; }
+    #nxp-chat-fab .fab-close { display: none; }
+    #nxp-chat-fab.open .fab-open  { display: none; }
+    #nxp-chat-fab.open .fab-close { display: block; }
+    #nxp-chat-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #f43f5e; color: #fff; font-size: .65rem;
+      font-weight: 700; width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #0a0f1c; transition: transform .3s;
+    }
+
+    /* ── Panel ── */
+    #nxp-chat-panel {
+      position: fixed; bottom: 104px; right: 28px; z-index: 9998;
+      width: min(420px, calc(100vw - 40px));
+      height: min(620px, calc(100vh - 140px));
+      background: rgba(8,13,24,.97);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(16,185,129,.15);
+      display: flex; flex-direction: column; overflow: hidden;
+      transform: scale(.92) translateY(20px); opacity: 0; pointer-events: none;
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .22s;
+    }
+    #nxp-chat-panel.open {
+      transform: scale(1) translateY(0); opacity: 1; pointer-events: all;
+    }
+
+    /* header */
+    #nxp-chat-header {
+      padding: 16px 18px; display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, rgba(16,185,129,.18) 0%, rgba(8,13,24,0) 100%);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .nxp-avatar {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg,#10b981,#059669);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 0 0 3px rgba(16,185,129,.25);
+    }
+    .nxp-chat-title { font-weight: 700; font-size: .92rem; color: #f1f5f9; }
+    .nxp-chat-sub   { font-size: .72rem; color: #10b981; margin-top: 1px; }
+    .nxp-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+      margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(16,185,129,.8);
+      animation: nxpPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes nxpPulse {
+      0%,100% { box-shadow: 0 0 6px rgba(16,185,129,.8); }
+      50%      { box-shadow: 0 0 16px rgba(16,185,129,1); }
+    }
+
+    /* messages */
+    #nxp-messages {
+      flex: 1; overflow-y: auto; padding: 14px 14px 8px;
+      display: flex; flex-direction: column; gap: 10px;
+      scroll-behavior: smooth;
+    }
+    #nxp-messages::-webkit-scrollbar { width: 4px; }
+    #nxp-messages::-webkit-scrollbar-track { background: transparent; }
+    #nxp-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+    .nxp-msg { display: flex; gap: 8px; align-items: flex-end; max-width: 100%; }
+    .nxp-msg.user { flex-direction: row-reverse; }
+
+    .nxp-bubble {
+      max-width: 82%; padding: 10px 13px; border-radius: 16px;
+      font-size: .82rem; line-height: 1.55; color: #e2e8f0;
+    }
+    .nxp-msg.bot  .nxp-bubble { background: rgba(255,255,255,.07); border-bottom-left-radius: 4px; }
+    .nxp-msg.user .nxp-bubble {
+      background: linear-gradient(135deg,#10b981 0%,#059669 100%);
+      color: #fff; border-bottom-right-radius: 4px;
+    }
+    .nxp-bubble strong { color: #fff; }
+    .nxp-bubble br+br  { display: block; margin: 4px 0; content: ''; }
+
+    /* typing indicator */
+    .nxp-typing { display: flex; gap: 4px; padding: 12px; }
+    .nxp-typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(16,185,129,.8); animation: nxpBounce .9s ease-in-out infinite;
+    }
+    .nxp-typing span:nth-child(2) { animation-delay: .15s; }
+    .nxp-typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes nxpBounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    /* product cards */
+    .nxp-cards { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .nxp-pcard {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px; padding: 11px 13px;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: start; gap: 6px;
+      transition: background .2s, border-color .2s;
+    }
+    .nxp-pcard:hover { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.3); }
+    .nxp-pcard-name  { font-size: .82rem; font-weight: 700; color: #f1f5f9; }
+    .nxp-pcard-cat   { font-size: .7rem; color: var(--text-muted,#6b7280); margin-top: 1px; }
+    .nxp-pcard-meta  { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .nxp-disc-badge  {
+      background: rgba(16,185,129,.18); color: #10b981;
+      font-size: .68rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; border: 1px solid rgba(16,185,129,.3);
+    }
+    .nxp-price-orig  { font-size: .7rem; color: #6b7280; text-decoration: line-through; }
+    .nxp-price-now   { font-size: .8rem; font-weight: 700; color: #10b981; }
+    .nxp-qty-badge   { font-size: .67rem; color: #94a3b8; }
+    .nxp-expiry      { font-size: .67rem; color: #f59e0b; }
+
+    .nxp-claim-btn {
+      margin-top: 6px; padding: 5px 12px; border-radius: 8px;
+      background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.35);
+      color: #10b981; font-size: .72rem; font-weight: 700;
+      cursor: pointer; transition: background .2s, transform .15s;
+      white-space: nowrap; align-self: end;
+    }
+    .nxp-claim-btn:hover {
+      background: rgba(16,185,129,.28); transform: scale(1.04);
+    }
+
+    /* quick replies */
+    #nxp-quick-replies { padding: 6px 14px 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .nxp-qr {
+      padding: 5px 11px; border-radius: 20px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: #cbd5e1; font-size: .72rem; cursor: pointer;
+      transition: background .18s, border-color .18s, color .18s;
+      white-space: nowrap;
+    }
+    .nxp-qr:hover { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: #10b981; }
+
+    /* input row */
+    #nxp-input-row {
+      padding: 10px 12px 14px; display: flex; gap: 8px; align-items: center;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    #nxp-input {
+      flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px; padding: 10px 14px; color: #f1f5f9;
+      font-size: .82rem; outline: none; font-family: inherit;
+      transition: border-color .2s, background .2s;
+    }
+    #nxp-input::placeholder { color: #4b5563; }
+    #nxp-input:focus { border-color: rgba(16,185,129,.5); background: rgba(255,255,255,.09); }
+    #nxp-send-btn {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg,#10b981,#059669);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    #nxp-send-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(16,185,129,.5); }
+    #nxp-send-btn svg { width: 18px; height: 18px; color: #fff; }
+  </style>
+
+  <!-- FAB Button -->
+  <button id="nxp-chat-fab" aria-label="Open NEXPIRE AI Assistant" title="NEXPIRE Assistant">
+    <span id="nxp-chat-badge" aria-hidden="true">●</span>
+    <!-- open icon: shopping bag / sparkle -->
+    <svg class="fab-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <!-- close icon -->
+    <svg class="fab-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+
+  <!-- Chat Panel -->
+  <div id="nxp-chat-panel" role="dialog" aria-label="NEXPIRE AI Assistant" aria-modal="true">
+    <!-- Header -->
+    <div id="nxp-chat-header">
+      <div class="nxp-avatar" aria-hidden="true">🤖</div>
+      <div>
+        <div class="nxp-chat-title">NEXPIRE Assistant</div>
+        <div class="nxp-chat-sub">Deals · Claims · Food Safety</div>
+      </div>
+      <div class="nxp-status-dot" title="Online" aria-label="Online"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="nxp-messages" aria-live="polite" aria-label="Chat messages"></div>
+
+    <!-- Quick Replies -->
+    <div id="nxp-quick-replies" aria-label="Quick reply suggestions"></div>
+
+    <!-- Input -->
+    <div id="nxp-input-row">
+      <input id="nxp-input" type="text" placeholder="Ask about deals, claims, food safety…"
+             aria-label="Type your message" autocomplete="off" maxlength="300"/>
+      <button id="nxp-send-btn" aria-label="Send message">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+    const fab     = document.getElementById('nxp-chat-fab');
+    const panel   = document.getElementById('nxp-chat-panel');
+    const msgs    = document.getElementById('nxp-messages');
+    const qrWrap  = document.getElementById('nxp-quick-replies');
+    const input   = document.getElementById('nxp-input');
+    const sendBtn = document.getElementById('nxp-send-btn');
+    const badge   = document.getElementById('nxp-chat-badge');
+
+    let isOpen = false;
+    let chatHistory = [];
+    let hasOpened = false;
+
+    /* ── Toggle ── */
+    fab.addEventListener('click', () => {
+      isOpen = !isOpen;
+      fab.classList.toggle('open', isOpen);
+      panel.classList.toggle('open', isOpen);
+      badge.style.display = 'none';
+      if (isOpen && !hasOpened) {
+        hasOpened = true;
+        loadWelcome();
+      }
+      if (isOpen) setTimeout(() => input.focus(), 320);
+    });
+
+    /* ── Send on Enter ── */
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    sendBtn.addEventListener('click', sendMessage);
+
+    /* ── Load welcome deals on first open ── */
+    async function loadWelcome() {
+      appendTyping();
+      try {
+        const res = await fetch('/api/v1/assistant/deals');
+        const data = await res.json();
+        removeTyping();
+        appendBotMessage(data.reply, data.products, data.quick_replies);
+      } catch(e) {
+        removeTyping();
+        appendBotMessage(
+          '👋 Welcome to **NEXPIRE**! I\'m your food-rescue assistant. Ask me about current deals, how to claim, or food safety.',
+          [], ['Show all discounts 🛒', 'How do I claim? 🤝', 'Is it safe to eat? 🍎']
+        );
+      }
+    }
+
+    /* ── Send message ── */
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      appendUserMessage(text);
+      chatHistory.push({ role: 'user', content: text });
+      appendTyping();
+
+      // Check for claim deeplink action
+      if (text.startsWith('__claim:')) {
+        const batchId = text.replace('__claim:', '');
+        removeTyping();
+        appendBotMessage(
+          `🎉 Great choice! To claim this product:\n\n1. Click the **Claim** button on the product card\n2. Enter your phone/email\n3. Head to the store within 3 minutes to complete your pickup!\n\nWould you like to see more deals?`,
+          [], ['Show all discounts 🛒', 'Show Dairy deals 🥛', 'How do I pay? 💳']
+        );
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/assistant/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history: chatHistory.slice(-6) })
+        });
+        const data = await res.json();
+        removeTyping();
+        chatHistory.push({ role: 'assistant', content: data.reply });
+        appendBotMessage(data.reply, data.products, data.quick_replies);
+      } catch(e) {
+        removeTyping();
+        appendBotMessage('Sorry, I had trouble connecting. Please try again!', [], _QUICK_DEFAULTS);
+      }
+    }
+
+    const _QUICK_DEFAULTS = ['Show all discounts 🛒', 'How do I claim? 🤝', 'Is it safe to eat? 🍎'];
+
+    /* ── Render helpers ── */
+    function appendUserMessage(text) {
+      const msg = document.createElement('div');
+      msg.className = 'nxp-msg user';
+      msg.innerHTML = `<div class="nxp-bubble">${escHtml(text)}</div>`;
+      msgs.appendChild(msg);
+      scrollBottom();
+    }
+
+    function appendBotMessage(markdown, products, quickReplies) {
+      const msg = document.createElement('div');
+      msg.className = 'nxp-msg bot';
+      const bubble = document.createElement('div');
+      bubble.className = 'nxp-bubble';
+      bubble.innerHTML = renderMarkdown(markdown);
+      msg.appendChild(bubble);
+      msgs.appendChild(msg);
+
+      if (products && products.length > 0) {
+        const cards = renderProductCards(products);
+        msgs.appendChild(cards);
+      }
+
+      setQuickReplies(quickReplies || []);
+      scrollBottom();
+    }
+
+    function renderProductCards(products) {
+      const wrap = document.createElement('div');
+      wrap.className = 'nxp-cards';
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'nxp-pcard';
+        const expDate = new Date(p.expiration_date);
+        const today = new Date();
+        const daysLeft = Math.ceil((expDate - today) / 86400000);
+        const expiryStr = daysLeft <= 1 ? '⚡ Expires today!' :
+                          daysLeft <= 3 ? `⚡ ${daysLeft} days left` :
+                          `Exp: ${p.expiration_date}`;
+        card.innerHTML = `
+          <div>
+            <div class="nxp-pcard-name">${escHtml(p.product_name)}</div>
+            <div class="nxp-pcard-cat">${escHtml(p.category)}</div>
+            <div class="nxp-pcard-meta">
+              <span class="nxp-disc-badge">-${p.discount_percentage}%</span>
+              <span class="nxp-price-orig">₹${p.original_price}</span>
+              <span class="nxp-price-now">₹${p.current_price}</span>
+              <span class="nxp-qty-badge">${p.quantity} left</span>
+            </div>
+            <div class="nxp-expiry">${expiryStr}</div>
+          </div>
+          <button class="nxp-claim-btn" data-bid="${p.id}" aria-label="Claim ${escHtml(p.product_name)}">
+            Claim →
+          </button>
+        `;
+        card.querySelector('.nxp-claim-btn').addEventListener('click', () => {
+          handleClaim(p.id, p.product_name);
+        });
+        wrap.appendChild(card);
+      });
+      return wrap;
+    }
+
+    function handleClaim(batchId, name) {
+      // Navigate to the claims tab if it exists, or open claim page
+      const claimsTab = document.querySelector('[data-tab="claims-tab"], .tab-btn[data-target="claims-tab"]');
+      if (claimsTab) claimsTab.click();
+
+      // Pre-fill batch ID in claims form if it exists
+      const batchInput = document.getElementById('claim-batch-id');
+      if (batchInput) {
+        batchInput.value = batchId;
+        batchInput.dispatchEvent(new Event('input'));
+      }
+
+      appendBotMessage(
+        `✅ To claim **${name}** (Batch #${batchId}):\n\n1. Enter your phone/email in the **Claims** tab above\n2. You have a **3-minute reservation window**\n3. Head to the store and collect your item!\n\nNeed help with anything else?`,
+        [], ['Show more deals 🛒', 'Payment info 💳', 'Food safety 🍎']
+      );
+    }
+
+    function setQuickReplies(replies) {
+      qrWrap.innerHTML = '';
+      replies.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'nxp-qr';
+        btn.textContent = r;
+        btn.addEventListener('click', () => {
+          input.value = r;
+          sendMessage();
+        });
+        qrWrap.appendChild(btn);
+      });
+    }
+
+    function appendTyping() {
+      const el = document.createElement('div');
+      el.className = 'nxp-msg bot';
+      el.id = 'nxp-typing-indicator';
+      el.innerHTML = `<div class="nxp-bubble nxp-typing"><span></span><span></span><span></span></div>`;
+      msgs.appendChild(el);
+      scrollBottom();
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('nxp-typing-indicator');
+      if (el) el.remove();
+    }
+
+    function scrollBottom() {
+      requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    function renderMarkdown(text) {
+      // Bold: **text**
+      // Numbered lists: 1. item
+      // Bullets: • item
+      return escHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
+
+    /* ── Show badge after 3s to draw attention ── */
+    setTimeout(() => {
+      if (!hasOpened) badge.style.display = 'flex';
+    }, 3000);
+
+  })();
+  </script>
+
 </body>
 </html>

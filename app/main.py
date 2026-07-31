@@ -15,6 +15,7 @@ from app.api.notifications import router as notifications_router
 from app.api.claims import router as claims_router
 from app.api.payments import router as payments_router
 from app.api.analytics import router as analytics_router
+from app.api.assistant import router as assistant_router
 from app.ml.predictor import get_predictor
 
 
@@ -47,6 +48,7 @@ app.include_router(notifications_router)
 app.include_router(claims_router)
 app.include_router(payments_router)
 app.include_router(analytics_router)
+app.include_router(assistant_router)
 
 
 

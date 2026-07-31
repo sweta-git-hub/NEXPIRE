@@ -12,6 +12,17 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <!-- Theme: apply saved preference before first paint to prevent flash -->
+  <script>
+    (function(){
+      try {
+        if (localStorage.getItem('nexpire-theme') === 'light') {
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <style>
     /* ===== DESIGN TOKENS (Locked Brand Palette & Shape System) ===== */
     :root {
@@ -54,6 +65,302 @@
       --trans-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       --trans-transform: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       --trans-shadow: box-shadow 0.2s ease-in-out;
+    }
+
+    /* ===== LIGHT THEME OVERRIDES ===== */
+    body.light-theme {
+      --bg-dark: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.82);
+      --bg-card-border: rgba(15, 23, 42, 0.09);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+
+      /* Slightly deeper accent tones for legibility on white */
+      --accent-green: #059669;
+      --accent-green-glow: rgba(5, 150, 105, 0.18);
+      --accent-emerald: #047857;
+      --accent-cyan: #0891b2;
+      --accent-cyan-glow: rgba(8, 145, 178, 0.12);
+      --accent-rose: #e11d48;
+      --accent-rose-glow: rgba(225, 29, 72, 0.12);
+      --accent-amber: #d97706;
+      --accent-amber-glow: rgba(217, 119, 6, 0.12);
+      --accent-purple: #7c3aed;
+      --accent-purple-glow: rgba(124, 58, 237, 0.12);
+    }
+
+    body.light-theme {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%);
+    }
+
+    /* ── Header ── */
+    body.light-theme header {
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom-color: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .brand-title {
+      background: linear-gradient(90deg, #0f172a, #059669);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Ambient Orbs ── */
+    body.light-theme .glow-orb { opacity: 0.5; }
+    body.light-theme .glow-1 { background: rgba(16, 185, 129, 0.06); }
+    body.light-theme .glow-2 { background: rgba(6, 182, 212, 0.05); }
+    body.light-theme .glow-3 { background: rgba(139, 92, 246, 0.04); }
+
+    /* ── Tabs ── */
+    body.light-theme .tab-btn:hover { background: rgba(15, 23, 42, 0.04); }
+    body.light-theme .tab-btn.active {
+      color: #0f172a;
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(8, 145, 178, 0.10));
+      border-color: rgba(5, 150, 105, 0.35);
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.10);
+    }
+
+    /* ── KPI & Metric Cards ── */
+    body.light-theme .kpi-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(15, 23, 42, 0.07);
+    }
+    body.light-theme .kpi-card:hover { border-color: rgba(15, 23, 42, 0.15); }
+    body.light-theme .metric-card {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(15, 23, 42, 0.07);
+    }
+
+    /* ── Glass Panels ── */
+    body.light-theme .glass-panel {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+
+    /* ── Forms & Inputs ── */
+    body.light-theme .form-input,
+    body.light-theme .form-select,
+    body.light-theme .form-textarea {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(15, 23, 42, 0.12);
+      color: #0f172a;
+    }
+    body.light-theme .form-input:focus-visible,
+    body.light-theme .form-select:focus-visible,
+    body.light-theme .form-textarea:focus-visible {
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+    }
+    body.light-theme .form-select option { background: #fff; color: #0f172a; }
+
+    /* ── Buttons ── */
+    body.light-theme .btn-secondary {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.12);
+      color: #334155;
+    }
+    body.light-theme .btn-secondary:hover { background: rgba(15, 23, 42, 0.08); }
+
+    /* ── Badges ── */
+    body.light-theme .badge-muted {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    /* ── Data Tables ── */
+    body.light-theme .data-table th { color: #475569; }
+    body.light-theme .data-table tr:hover td { background: rgba(15, 23, 42, 0.02); }
+
+    /* ── Console Output ── */
+    body.light-theme .console-out {
+      background: #1e293b;
+      border-color: rgba(15, 23, 42, 0.15);
+      color: #a7f3d0;
+    }
+
+    /* ── NGO / Auction Cards ── */
+    body.light-theme .ngo-card { background: rgba(255, 255, 255, 0.85); }
+    body.light-theme .auction-card { background: rgba(255, 255, 255, 0.92); }
+
+    /* ── Type Pills ── */
+    body.light-theme .type-pill {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .type-pill:hover {
+      background: rgba(5, 150, 105, 0.06);
+      border-color: rgba(5, 150, 105, 0.3);
+    }
+    body.light-theme .type-pill.active {
+      background: rgba(5, 150, 105, 0.1);
+    }
+
+    /* ── Auction Config / Bars ── */
+    body.light-theme .auction-config { background: rgba(15, 23, 42, 0.02); }
+    body.light-theme .conv-bar-bg,
+    body.light-theme .countdown-bar-bg,
+    body.light-theme .cat-bar-bg { background: rgba(15, 23, 42, 0.06); }
+
+    /* ── Price Ticks ── */
+    body.light-theme .price-tick {
+      background: rgba(15, 23, 42, 0.04);
+      color: #475569;
+    }
+    body.light-theme .price-tick.current {
+      background: rgba(5, 150, 105, 0.1);
+      border-color: rgba(5, 150, 105, 0.3);
+    }
+
+    /* ── Claimed Overlay ── */
+    body.light-theme .claimed-overlay { background: rgba(248, 250, 252, 0.95); }
+    body.light-theme .claimed-token {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    /* ── Modal ── */
+    body.light-theme .modal-backdrop { background: rgba(15, 23, 42, 0.45); }
+    body.light-theme .modal-card {
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      border-color: rgba(5, 150, 105, 0.25);
+      box-shadow: 0 0 40px rgba(5, 150, 105, 0.1), 0 20px 50px rgba(15, 23, 42, 0.12);
+    }
+    body.light-theme .modal-close {
+      background: rgba(15, 23, 42, 0.05);
+    }
+    body.light-theme .modal-close:hover {
+      background: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .receipt-top { border-bottom-color: rgba(15, 23, 42, 0.1); }
+    body.light-theme .receipt-headline {
+      background: linear-gradient(90deg, #059669, #0891b2);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Shimmer ── */
+    body.light-theme .shimmer {
+      background: linear-gradient(90deg, rgba(15,23,42,0.03) 25%, rgba(15,23,42,0.06) 50%, rgba(15,23,42,0.03) 75%);
+      background-size: 200% 100%;
+    }
+
+    /* ── Toast ── */
+    body.light-theme #toast {
+      background: rgba(5, 150, 105, 0.1);
+      border-color: rgba(5, 150, 105, 0.3);
+      backdrop-filter: blur(12px);
+    }
+    body.light-theme #toast.error {
+      background: rgba(225, 29, 72, 0.1);
+      border-color: rgba(225, 29, 72, 0.3);
+    }
+
+    /* ── Divider / Cat-row borders ── */
+    body.light-theme .divider { background: rgba(15, 23, 42, 0.08); }
+    body.light-theme .cat-row { border-bottom-color: rgba(15, 23, 42, 0.06); }
+
+    /* ── Inline style overrides (dark panel backgrounds used in HTML) ── */
+    body.light-theme [style*="background: rgba(10, 15, 28"],
+    body.light-theme [style*="background: rgba(8, 13, 24"],
+    body.light-theme [style*="background: rgba(255,255,255,0.03)"],
+    body.light-theme [style*="background: rgba(255,255,255,0.02)"],
+    body.light-theme [style*="background: rgba(255,255,255,0.01)"] {
+      background: rgba(255, 255, 255, 0.7) !important;
+      border-color: rgba(15, 23, 42, 0.08) !important;
+    }
+
+    /* ── AI Assistant Widget (light overrides) ── */
+    body.light-theme #nxp-chat-badge { border-color: #f8fafc; }
+    body.light-theme #nxp-chat-panel {
+      background: rgba(255, 255, 255, 0.97);
+      border-color: rgba(15, 23, 42, 0.1);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(5, 150, 105, 0.1);
+    }
+    body.light-theme #nxp-chat-header {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(255,255,255,0) 100%);
+      border-bottom-color: rgba(15, 23, 42, 0.06);
+    }
+    body.light-theme .nxp-chat-title { color: #0f172a; }
+    body.light-theme .nxp-msg.bot .nxp-bubble {
+      background: rgba(15, 23, 42, 0.05);
+      color: #334155;
+    }
+    body.light-theme .nxp-bubble strong { color: #0f172a; }
+    body.light-theme .nxp-pcard {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .nxp-pcard:hover {
+      background: rgba(5, 150, 105, 0.05);
+      border-color: rgba(5, 150, 105, 0.2);
+    }
+    body.light-theme .nxp-pcard-name { color: #0f172a; }
+    body.light-theme .nxp-price-now { color: #059669; }
+    body.light-theme .nxp-disc-badge {
+      background: rgba(5, 150, 105, 0.1);
+      color: #059669;
+      border-color: rgba(5, 150, 105, 0.25);
+    }
+    body.light-theme .nxp-claim-btn {
+      background: rgba(5, 150, 105, 0.08);
+      border-color: rgba(5, 150, 105, 0.25);
+      color: #059669;
+    }
+    body.light-theme .nxp-claim-btn:hover { background: rgba(5, 150, 105, 0.15); }
+    body.light-theme .nxp-qr {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.1);
+      color: #475569;
+    }
+    body.light-theme .nxp-qr:hover {
+      background: rgba(5, 150, 105, 0.08);
+      border-color: rgba(5, 150, 105, 0.3);
+      color: #059669;
+    }
+    body.light-theme #nxp-input {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.1);
+      color: #0f172a;
+    }
+    body.light-theme #nxp-input::placeholder { color: #94a3b8; }
+    body.light-theme #nxp-input:focus {
+      border-color: rgba(5, 150, 105, 0.4);
+      background: rgba(15, 23, 42, 0.02);
+    }
+    body.light-theme #nxp-input-row {
+      border-top-color: rgba(15, 23, 42, 0.06);
+    }
+    body.light-theme .nxp-typing span { background: rgba(5, 150, 105, 0.6); }
+
+    /* ── Theme Toggle Button ── */
+    .theme-toggle {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      transform: scale(1.06);
+    }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .icon-sun  { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    body.light-theme .theme-toggle {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .theme-toggle:hover {
+      background: rgba(15, 23, 42, 0.08);
+    }
+    body.light-theme .theme-toggle .icon-sun  { display: block; }
+    body.light-theme .theme-toggle .icon-moon { display: none; }
+
+    /* ── Smooth transition for theme switching ── */
+    body {
+      transition: background 0.4s ease, color 0.3s ease;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -663,6 +970,16 @@
       <a href="/docs" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">
         <i data-lucide="file-text" aria-hidden="true"></i> API Docs
       </a>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+        <!-- Moon icon (shown in dark mode) -->
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- Sun icon (shown in light mode) -->
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
       <div class="status-badge" id="health-badge">
         <div class="status-dot"></div>
         <span id="health-text">Checking…</span>
@@ -2826,6 +3143,48 @@
       renderInventoryTable(filtered);
     }
 
+
+
+    // ===== THEME TOGGLE =====
+    (function initTheme() {
+      const saved = localStorage.getItem('nexpire-theme');
+      if (saved === 'light') {
+        document.body.classList.add('light-theme');
+      } else if (saved === 'dark') {
+        document.body.classList.remove('light-theme');
+      }
+      // If no saved preference, stay dark (the default)
+
+      const toggleBtn = document.getElementById('theme-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const isLight = document.body.classList.toggle('light-theme');
+          localStorage.setItem('nexpire-theme', isLight ? 'light' : 'dark');
+
+          // Update Chart.js charts if they exist (grid/text colors)
+          if (typeof Chart !== 'undefined') {
+            const lightGrid = 'rgba(15, 23, 42, 0.08)';
+            const darkGrid  = 'rgba(255, 255, 255, 0.06)';
+            const lightText = '#64748b';
+            const darkText  = '#9ca3af';
+            Chart.helpers.each(Chart.instances, (chart) => {
+              if (chart.config.type === 'line' || chart.config.type === 'bar') {
+                const scales = chart.options.scales;
+                if (scales && scales.x) {
+                  scales.x.grid.color = isLight ? lightGrid : darkGrid;
+                  scales.x.ticks.color = isLight ? lightText : darkText;
+                }
+                if (scales && scales.y) {
+                  scales.y.grid.color = isLight ? lightGrid : darkGrid;
+                  scales.y.ticks.color = isLight ? lightText : darkText;
+                }
+              }
+              chart.update('none');
+            });
+          }
+        });
+      }
+    })();
 
     // ===== INIT: activate first tab =====
     (function init() {

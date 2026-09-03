@@ -218,6 +218,36 @@
       border-color: rgba(15, 23, 42, 0.1);
     }
 
+    /* ── Light Theme Portal Modal ── */
+    body.light-theme #portal-modal {
+      background: rgba(241, 245, 249, 0.9);
+    }
+    body.light-theme .portal-modal-wrapper {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(15, 23, 42, 0.12);
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+    }
+    body.light-theme .portal-modal-title {
+      background: linear-gradient(135deg, #0f172a 0%, #059669 50%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.light-theme .portal-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+    body.light-theme .portal-card:hover {
+      border-color: rgba(15, 23, 42, 0.25);
+    }
+    body.light-theme .portal-features-box {
+      background: rgba(15, 23, 42, 0.03);
+      border-color: rgba(15, 23, 42, 0.07);
+    }
+    body.light-theme .portal-modal-close {
+      background: rgba(15, 23, 42, 0.05);
+      border-color: rgba(15, 23, 42, 0.12);
+    }
+
     /* ── Modal ── */
     body.light-theme .modal-backdrop { background: rgba(15, 23, 42, 0.45); }
     body.light-theme .modal-card {
@@ -949,6 +979,286 @@
     }
     #toast.show { transform: translateY(0); opacity: 1; }
     #toast.error { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent-rose); }
+
+    /* ===== PORTAL SELECTOR MODAL & HEADER BADGE ===== */
+    .portal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+    .portal-badge:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .portal-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+    .portal-badge-admin {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(245, 158, 11, 0.45);
+      color: #fbbf24;
+    }
+    .portal-badge-admin .portal-badge-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+    }
+    .portal-badge-vendor {
+      background: rgba(6, 182, 212, 0.14);
+      border-color: rgba(6, 182, 212, 0.45);
+      color: #38bdf8;
+    }
+    .portal-badge-vendor .portal-badge-dot {
+      background: #06b6d4;
+      box-shadow: 0 0 8px #06b6d4;
+    }
+    .portal-badge-customer {
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #34d399;
+    }
+    .portal-badge-customer .portal-badge-dot {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    /* Modal Overlay */
+    #portal-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(3, 7, 18, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #portal-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .portal-modal-wrapper {
+      max-width: 1100px;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.1);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #portal-modal.show .portal-modal-wrapper {
+      transform: scale(1) translateY(0);
+    }
+    .portal-modal-header {
+      text-align: center;
+      margin-bottom: 2.25rem;
+    }
+    .portal-modal-title {
+      font-family: var(--font-display);
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .portal-modal-subtitle {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      max-width: 620px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    .portal-modal-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .portal-modal-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      transform: rotate(90deg);
+    }
+
+    /* 3 Portal Cards Grid */
+    .portal-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 960px) {
+      .portal-cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .portal-modal-wrapper {
+        padding: 1.75rem;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+    }
+    .portal-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 18px;
+      padding: 1.75rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 0.7;
+      transition: opacity 0.3s ease, height 0.3s ease;
+    }
+    .portal-card-admin::before {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+    .portal-card-vendor::before {
+      background: linear-gradient(90deg, #06b6d4, #3b82f6);
+    }
+    .portal-card-customer::before {
+      background: linear-gradient(90deg, #10b981, #059669);
+    }
+    .portal-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .portal-card:hover::before {
+      opacity: 1;
+      height: 6px;
+    }
+    .portal-card.selected {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 2px var(--accent-green), 0 12px 28px rgba(16, 185, 129, 0.2);
+    }
+    .portal-card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .portal-card-icon svg {
+      width: 26px;
+      height: 26px;
+    }
+    .portal-card-admin .portal-card-icon {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .portal-card-vendor .portal-card-icon {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .portal-card-customer .portal-card-icon {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .portal-card-role {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    .portal-card-admin .portal-card-role { color: #f59e0b; }
+    .portal-card-vendor .portal-card-role { color: #06b6d4; }
+    .portal-card-customer .portal-card-role { color: #10b981; }
+
+    .portal-card-name {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+    .portal-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.75rem;
+      flex-grow: 1;
+    }
+    .portal-enter-btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .portal-card-admin .portal-enter-btn {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a;
+    }
+    .portal-card-vendor .portal-enter-btn {
+      background: linear-gradient(135deg, #06b6d4, #0284c7);
+      color: #ffffff;
+    }
+    .portal-card-customer .portal-enter-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+    }
+    .portal-enter-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      filter: brightness(1.08);
+    }
   </style>
 </head>
 <body>
@@ -966,7 +1276,18 @@
         <div class="brand-subtitle">AI Food-Waste Rescue Platform</div>
       </div>
     </div>
-    <div style="display:flex;gap:1rem;align-items:center;">
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <!-- Portal Role Switcher -->
+      <div class="portal-indicator-container" id="portal-indicator-container" style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="portal-badge portal-badge-admin" id="current-portal-badge" onclick="openPortalModal()" title="Click to switch portal">
+          <span class="portal-badge-dot"></span>
+          <span id="current-portal-label">Admin Portal</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openPortalModal()" title="Switch User Portal" style="gap: 0.35rem;">
+          <i data-lucide="arrow-left-right" aria-hidden="true"></i> Switch Portal
+        </button>
+      </div>
+
       <a href="/docs" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">
         <i data-lucide="file-text" aria-hidden="true"></i> API Docs
       </a>
@@ -987,13 +1308,76 @@
     </div>
   </header>
 
+  <!-- ==========================================
+       PORTAL SELECTION MODAL
+       ========================================== -->
+  <div id="portal-modal" class="portal-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
+    <div class="portal-modal-wrapper">
+      <button class="portal-modal-close" onclick="closePortalModal()" aria-label="Close portal modal" title="Close">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+
+      <div class="portal-modal-header">
+        <div style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.8rem;border-radius:9999px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.75rem;">
+          <i data-lucide="layers" style="width:14px;height:14px;"></i> Multi-Role Portal System
+        </div>
+        <h2 class="portal-modal-title" id="portal-modal-title">Select User Portal</h2>
+        <p class="portal-modal-subtitle">Choose your access role below to enter the dedicated interface tailored for your workflow.</p>
+      </div>
+
+      <div class="portal-cards-grid">
+        <!-- 1. ADMIN PORTAL -->
+        <div class="portal-card portal-card-admin" data-portal="ADMIN" onclick="selectPortal('ADMIN')">
+          <div class="portal-card-icon">
+            <i data-lucide="shield-check"></i>
+          </div>
+          <div class="portal-card-role">Enterprise Control</div>
+          <div class="portal-card-name">1. ADMIN Portal</div>
+          <div class="portal-card-desc">Comprehensive system overview, NGO bulk orders, algorithmic pricing simulator, and inventory control.</div>
+
+          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('ADMIN')">
+            Enter as Admin <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- 2. VENDOR PORTAL -->
+        <div class="portal-card portal-card-vendor" data-portal="VENDOR" onclick="selectPortal('VENDOR')">
+          <div class="portal-card-icon">
+            <i data-lucide="store"></i>
+          </div>
+          <div class="portal-card-role">Store Manager</div>
+          <div class="portal-card-name">2. VENDOR Portal</div>
+          <div class="portal-card-desc">Retail branch metrics, dynamic markdown AI simulation, live flash reservation monitoring, and stock care.</div>
+
+          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('VENDOR')">
+            Enter as Vendor <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- 3. CUSTOMER PORTAL -->
+        <div class="portal-card portal-card-customer" data-portal="CUSTOMERS" onclick="selectPortal('CUSTOMERS')">
+          <div class="portal-card-icon">
+            <i data-lucide="sparkles"></i>
+          </div>
+          <div class="portal-card-role">Food Rescuer & Buyer</div>
+          <div class="portal-card-name">3. CUSTOMERS Portal</div>
+          <div class="portal-card-desc">Instant access to hyper-local surplus flash sales, near-expiry food discounts, and 1-click reservations.</div>
+
+          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('CUSTOMERS')">
+            Enter as Customer <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ======== MAIN ======== -->
   <main>
 
     <!-- Navigation Tabs -->
     <div class="tabs" id="main-tabs" role="tablist" aria-label="NEXPIRE Navigation Tabs">
       <button class="tab-btn active" id="tab-btn-impact" role="tab" aria-selected="true" aria-controls="impact-tab" onclick="switchTab('impact-tab', this)">
-        <i data-lucide="leaf" aria-hidden="true"></i> Eco-Impact Dashboard
+        <i data-lucide="layout-dashboard" aria-hidden="true"></i> Dashboard
       </button>
       <button class="tab-btn" id="tab-btn-ngo" role="tab" aria-selected="false" aria-controls="ngo-tab" onclick="switchTab('ngo-tab', this)">
         <i data-lucide="building-2" aria-hidden="true"></i> Bulk Customers
@@ -1004,11 +1388,14 @@
       <button class="tab-btn" id="tab-btn-claims" role="tab" aria-selected="false" aria-controls="claims-tab" onclick="switchTab('claims-tab', this)">
         <i data-lucide="zap" aria-hidden="true"></i> ML Flash Claims
       </button>
+      <button class="tab-btn" id="tab-btn-inventory" role="tab" aria-selected="false" aria-controls="inventory-tab" onclick="switchTab('inventory-tab', this)">
+        <i data-lucide="package-search" aria-hidden="true"></i> Inventory Care
+      </button>
       <button class="tab-btn" id="tab-btn-notify" role="tab" aria-selected="false" aria-controls="notify-tab" onclick="switchTab('notify-tab', this)">
         <i data-lucide="send" aria-hidden="true"></i> Notification Engine
       </button>
-      <button class="tab-btn" id="tab-btn-inventory" role="tab" aria-selected="false" aria-controls="inventory-tab" onclick="switchTab('inventory-tab', this)">
-        <i data-lucide="store" aria-hidden="true"></i> Inventory Core
+      <button class="tab-btn" id="tab-btn-assistant" role="button" aria-label="Open AI Assistant Chatbot" onclick="openChatbot()" style="border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); color: var(--accent-green);">
+        <i data-lucide="bot" aria-hidden="true"></i> AI Assistant 💬
       </button>
     </div>
 
@@ -1758,6 +2145,103 @@
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
+
+    // ===== PORTAL CONFIGURATION =====
+    const PORTALS = {
+      ADMIN: {
+        id: 'ADMIN',
+        name: 'Admin Portal',
+        badgeClass: 'portal-badge-admin',
+        tabs: ['tab-btn-impact', 'tab-btn-ngo', 'tab-btn-ml', 'tab-btn-inventory', 'tab-btn-notify', 'tab-btn-assistant'],
+        defaultTab: 'impact-tab'
+      },
+      VENDOR: {
+        id: 'VENDOR',
+        name: 'Vendor Portal',
+        badgeClass: 'portal-badge-vendor',
+        tabs: ['tab-btn-impact', 'tab-btn-ml', 'tab-btn-claims', 'tab-btn-inventory', 'tab-btn-assistant'],
+        defaultTab: 'impact-tab'
+      },
+      CUSTOMERS: {
+        id: 'CUSTOMERS',
+        name: 'Customer Portal',
+        badgeClass: 'portal-badge-customer',
+        tabs: ['tab-btn-claims', 'tab-btn-assistant'],
+        defaultTab: 'claims-tab'
+      }
+    };
+
+    function selectPortal(portalKey, closeModal = true) {
+      const portal = PORTALS[portalKey] || PORTALS.ADMIN;
+      localStorage.setItem('nexpire_selected_portal', portalKey);
+      sessionStorage.setItem('nexpire_portal_opened', 'true');
+
+      // Update Header Badge
+      const badge = document.getElementById('current-portal-badge');
+      const label = document.getElementById('current-portal-label');
+      if (label) label.textContent = portal.name;
+      if (badge) {
+        badge.className = 'portal-badge ' + portal.badgeClass;
+      }
+
+      // Filter visible tabs according to role
+      const allTabs = document.querySelectorAll('#main-tabs .tab-btn');
+      allTabs.forEach(btn => {
+        if (portal.tabs.includes(btn.id)) {
+          btn.style.display = 'inline-flex';
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+
+      // Highlight active card in modal
+      document.querySelectorAll('.portal-card').forEach(card => {
+        if (card.dataset.portal === portalKey) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+
+      // Switch to default tab if current active tab is not visible in this portal
+      const activeTabContent = document.querySelector('.tab-content.active');
+      const currentActiveTabId = activeTabContent ? activeTabContent.id : null;
+      const activeTabBtn = currentActiveTabId ? document.querySelector(`[aria-controls="${currentActiveTabId}"]`) : null;
+
+      if (!activeTabBtn || activeTabBtn.style.display === 'none' || !currentActiveTabId) {
+        const targetBtn = document.getElementById(portal.tabs[0]) || document.querySelector(`[aria-controls="${portal.defaultTab}"]`);
+        if (targetBtn) {
+          switchTab(portal.defaultTab, targetBtn);
+        }
+      } else {
+        if (currentActiveTabId === 'impact-tab') loadAnalytics();
+        if (currentActiveTabId === 'ngo-tab') loadStandingOrders();
+        if (currentActiveTabId === 'inventory-tab') loadInventoryCore();
+        if (currentActiveTabId === 'claims-tab') loadFlashClaims();
+      }
+
+      if (closeModal) {
+        closePortalModal();
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openPortalModal() {
+      const modal = document.getElementById('portal-modal');
+      if (modal) {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closePortalModal() {
+      const modal = document.getElementById('portal-modal');
+      if (modal) {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    }
 
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -3185,12 +3669,20 @@
       }
     })();
 
-    // ===== INIT: activate first tab =====
+    // ===== INIT: activate portal & default tab =====
     (function init() {
-      const firstBtn = document.querySelector('.tab-btn');
-      firstBtn.classList.add('active');
-      document.getElementById('impact-tab').classList.add('active');
-      loadAnalytics();
+      const savedPortal = localStorage.getItem('nexpire_selected_portal');
+      const hasVisited = sessionStorage.getItem('nexpire_portal_opened');
+
+      if (savedPortal && PORTALS[savedPortal]) {
+        selectPortal(savedPortal, false);
+        if (!hasVisited) {
+          openPortalModal();
+        }
+      } else {
+        selectPortal('ADMIN', false);
+        openPortalModal();
+      }
     })();
   </script>
 
@@ -3426,8 +3918,12 @@
     let hasOpened = false;
 
     /* ── Toggle ── */
-    fab.addEventListener('click', () => {
-      isOpen = !isOpen;
+    function toggleChat(openState) {
+      if (typeof openState === 'boolean') {
+        isOpen = openState;
+      } else {
+        isOpen = !isOpen;
+      }
       fab.classList.toggle('open', isOpen);
       panel.classList.toggle('open', isOpen);
       badge.style.display = 'none';
@@ -3436,7 +3932,16 @@
         loadWelcome();
       }
       if (isOpen) setTimeout(() => input.focus(), 320);
-    });
+    }
+
+    fab.addEventListener('click', () => toggleChat());
+    window.openChatbot = function() { toggleChat(true); };
+    window.toggleChatbot = toggleChat;
+
+    // Open if URL has query or hash requesting assistant
+    if (window.location.hash === '#assistant' || window.location.search.includes('chat') || window.location.search.includes('assistant')) {
+      setTimeout(() => toggleChat(true), 400);
+    }
 
     /* ── Send on Enter ── */
     input.addEventListener('keydown', e => {

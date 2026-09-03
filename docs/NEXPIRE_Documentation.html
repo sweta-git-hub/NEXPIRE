@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NEXPIRE — Comprehensive System Documentation & Technical Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=Fira+Code:wght@400;500&display=swap');
+
+    @page {
+      size: A4;
+      margin: 15mm 14mm 15mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-size: 9.8pt;
+    }
+
+    h1, h2, h3, h4, .display-font {
+      font-family: 'Space Grotesk', sans-serif;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    /* Cover Page */
+    .cover-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      padding: 30px 10px 10px 10px;
+    }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: #ecfdf5;
+      border: 1px solid #10b981;
+      border-radius: 9999px;
+      color: #047857;
+      font-size: 8.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .cover-title {
+      font-size: 36pt;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .cover-title span {
+      color: #059669;
+    }
+
+    .cover-subtitle {
+      font-size: 13.5pt;
+      color: #475569;
+      font-weight: 400;
+      line-height: 1.45;
+      max-width: 600px;
+      margin-bottom: 30px;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 20px;
+    }
+
+    .cover-meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cover-meta-label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .cover-meta-val {
+      font-size: 9.5pt;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    .cover-footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+
+    /* Page Headings & Structure */
+    .page-break {
+      page-break-before: always;
+    }
+
+    .section-header {
+      margin-top: 26px;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-header h2 {
+      font-size: 15pt;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-badge {
+      font-size: 7.5pt;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    h4 {
+      font-size: 10pt;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    p {
+      margin-bottom: 10px;
+      color: #334155;
+    }
+
+    /* Cards & Callouts */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .callout {
+      border-left: 4px solid #10b981;
+      background: #f0fdf4;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: #065f46;
+      font-size: 9pt;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .callout-body {
+      font-size: 8.8pt;
+      color: #166534;
+      line-height: 1.45;
+    }
+
+    .callout-warn {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .callout-warn .callout-title { color: #92400e; }
+    .callout-warn .callout-body { color: #b45309; }
+
+    .callout-info {
+      border-left-color: #06b6d4;
+      background: #ecfeff;
+    }
+    .callout-info .callout-title { color: #155e75; }
+    .callout-info .callout-body { color: #0e7490; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td {
+      padding: 6px 9px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .stat-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15pt;
+      font-weight: 700;
+      color: #059669;
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 7.5pt;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    /* Code Blocks */
+    pre, code {
+      font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    code {
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 8pt;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 7.8pt;
+      line-height: 1.45;
+      overflow-x: hidden;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* UI Wireframes */
+    .wireframe-box {
+      background: #0b0f19;
+      color: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7.2pt;
+      line-height: 1.35;
+      margin-bottom: 12px;
+      border: 1px solid #1e293b;
+      page-break-inside: avoid;
+    }
+
+    .wireframe-title {
+      font-family: 'Space Grotesk', sans-serif;
+      color: #10b981;
+      font-weight: 700;
+      font-size: 8.5pt;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    ul, ol {
+      margin-left: 18px;
+      margin-bottom: 10px;
+    }
+
+    li {
+      margin-bottom: 4px;
+      color: #334155;
+    }
+
+    .formula-box {
+      background: #f1f5f9;
+      border-left: 3px solid #6366f1;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      margin: 8px 0 10px 0;
+      font-family: 'Fira Code', monospace;
+      font-size: 8pt;
+      color: #1e1b4b;
+      page-break-inside: avoid;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 7pt;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-amber { background: #fef3c7; color: #b45309; }
+    .badge-purple { background: #f3e8ff; color: #7e22ce; }
+  </style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div>
+      <div class="cover-badge">
+        <span>●</span> Official Project & Technical Architecture Specification
+      </div>
+      <h1 class="cover-title">NEXPIRE<br><span>AI Food Rescue Platform</span></h1>
+      <p class="cover-subtitle">
+        An end-to-end technical, algorithmic, and architectural guide to the predictive food waste redistribution ecosystem.
+      </p>
+
+      <div class="grid-4" style="margin-top: 30px;">
+        <div class="stat-box">
+          <div class="stat-val">0.5 kg</div>
+          <div class="stat-label">Food Saved / Rescued Unit</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">2.5 kg</div>
+          <div class="stat-label">CO₂e Offset / kg Waste</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">180s</div>
+          <div class="stat-label">Atomic Redis TTL Lock</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">100%</div>
+          <div class="stat-label">Subsidized NGO Bypass</div>
+        </div>
+      </div>
+
+      <div class="cover-meta-grid">
+        <div class="cover-meta-item">
+          <span class="cover-meta-label">Project Name</span>
+          <span class="cover-meta-val">NEXPIRE (Formerly ResQ-Chain)</span>
+        </div>
+        <div class="cover-meta-item">
+          <span class="cover-meta-label">Primary Stack</span>
+          <span class="cover-meta-val">FastAPI + Postgres/PostGIS + Redis + Celery + Scikit-Learn</span>
+        </div>
+        <div class="cover-meta-item">
+          <span class="cover-meta-label">Implementation Status</span>
+          <span class="cover-meta-val">All Phases Complete (Phase 0 – Phase 7)</span>
+        </div>
+        <div class="cover-meta-item">
+          <span class="cover-meta-label">Deployment Topology</span>
+          <span class="cover-meta-val">Docker Compose (4 Services, Host Port 8001)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>Antigravity Engineering | Advanced Agentic Coding</span>
+      <span>Confidential & Proprietary • 2026 Edition</span>
+    </div>
+  </div>
+
+  <!-- SECTION 1: EXECUTIVE SUMMARY & DOMAIN CONTEXT -->
+  <div class="section-header">
+    <h2>1. Executive Summary & Domain Knowledge</h2>
+    <span class="section-badge">Domain Context</span>
+  </div>
+
+  <p>
+    <strong>NEXPIRE</strong> is an intelligent, automated food waste reduction and redistribution platform designed to bridge the gap between commercial perishable inventory loss, community food rescue, and charitable hunger relief.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">The Global Food Waste Paradox</div>
+    <div class="callout-body">
+      Globally, <strong>1.3 billion tons</strong> of food is discarded annually (~33% of all food produced), generating 8–10% of global greenhouse emissions. Concurrently, hundreds of millions suffer from food insecurity. Retail stores discard perfectly nutritious items simply because they have reached a commercial "best before" cutoff or foot traffic slowed due to weather events.
+    </div>
+  </div>
+
+  <h3>The Four Critical Inefficiencies in Retail Food Disposal</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>1. The "Expiration Cliff" & Static Sticker Markdowns</h4>
+      <p>Store workers typically walk aisles late in the afternoon slapping fixed 20% or 50% discount stickers onto products. This process is labor-intensive, unscientific, and usually happens too late to capture shoppers before closing.</p>
+    </div>
+    <div class="card">
+      <h4>2. Weather Sensitivity & Foot Traffic Shocks</h4>
+      <p>Severe rain, heatwaves, or snowstorms drastically reduce store foot traffic. While demand drops by 40–70%, shelf inventory decay accelerates, causing mass disposal that static models cannot anticipate.</p>
+    </div>
+    <div class="card">
+      <h4>3. Concurrency Double-Claiming Failures</h4>
+      <p>When high-value perishables (e.g., artisanal meat or bakery) are blasted out on discount apps, simultaneous claims cause severe stock conflicts and customer frustration if the backend lacks atomic locking.</p>
+    </div>
+    <div class="card">
+      <h4>4. Disconnected Shelter & NGO Redistribution</h4>
+      <p>Charities, food banks, and shelters receive unpredictable donations of items they cannot use (e.g., 200kg of cabbage when they need protein). There is no automated subscription or priority reservation pipeline.</p>
+    </div>
+  </div>
+
+  <h3>The NEXPIRE Automated Solution Cycle</h3>
+  <ol>
+    <li><strong>Monitor:</strong> Scans PostgreSQL inventory databases continuously for batches nearing perishable expiration.</li>
+    <li><strong>Predict:</strong> A Scikit-Learn Machine Learning pipeline calculates item risk scores by evaluating category shelf-life decay, stock depth, and live ambient temperature.</li>
+    <li><strong>Price:</strong> Computes the exact clearance discount required to maximize recovery while protecting retailer margins.</li>
+    <li><strong>Alert:</strong> Triggers hyper-local SMS and WhatsApp Business broadcasts via Twilio to verified consumers within a PostGIS-calculated radius.</li>
+    <li><strong>Reserve:</strong> Users tap a tokenized link or reply "YES" to an SMS. An atomic Redis TTL lock holds the item for 180 seconds to prevent double-claiming.</li>
+    <li><strong>Pay & Fulfill:</strong> Consumers pay via Razorpay or Stripe and select Self-Pickup (QR code) or Local Delivery. Registered NGOs skip payment via subsidized allocation.</li>
+    <li><strong>Quantify:</strong> Aggregates environmental impact (kg food rescued, kg CO₂e offset) and outputs shareable social impact receipts.</li>
+  </ol>
+
+  <!-- SECTION 2: ARCHITECTURAL OVERVIEW & TOPOLOGY -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>2. System Architecture & Topology</h2>
+    <span class="section-badge">Infrastructure</span>
+  </div>
+
+  <p>
+    NEXPIRE operates as a decoupled microservices-ready architecture managed via Docker Compose. The topology is optimized for sub-millisecond concurrency locking, fast geospatial querying, and asynchronous notification broadcasting.
+  </p>
+
+  <div class="wireframe-box">
+    <div class="wireframe-title">CONTAINER TOPOLOGY & NETWORK FLOW</div>
++---------------------------------------------------------------------------------------+
+|  CLIENT BROWSERS & CONSUMERS        STORE OPERATORS & INVENTORY SCANNER               |
+|  - Dashboard: http://localhost:8001/ - CSV Uploads, Barcode Intake, Repricer Simulator|
++---------------------------------------------------------------------------------------+
+                                  |  (HTTP / JSON / Webhooks)
+                                  v
++---------------------------------------------------------------------------------------+
+|  CONTAINER 1: nexpire-api (FastAPI / Uvicorn, Python 3.11) - Host Port 8001           |
+|  - REST Routers: Stores, Inventory, Pricing, Standing Orders, Claims, Payments, ESG   |
+|  - In-Memory Machine Learning Pipeline (RandomForestRegressor + ColumnTransformer)    |
+|  - Embedded AI Assistant Natural Language Router (/api/v1/assistant)                  |
++---------------------------------------------------------------------------------------+
+         |                                  |                             |
+         v                                  v                             v
++------------------------+      +------------------------+      +------------------------+
+| CONTAINER 2:           |      | CONTAINER 3:           |      | CONTAINER 4:           |
+| nexpire-db             |      | nexpire-redis          |      | nexpire-worker         |
+| PostGIS 16-3.4         |      | Redis 7 Alpine         |      | Celery 5.x Worker      |
+| Port: 5432             |      | Port: 6379             |      | Off-path task queue    |
+| Persistent Volume:     |      | Atomic TTL Locks       |      | Twilio SMS / WhatsApp  |
+| pgdata                 |      | Message Broker         |      | Flash Broadcast Dispatch|
++------------------------+      +------------------------+      +------------------------+
+  </div>
+
+  <h3>Core Architectural Components</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Container Name</th>
+        <th>Port</th>
+        <th>Key Responsibilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>FastAPI Web Core</strong></td>
+        <td><code>nexpire-api</code></td>
+        <td>8001:8000</td>
+        <td>High-throughput asynchronous ASGI web server, Pydantic v2 schemas, REST endpoints, static dashboard host.</td>
+      </tr>
+      <tr>
+        <td><strong>PostgreSQL + PostGIS</strong></td>
+        <td><code>nexpire-db</code></td>
+        <td>5432:5432</td>
+        <td>ACID relational database, spatial index engine (<code>ST_DWithin</code>), inventory batches, claims, standing orders.</td>
+      </tr>
+      <tr>
+        <td><strong>Redis In-Memory Engine</strong></td>
+        <td><code>nexpire-redis</code></td>
+        <td>6379:6379</td>
+        <td>High-concurrency atomic reservation lock (<code>SET NX EX</code>), Celery queue message broker, fast TTL manager.</td>
+      </tr>
+      <tr>
+        <td><strong>Celery Task Worker</strong></td>
+        <td><code>nexpire-worker</code></td>
+        <td>Internal</td>
+        <td>Background asynchronous queue worker executing batch flash broadcasts and bulk notification dispatches.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 3: ML PRICING & DECAY FORMULAS -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>3. The AI Expiration Risk & Dynamic Pricing Engine</h2>
+    <span class="section-badge">Machine Learning</span>
+  </div>
+
+  <p>
+    Standard markdown models treat 2 days to expiry identically across milk, bread, and canned goods. NEXPIRE introduces <strong>Category-Relative Urgency Normalization</strong>, translating raw expiry timelines into a universal urgency signal ($0.0$ to $1.0$).
+  </p>
+
+  <h3>3.1 The Category Urgency Normalization</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Curve Type 1: Linear-Convex (Perishables)</h4>
+      <p><strong>Applies to:</strong> Dairy, Bakery, Meat & Seafood, Fruits & Veggies, Ready-to-Eat.</p>
+      <p>Urgency accelerates dramatically in the final 20% of shelf life, matching compounding bacterial growth and sensory decay.</p>
+      <div class="formula-box">
+        Urgency = (1 - DaysRemaining / ShelfLife) ^ 1.4
+      </div>
+    </div>
+    <div class="card">
+      <h4>Curve Type 2: Sigmoid Ramp (Pantry & Long-Shelf)</h4>
+      <p><strong>Applies to:</strong> Food Grains, Oil & Masala, Snacks, Beverages, Canned.</p>
+      <p>Urgency stays near 0% across 90% of product life, ramping up steeply only in the final 5–10% to prevent premature clearance.</p>
+      <div class="formula-box">
+        Urgency = 1 / (1 + e^(-k * (FractionElapsed - 0.92)))
+      </div>
+    </div>
+  </div>
+
+  <h3>3.2 Mathematical Formulation of Spoilage Risk</h3>
+  <p>The total risk score is a composite function of decay, weather temperature, remaining volume, and physical grade:</p>
+
+  <div class="formula-box">
+    F_decay = exp(-0.25 * (DaysToExpiry / CategoryPerishabilityIndex))
+  </div>
+  <div class="formula-box">
+    F_temp  = 1.0 + max(0, (AmbientTemp_C - 25.0) * 0.02)
+  </div>
+  <div class="formula-box">
+    F_qty   = 1.0 + min(0.5, (RemainingQuantity / 100.0) * 0.2)
+  </div>
+  <div class="formula-box">
+    Total Spoilage Risk = clip(F_decay * F_temp * F_qty * PhysicalConditionMultiplier + N(0, 0.03), 0.05, 0.99)
+  </div>
+
+  <h3>3.3 Risk-to-Discount Mapping Tiers</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Risk Level</th>
+        <th>Calculated Risk ($R$)</th>
+        <th>Dynamic Markdown %</th>
+        <th>Clearance Velocity Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-green">Low Risk</span></td>
+        <td>$R < 0.20$</td>
+        <td>$0\% - 10\%$</td>
+        <td>Normal store browsing clearance.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">Medium Risk</span></td>
+        <td>$0.20 \le R < 0.45$</td>
+        <td>$15\% - 30\%$</td>
+        <td>In-store display highlight & mobile feed recommendation.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">High Risk</span></td>
+        <td>$0.45 \le R < 0.75$</td>
+        <td>$35\% - 60\%$</td>
+        <td>Hyper-local SMS/WhatsApp flash broadcast dispatch.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">Critical Risk</span></td>
+        <td>$R \ge 0.75$</td>
+        <td>$65\% - 90\%$</td>
+        <td>Emergency flash sale / Standing order shelter match.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 4: DETAILED PHASE SPECIFICATION -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>4. Phase-by-Phase Technical Implementation</h2>
+    <span class="section-badge">Phases 0 - 7</span>
+  </div>
+
+  <h3>Phase 0: Infrastructure & Container Orchestration</h3>
+  <ul>
+    <li><strong>PostgreSQL 16 with PostGIS 3.4</strong> configured with automated database seeding via <code>init.sql</code>.</li>
+    <li><strong>Redis 7 Alpine</strong> configured with health check ping intervals of 5s and volume persistence.</li>
+    <li><strong>Proof of Life Check:</strong> <code>GET /health</code> queries both engines and returns <code>{"database":"ok","redis":"ok","healthy":true}</code>.</li>
+  </ul>
+
+  <h3>Phase 1: Store & Inventory Core Engine</h3>
+  <ul>
+    <li>CRUD operations for <code>Store</code> and <code>Batch</code> entities using SQLAlchemy ORM and Pydantic v2 schemas.</li>
+    <li>Automatic <code>current_price</code> calculation based on <code>original_price</code> and <code>discount_percentage</code>.</li>
+    <li>Streamed CSV ingestion (<code>POST /api/v1/inventory/upload-csv</code>) with row-level error reporting that preserves valid rows.</li>
+  </ul>
+
+  <h3>Phase 2: ML Expiration Risk & Dynamic Discounting</h3>
+  <ul>
+    <li>Scikit-Learn Multi-Output <code>RandomForestRegressor</code> serialized via <code>joblib</code> at <code>app/ml/artifacts/pricing_model.joblib</code>.</li>
+    <li>Live weather integration querying OpenWeatherMap API for ambient temperatures, with fallback handling.</li>
+    <li>Interactive batch repricing endpoint: <code>POST /api/v1/ml/reprice-batch/{batch_id}</code>.</li>
+  </ul>
+
+  <h3>Phase 3: Omnichannel Notification Engine</h3>
+  <ul>
+    <li>Integrated Twilio SMS and WhatsApp Business API supporting formatted messages with dynamic tokenized links.</li>
+    <li>Inbound SMS webhook (<code>POST /api/v1/notifications/twilio-inbound</code>) allowing single-tap claiming by replying "YES".</li>
+    <li>Celery background worker task (<code>dispatch_batch_notifications_task</code>) processing dispatches off the HTTP thread.</li>
+  </ul>
+
+  <h3>Phase 4: Standing Orders & NGO Priority Allocation</h3>
+  <ul>
+    <li>Rule-based subscription engine for shelters and food banks (category filters, minimum quantities, priority windows).</li>
+    <li>Subsidized matches flagged with <code>is_subsidized = True</code>, completely bypassing commercial payment gates.</li>
+    <li>Automated matching evaluator: <code>POST /api/v1/standing-orders/evaluate</code>.</li>
+  </ul>
+
+  <h3>Phase 5: Concurrency-Safe Marketplace & Geo-Routing</h3>
+  <ul>
+    <li>PostGIS <code>ST_DWithin</code> geospatial queries searching inventory batches within walking/driving radii.</li>
+    <li>Atomic Redis reservation locking (<code>SET NX EX claim:lock:{batch_id}</code>) with configurable TTL (180s) to eliminate double-claims.</li>
+    <li>Single-use URL-safe tokenized claim records (<code>Claim</code> model).</li>
+  </ul>
+
+  <h3>Phase 6: Multi-Rail Payment Gateway & Fulfillment</h3>
+  <ul>
+    <li>Dual gateway support: <strong>Razorpay</strong> (INR/paise) and <strong>Stripe</strong> (USD/cents) with mock fallbacks for testing.</li>
+    <li>HMAC SHA-256 webhook verification atomically updating claim status to <code>PAID</code>.</li>
+    <li>Dual fulfillment routing: In-Store Self-Pickup (QR code generator) and Local Delivery routing.</li>
+  </ul>
+
+  <h3>Phase 7: Eco-Impact Analytics & Hardening</h3>
+  <ul>
+    <li>ESG impact calculation: 0.5 kg waste prevented per item, 2.5 kg CO₂e offset per kg food rescued.</li>
+    <li>Full platform metrics at <code>GET /api/v1/analytics/summary</code> and store-level breakdown at <code>/api/v1/analytics/store/{id}</code>.</li>
+    <li>36+ passing automated test suites covering all workflows and error conditions.</li>
+  </ul>
+
+  <!-- SECTION 5: COMPLETE UI / UX DEEP-DIVE -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>5. The User Interface (UI) & User Experience (UX) Deep-Dive</h2>
+    <span class="section-badge">Frontend Walkthrough</span>
+  </div>
+
+  <p>
+    NEXPIRE provides two purpose-built web interfaces: the <strong>Operations & Store Dashboard</strong> (for retail managers, analysts, and operators) and the <strong>Consumer Claim Portal</strong> (a lightweight, mobile-optimized landing page for shoppers).
+  </p>
+
+  <h3>5.1 The Operations & Store Dashboard (<code>/</code>)</h3>
+  <p>
+    Engineered with vanilla CSS, glassmorphic panels, CSS variables, Outfit/Space Grotesk typography, and a theme switcher that stores state in <code>localStorage</code> and dynamically refreshes Chart.js colors.
+  </p>
+
+  <div class="wireframe-box">
+    <div class="wireframe-title">OPERATIONS DASHBOARD LAYOUT & TAB NAVIGATION</div>
++-----------------------------------------------------------------------------------------------+
+| [LOGO] NEXPIRE | AI Food Rescue System      [Active Store: Metro Grocery #104]  [☀/☾ Theme]   |
++-----------------------------------------------------------------------------------------------+
+| [1. Impact Analytics] [2. NGO Orders] [3. AI Pricing] [4. Claims] [5. Inventory] [6. Alerts]  |
++-----------------------------------------------------------------------------------------------+
+|                                                                                               |
+|  [KPI CARDS] Food Rescued: 4,280 kg | CO₂e Saved: 10,700 kg | Revenue: $18,420 | NGO Meals: 1,420 |
+|                                                                                               |
+|  +--------------------------------------------+  +------------------------------------------+ |
+|  | Monthly Food Rescue & Carbon Offset (Chart)|  | Waste Reduction by Food Category (Donut) | |
+|  +--------------------------------------------+  +------------------------------------------+ |
+|                                                                                               |
++-----------------------------------------------------------------------------------------------+
+|                                                                 [💬 AI Assistant Chat Widget] |
++-----------------------------------------------------------------------------------------------+
+  </div>
+
+  <h4>Walkthrough of Dashboard Tabs</h4>
+  <ul>
+    <li>
+      <strong>Tab 1: Impact & ESG Analytics (<code>#impact-tab</code>):</strong>
+      Displays executive-ready sustainability metrics. Includes dual-axis historical trend charts (Food Rescued vs. CO₂e Averted) and category distribution donuts rendered using Chart.js. Offers instant ESG report generation.
+    </li>
+    <li>
+      <strong>Tab 2: Standing Orders & NGO Priority Rescue (<code>#ngo-tab</code>):</strong>
+      Enables charitable organizations to register standing subscription filters. Operators can click "Evaluate Matches" to automatically pair expiring batches with shelter needs at 100% subsidy.
+    </li>
+    <li>
+      <strong>Tab 3: AI Dynamic Pricing Simulator (<code>#ml-tab</code>):</strong>
+      Allows operators to simulate the Scikit-Learn pricing model interactively. Features sliders for remaining shelf hours, batch volume, and weather temperature. Includes a "Reprice Batch" button that writes new AI discounts to PostgreSQL.
+    </li>
+    <li>
+      <strong>Tab 4: Claims & Geo-Marketplace (<code>#claims-tab</code>):</strong>
+      Visualizes customer reservations, real-time PostGIS radius filters, active Redis locks, and a multi-tier descending price Dutch auction simulator.
+    </li>
+    <li>
+      <strong>Tab 5: Store & Inventory Manager (<code>#inventory-tab</code>):</strong>
+      Full CRUD inventory management. Includes color-coded urgency badges, a "New Batch" modal, CSV drag-and-drop batch upload, and a simulated shelf barcode scanner.
+    </li>
+    <li>
+      <strong>Tab 6: Flash Alerts & Notifications (<code>#notify-tab</code>):</strong>
+      A command center for dispatching SMS and WhatsApp flash sales via Twilio, featuring an interactive webhook simulator to test two-way "Reply YES" claiming.
+    </li>
+    <li>
+      <strong>Floating Widget: NEXPIRE AI Assistant:</strong>
+      A persistent chat widget powered by <code>/api/v1/assistant</code>. Guides users through active deals, claiming steps, payment inquiries, and food safety FAQs.
+    </li>
+  </ul>
+
+  <!-- SECTION 5.2: CONSUMER CLAIM PORTAL -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>5.2 The Consumer Claim Portal (<code>/claim/{token}</code>)</h2>
+    <span class="section-badge">Consumer Flow</span>
+  </div>
+
+  <p>
+    When a customer taps an SMS or WhatsApp notification link, they open a lightweight, mobile-first web page. The page requires <strong>no app download and no account creation</strong>, removing friction to ensure rapid claiming before product spoilage.
+  </p>
+
+  <div class="wireframe-box">
+    <div class="wireframe-title">CONSUMER MOBILE CLAIM PAGE WIREFRAME</div>
+                     +---------------------------------------+
+                     |         NEXPIRE FLASH RESCUE          |
+                     |                                       |
+                     |  [⚡ FLASH RESCUE]   Expires in: 02:45 |
+                     |                                       |
+                     |  Artisan Sourdough Loaf (Pack of 2)   |
+                     |  Downtown Bakery Hub                  |
+                     |                                       |
+                     |  Original: $6.00    Discount: -60%    |
+                     |  NOW: $2.40                           |
+                     |                                       |
+                     |  [==========|                         |
+                     |  Reserved for you for 180 seconds     |
+                     |                                       |
+                     |  Fulfillment Preference:              |
+                     |  (o) Self-Pickup at Store (Free)      |
+                     |  ( ) Local Green Courier (+$1.50)     |
+                     |                                       |
+                     |  [ PAY $2.40 & SECURE CLAIM ]         |
+                     |                                       |
+                     |  Guaranteed Fresh • Zero Food Waste   |
+                     +---------------------------------------+
+  </div>
+
+  <h3>Key Features of the Consumer Claim Flow</h3>
+  <ol>
+    <li>
+      <strong>Live Redis TTL Reservation Timer:</strong>
+      A prominent visual progress bar and countdown timer shows the user's 3-minute lock window. If checkout is abandoned, the lock auto-releases.
+    </li>
+    <li>
+      <strong>Multi-Tier Descending Price Ticker:</strong>
+      For high-volume auction items, the price visibly decreases at set intervals, incentivizing immediate conversion.
+    </li>
+    <li>
+      <strong>Integrated Multi-Rail Payment:</strong>
+      Clicking the pay button opens a secure payment modal (Razorpay in India, Stripe globally).
+    </li>
+    <li>
+      <strong>Subsidized NGO Bypass:</strong>
+      If opened via a shelter match token, the payment button is replaced with a prominent green <em>"Confirm Subsidized Pickup (Free)"</em> button.
+    </li>
+    <li>
+      <strong>Dual Fulfillment Confirmation:</strong>
+      <ul>
+        <li><strong>Self-Pickup:</strong> Generates a high-contrast QR code for store staff verification and provides one-tap navigation to the store.</li>
+        <li><strong>Local Delivery:</strong> Prompts for delivery address, adds a delivery fee, and tracks courier status.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Shareable Social Impact Receipt:</strong>
+      Upon completion, generates a downloadable badge: <em>"🌱 I just rescued 1.5 kg of food and saved 3.7 kg CO₂e with NEXPIRE!"</em>
+    </li>
+  </ol>
+
+  <!-- SECTION 6: DATABASE SCHEMA -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>6. Database Schema & Data Models</h2>
+    <span class="section-badge">Data Layer</span>
+  </div>
+
+  <p>
+    The persistence layer is modeled in SQLAlchemy with PostgreSQL/PostGIS. Below is the relational entity specification:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Table Name</th>
+        <th>Field Name</th>
+        <th>Data Type</th>
+        <th>Description & Constraints</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="4"><strong>stores</strong></td>
+        <td><code>id</code></td>
+        <td>Integer (PK)</td>
+        <td>Unique store identifier.</td>
+      </tr>
+      <tr>
+        <td><code>name</code> / <code>address</code></td>
+        <td>String</td>
+        <td>Store brand name and street address.</td>
+      </tr>
+      <tr>
+        <td><code>latitude</code> / <code>longitude</code></td>
+        <td>Float</td>
+        <td>Spatial coordinates used by PostGIS for radius routing.</td>
+      </tr>
+      <tr>
+        <td><code>contact_phone</code></td>
+        <td>String</td>
+        <td>Store manager phone number.</td>
+      </tr>
+      <tr>
+        <td rowspan="6"><strong>batches</strong></td>
+        <td><code>id</code> / <code>store_id</code></td>
+        <td>Integer (PK / FK)</td>
+        <td>Batch ID and foreign key reference to <code>stores.id</code>.</td>
+      </tr>
+      <tr>
+        <td><code>sku</code> / <code>item_name</code></td>
+        <td>String</td>
+        <td>Product stock code and human-readable name.</td>
+      </tr>
+      <tr>
+        <td><code>category</code></td>
+        <td>String</td>
+        <td>Category: <code>dairy</code>, <code>bakery</code>, <code>produce</code>, <code>meat</code>, etc.</td>
+      </tr>
+      <tr>
+        <td><code>remaining_quantity</code></td>
+        <td>Integer</td>
+        <td>Remaining stock count in batch.</td>
+      </tr>
+      <tr>
+        <td><code>original_price</code> / <code>current_price</code></td>
+        <td>Float</td>
+        <td>Original retail price and current AI-discounted price.</td>
+      </tr>
+      <tr>
+        <td><code>expiration_date</code> / <code>status</code></td>
+        <td>DateTime / String</td>
+        <td>Expiry timestamp and state: <code>ACTIVE</code>, <code>DISCOUNTED</code>, <code>CLAIMED</code>.</td>
+      </tr>
+      <tr>
+        <td rowspan="6"><strong>claims</strong></td>
+        <td><code>id</code> / <code>batch_id</code></td>
+        <td>Integer (PK / FK)</td>
+        <td>Claim ID and foreign key reference to <code>batches.id</code>.</td>
+      </tr>
+      <tr>
+        <td><code>claim_token</code></td>
+        <td>String (Unique)</td>
+        <td>URL-safe random token used in single-tap links.</td>
+      </tr>
+      <tr>
+        <td><code>status</code></td>
+        <td>String</td>
+        <td>Status: <code>RESERVED</code>, <code>PENDING_PAYMENT</code>, <code>PAID</code>, <code>FULFILLED</code>.</td>
+      </tr>
+      <tr>
+        <td><code>fulfillment_type</code></td>
+        <td>String</td>
+        <td>Choice: <code>PICKUP</code> or <code>DELIVERY</code>.</td>
+      </tr>
+      <tr>
+        <td><code>reserved_until</code></td>
+        <td>DateTime</td>
+        <td>TTL mirror timestamp matching the Redis key expiration.</td>
+      </tr>
+      <tr>
+        <td><code>is_subsidized</code></td>
+        <td>Boolean</td>
+        <td>True if claim is an NGO allocation skipping payment gates.</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>standing_orders</strong></td>
+        <td><code>id</code> / <code>organization_name</code></td>
+        <td>Integer (PK) / String</td>
+        <td>Charity ID and shelter/food bank legal name.</td>
+      </tr>
+      <tr>
+        <td><code>category_filter</code></td>
+        <td>String</td>
+        <td>Preferred food categories (e.g. <code>produce,bakery</code>).</td>
+      </tr>
+      <tr>
+        <td><code>priority_window_hours</code></td>
+        <td>Integer</td>
+        <td>Hours before expiration to allocate priority reservation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 7: REST API SPECIFICATION -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>7. REST API Endpoints Reference</h2>
+    <span class="section-badge">API V1</span>
+  </div>
+
+  <p>All endpoints are prefixed with <code>/api/v1</code>. Interactive OpenAPI documentation is hosted at <code>/docs</code>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Path</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-green">GET</span></td>
+        <td><code>/health</code></td>
+        <td>Proof-of-life check verifying Postgres and Redis connectivity.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">POST</span></td>
+        <td><code>/api/v1/stores</code></td>
+        <td>Register a new store location with geospatial coordinates.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">GET</span></td>
+        <td><code>/api/v1/inventory/batches</code></td>
+        <td>Query batches filtered by store, category, and expiration status.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">POST</span></td>
+        <td><code>/api/v1/inventory/upload-csv</code></td>
+        <td>Streamed multipart CSV ingestion with row-level diagnostics.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">POST</span></td>
+        <td><code>/api/v1/ml/predict-discount</code></td>
+        <td>Calculate risk score ($0.0-1.0$) and recommended discount %.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">POST</span></td>
+        <td><code>/api/v1/ml/reprice-batch/{id}</code></td>
+        <td>Fetch live weather, calculate AI discount, and update Postgres batch.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">POST</span></td>
+        <td><code>/api/v1/notifications/broadcast/{id}</code></td>
+        <td>Queue Celery background SMS/WhatsApp broadcast to nearby buyers.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">POST</span></td>
+        <td><code>/api/v1/notifications/twilio-inbound</code></td>
+        <td>Twilio webhook processing single-tap "reply YES" SMS claiming.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">POST</span></td>
+        <td><code>/api/v1/claims/geo-search</code></td>
+        <td>PostGIS spatial search returning deals within given kilometer radius.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">POST</span></td>
+        <td><code>/api/v1/claims</code></td>
+        <td>Create tokenized claim reservation with atomic Redis TTL lock.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">GET</span></td>
+        <td><code>/api/v1/claims/{token}</code></td>
+        <td>Resolve public consumer claim details by token.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">POST</span></td>
+        <td><code>/api/v1/payments/checkout-session</code></td>
+        <td>Create Razorpay Order or Stripe Session (supports NGO bypass).</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">GET</span></td>
+        <td><code>/api/v1/analytics/summary</code></td>
+        <td>Platform-wide food waste prevented, CO₂e saved, and NGO meals.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">POST</span></td>
+        <td><code>/api/v1/assistant/chat</code></td>
+        <td>Conversational query engine for deals, claims, and food safety FAQs.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 8: OPERATIONAL RUNBOOK -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <h2>8. Deployment, Operational Runbook & Verification</h2>
+    <span class="section-badge">Operations</span>
+  </div>
+
+  <h3>8.1 Production Deployment with Docker Compose</h3>
+  <pre><code># 1. Clone workspace and setup environment variables
+cp .env.example .env
+
+# 2. Build and start all 4 containers in detached mode
+docker compose up --build -d
+
+# 3. Verify health status of all nodes
+curl http://localhost:8001/health
+# Response: {"database":"ok","redis":"ok","healthy":true}
+
+# 4. View real-time container status
+docker compose ps</code></pre>
+
+  <h3>8.2 Running the Automated Test Suite</h3>
+  <p>The codebase includes 36 comprehensive test suites validating all API phases, ML models, and edge cases:</p>
+  <pre><code># Execute pytest inside the running API container
+docker compose exec api pytest -v --cov=app
+
+# Run focused tests on ML pricing engine
+docker compose exec api pytest tests/test_pricing.py -v</code></pre>
+
+  <h3>8.3 Primary Service URLs Reference</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Service Name</th>
+        <th>URL</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Operations Dashboard</strong></td>
+        <td><code>http://localhost:8001/</code></td>
+        <td>Store inventory, ML simulator, claims radar, NGO orders, analytics.</td>
+      </tr>
+      <tr>
+        <td><strong>Interactive Swagger UI</strong></td>
+        <td><code>http://localhost:8001/docs</code></td>
+        <td>FastAPI interactive endpoint testing and OpenAPI schema viewer.</td>
+      </tr>
+      <tr>
+        <td><strong>Alternative ReDoc Specs</strong></td>
+        <td><code>http://localhost:8001/redoc</code></td>
+        <td>Formatted OpenAPI documentation for developer onboarding.</td>
+      </tr>
+      <tr>
+        <td><strong>API Health Check</strong></td>
+        <td><code>http://localhost:8001/health</code></td>
+        <td>Kubernetes/Docker liveness probe verifying DB and Redis nodes.</td>
+      </tr>
+      <tr>
+        <td><strong>Consumer Claim Demo</strong></td>
+        <td><code>http://localhost:8001/claim/new</code></td>
+        <td>Live demo of consumer claim page with QR and payment checkout.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info" style="margin-top: 20px;">
+    <div class="callout-title">Summary & Conclusion</div>
+    <div class="callout-body">
+      NEXPIRE bridges enterprise retail inventory systems, predictive machine learning, high-concurrency reservation locking, and community hunger relief into a single automated ecosystem. It delivers tangible economic recovery to retailers while preventing thousands of tons of edible food from entering landfills.
+    </div>
+  </div>
+
+</body>
+</html>

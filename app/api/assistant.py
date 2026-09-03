@@ -309,6 +309,9 @@ def _build_response(
     )
 
 
+from app.services.llm_assistant import get_llm_assistant_service
+
+
 # ---------------------------------------------------------------------------
 # Endpoint
 # ---------------------------------------------------------------------------
@@ -316,10 +319,35 @@ def _build_response(
 def chat(req: ChatRequest, db: Session = Depends(get_db)):
     """AI assistant chat endpoint powering the customer-facing widget.
 
-    Detects intent from the user's message, optionally fetches live product
-    data, and returns a structured response with inline product cards and
-    suggested follow-up replies.
+    Uses Groq LLM with strict domain & database guardrails when configured,
+    and seamlessly falls back to the deterministic rule-based engine offline.
     """
+    llm_service = get_llm_assistant_service()
+    if llm_service.is_configured():
+        llm_data = llm_service.generate_chat_response(
+            message=req.message,
+            history=req.history,
+            store_id=req.store_id,
+            db=db,
+        )
+        if llm_data:
+            # Resolve product IDs into cards
+            product_ids = llm_data.get("product_ids", [])
+            cards = []
+            if product_ids:
+                batches = db.query(Batch).filter(Batch.id.in_(product_ids)).all()
+                # Maintain ordering returned by LLM
+                batch_map = {b.id: b for b in batches}
+                cards = [_batch_to_card(batch_map[pid]) for pid in product_ids if pid in batch_map]
+
+            return ChatResponse(
+                reply=llm_data["reply"],
+                intent=llm_data.get("intent", "browse_discounts"),
+                products=cards,
+                quick_replies=llm_data.get("quick_replies", _QUICK_DEFAULTS),
+            )
+
+    # Fallback to deterministic rule-based engine
     intent, category = _detect_intent(req.message)
 
     # Fetch products for deal-display intents

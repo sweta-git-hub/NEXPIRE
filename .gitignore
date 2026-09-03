@@ -1,7 +1,9 @@
 # ---------- Secrets ----------
 .env
+.env.save
 *.env.local
 **/secrets/
+/NEXPIRE/
 
 # ---------- Python ----------
 __pycache__/

@@ -1279,11 +1279,11 @@
     <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
       <!-- Portal Role Switcher -->
       <div class="portal-indicator-container" id="portal-indicator-container" style="display: flex; align-items: center; gap: 0.5rem;">
-        <div class="portal-badge portal-badge-admin" id="current-portal-badge" onclick="openPortalModal()" title="Click to switch portal">
+        <div class="portal-badge portal-badge-admin" id="current-portal-badge" onclick="window.location.href='/login'" title="Click to switch portal" style="cursor: pointer;">
           <span class="portal-badge-dot"></span>
           <span id="current-portal-label">Admin Portal</span>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="openPortalModal()" title="Switch User Portal" style="gap: 0.35rem;">
+        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/login'" title="Switch User Portal" style="gap: 0.35rem;">
           <i data-lucide="arrow-left-right" aria-hidden="true"></i> Switch Portal
         </button>
       </div>
@@ -1317,166 +1317,6 @@
       </div>
     </div>
   </header>
-
-  <!-- ==========================================
-       PORTAL SELECTION & AUTHENTICATION MODAL
-       ========================================== -->
-  <div id="portal-modal" class="portal-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
-    <div class="portal-modal-wrapper">
-      <button class="portal-modal-close" onclick="closePortalModal()" aria-label="Close portal modal" title="Close">
-        <i data-lucide="x" aria-hidden="true"></i>
-      </button>
-
-      <div class="portal-modal-header">
-        <div style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.8rem;border-radius:9999px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.75rem;">
-          <i data-lucide="layers" style="width:14px;height:14px;"></i> Multi-Role Portal System
-        </div>
-        <h2 class="portal-modal-title" id="portal-modal-title">Select User Portal</h2>
-        <p class="portal-modal-subtitle">Choose your access role below to sign in or access your dedicated operations interface.</p>
-      </div>
-
-      <div class="portal-cards-grid">
-        <!-- 1. ADMIN PORTAL -->
-        <div class="portal-card portal-card-admin" data-portal="ADMIN" onclick="selectPortal('ADMIN', false)">
-          <div class="portal-card-icon">
-            <i data-lucide="shield-check"></i>
-          </div>
-          <div class="portal-card-role">Enterprise Control</div>
-          <div class="portal-card-name">1. ADMIN Portal</div>
-          <div class="portal-card-desc">Comprehensive system overview, NGO bulk orders, algorithmic pricing simulator, and inventory control.</div>
-
-          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('ADMIN', false)">
-            Select Admin <i data-lucide="arrow-right"></i>
-          </button>
-        </div>
-
-        <!-- 2. VENDOR PORTAL -->
-        <div class="portal-card portal-card-vendor" data-portal="VENDOR" onclick="selectPortal('VENDOR', false)">
-          <div class="portal-card-icon">
-            <i data-lucide="store"></i>
-          </div>
-          <div class="portal-card-role">Store Manager</div>
-          <div class="portal-card-name">2. VENDOR Portal</div>
-          <div class="portal-card-desc">Retail branch metrics, dynamic markdown AI simulation, live flash reservation monitoring, and stock care.</div>
-
-          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('VENDOR', false)">
-            Select Vendor <i data-lucide="arrow-right"></i>
-          </button>
-        </div>
-
-        <!-- 3. CUSTOMER PORTAL -->
-        <div class="portal-card portal-card-customer" data-portal="CUSTOMERS" onclick="selectPortal('CUSTOMERS', false)">
-          <div class="portal-card-icon">
-            <i data-lucide="sparkles"></i>
-          </div>
-          <div class="portal-card-role">Food Rescuer & Buyer</div>
-          <div class="portal-card-name">3. CUSTOMERS Portal</div>
-          <div class="portal-card-desc">Instant access to hyper-local surplus flash sales, near-expiry food discounts, and 1-click reservations.</div>
-
-          <button class="portal-enter-btn" onclick="event.stopPropagation(); selectPortal('CUSTOMERS', false)">
-            Select Customer <i data-lucide="arrow-right"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- AUTHENTICATION FORM CONTAINER -->
-      <div id="portal-auth-container" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--bg-card-border);">
-        <!-- Active Sign In State Notice -->
-        <div id="auth-status-banner" style="display:none; align-items:center; justify-content:space-between; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.25rem;">
-          <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
-            <i data-lucide="check-circle" style="color:var(--accent-green); width:18px; height:18px;"></i>
-            <span>Signed in as <strong id="banner-user-email">admin@nexpire.org</strong> (<span id="banner-user-role" style="text-transform:uppercase; font-weight:700; color:var(--accent-green);">admin</span>)</span>
-          </div>
-          <button onclick="handleLogout()" class="btn btn-secondary btn-sm" style="font-size:0.75rem;">Sign Out</button>
-        </div>
-
-        <!-- FORM 1: EMAIL & PASSWORD (ADMIN & VENDOR) -->
-        <div id="auth-form-credential" style="display: block;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-            <div style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-              <i data-lucide="lock" style="width: 16px; height: 16px; color: var(--accent-green);"></i>
-              <span id="auth-form-title">Store Vendor / Staff Authentication</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Email + Password</span>
-          </div>
-
-          <!-- Sample Quick-Fill Chips -->
-          <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
-            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Sample Logins:</span>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCredentials('admin@nexpire.org', 'AdminPassword123!')" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 9999px;">
-              ⚡ Admin
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCredentials('metro.manager@nexpire.org', 'VendorPassword123!')" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 9999px;">
-              ⚡ Downtown Vendor (#1)
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCredentials('green.grocer@nexpire.org', 'VendorPassword123!')" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 9999px;">
-              ⚡ Green Grocer Vendor (#2)
-            </button>
-          </div>
-
-          <form id="credential-login-form" onsubmit="event.preventDefault(); submitCredentialLogin();">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
-              <div>
-                <label style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">Business Email</label>
-                <input type="email" id="auth-email-input" class="form-input" placeholder="manager@store.com" required style="width: 100%;">
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">Account Password</label>
-                <input type="password" id="auth-password-input" class="form-input" placeholder="••••••••••••" required style="width: 100%;">
-              </div>
-            </div>
-
-            <div id="auth-credential-error" style="display: none; color: var(--accent-rose); font-size: 0.8rem; margin-bottom: 0.8rem;"></div>
-
-            <button type="submit" id="auth-credential-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; gap: 0.5rem;">
-              <i data-lucide="log-in"></i> Sign In to Portal
-            </button>
-          </form>
-        </div>
-
-        <!-- FORM 2: PHONE & OTP (CUSTOMER PORTAL) -->
-        <div id="auth-form-otp" style="display: none;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-            <div style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-              <i data-lucide="smartphone" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i>
-              <span>Customer Verification (Passwordless OTP)</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Instant SMS Code</span>
-          </div>
-
-          <!-- Sample Quick-Fill Chips -->
-          <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
-            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Sample Customer:</span>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillCustomer('+919876543210', '123456')" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 9999px;">
-              ⚡ +91 98765 43210 (Test OTP: 123456)
-            </button>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
-            <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">Mobile Phone Number</label>
-              <div style="display: flex; gap: 0.4rem;">
-                <input type="tel" id="auth-phone-input" class="form-input" placeholder="+919876543210" style="flex: 1;">
-                <button type="button" id="btn-send-otp" class="btn btn-secondary btn-sm" onclick="sendCustomerOTP()" style="white-space: nowrap;">
-                  Send OTP
-                </button>
-              </div>
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">6-Digit OTP Code</label>
-              <input type="text" id="auth-otp-input" class="form-input" placeholder="123456" maxlength="6" style="width: 100%; text-align: center; letter-spacing: 2px; font-weight: 700;">
-            </div>
-          </div>
-
-          <div id="auth-otp-feedback" style="display: none; font-size: 0.8rem; margin-bottom: 0.8rem;"></div>
-
-          <button type="button" id="auth-otp-submit-btn" class="btn btn-primary" onclick="verifyCustomerOTP()" style="width: 100%; justify-content: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));">
-            <i data-lucide="check-check"></i> Verify OTP & Enter Customer Deals
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- ======== MAIN ======== -->
   <main>
@@ -2502,8 +2342,8 @@
     function handleLogout() {
       localStorage.removeItem('nexpire_token');
       localStorage.removeItem('nexpire_user');
-      updateAuthHeaderUI();
-      openPortalModal();
+      localStorage.removeItem('nexpire_selected_portal');
+      window.location.href = '/login';
     }
 
     function selectPortal(portalKey, closeModal = true) {
@@ -2580,21 +2420,11 @@
     }
 
     function openPortalModal() {
-      const modal = document.getElementById('portal-modal');
-      if (modal) {
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        updateAuthHeaderUI();
-      }
-      if (window.lucide) lucide.createIcons();
+      window.location.href = '/login';
     }
 
     function closePortalModal() {
-      const modal = document.getElementById('portal-modal');
-      if (modal) {
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-      }
+      // no-op
     }
 
     function switchTab(tabId, btn) {
@@ -4025,9 +3855,16 @@
 
     // ===== INIT: activate portal & default tab =====
     (function init() {
-      updateAuthHeaderUI();
-      const savedPortal = localStorage.getItem('nexpire_selected_portal');
       const auth = getStoredAuth();
+
+      // If user is unauthenticated, redirect to dedicated login page
+      if (!auth.token || !auth.user) {
+        window.location.href = '/login';
+        return;
+      }
+
+      updateAuthHeaderUI();
+      const savedPortal = localStorage.getItem('nexpire_selected_portal') || (auth.user.role === 'admin' ? 'ADMIN' : (auth.user.role === 'vendor' ? 'VENDOR' : 'CUSTOMERS'));
 
       if (savedPortal && PORTALS[savedPortal]) {
         selectPortal(savedPortal, false);
@@ -4035,9 +3872,13 @@
         selectPortal('ADMIN', false);
       }
 
-      // If user is unauthenticated, show the portal login modal automatically
-      if (!auth.token) {
-        openPortalModal();
+      // If vendor with specific store, select store automatically
+      if (auth.user.role === 'vendor' && auth.user.store_id) {
+        const storeSelect = document.getElementById('store-select');
+        if (storeSelect) {
+          storeSelect.value = String(auth.user.store_id);
+          if (typeof onStoreChange === 'function') onStoreChange();
+        }
       }
     })();
   </script>

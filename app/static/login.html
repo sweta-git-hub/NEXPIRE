@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXPIRE — Portal Access & Authentication</title>
+  <meta name="description" content="Secure role-based portal access for NEXPIRE Food Rescue Platform.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+
+  <script>
+    // Apply theme preference before render
+    (function(){
+      try {
+        if (localStorage.getItem('nexpire-theme') === 'light') {
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch(e) {}
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-card: rgba(18, 26, 43, 0.78);
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.25);
+      --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.2);
+      --accent-amber: #f59e0b;
+      --accent-amber-glow: rgba(245, 158, 11, 0.2);
+      --accent-rose: #f43f5e;
+      --accent-rose-glow: rgba(244, 63, 94, 0.2);
+      --accent-purple: #8b5cf6;
+      --accent-purple-glow: rgba(139, 92, 246, 0.2);
+
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+
+      --font-main: 'Outfit', sans-serif;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      --radius-card: 16px;
+      --radius-btn: 10px;
+    }
+
+    body.light-theme {
+      --bg-dark: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-card-border: rgba(15, 23, 42, 0.09);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-green: #059669;
+      --accent-green-glow: rgba(5, 150, 105, 0.18);
+      --accent-cyan: #0891b2;
+      --accent-cyan-glow: rgba(8, 145, 178, 0.15);
+      --accent-amber: #d97706;
+      --accent-purple: #7c3aed;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      padding: 1.5rem;
+    }
+
+    /* Ambient Glow Orbs */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+    .glow-1 { top: -100px; left: -100px; width: 450px; height: 450px; background: var(--accent-green-glow); }
+    .glow-2 { bottom: -150px; right: -150px; width: 500px; height: 500px; background: var(--accent-cyan-glow); }
+    .glow-3 { top: 40%; left: 60%; width: 350px; height: 350px; background: var(--accent-purple-glow); }
+
+    /* Top Nav / Brand */
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1100px;
+      margin: 0 auto 2.5rem auto;
+      width: 100%;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-green-glow);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    body.light-theme .brand-title {
+      background: linear-gradient(90deg, #0f172a, #059669);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .theme-toggle {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-muted);
+      border-radius: 9999px;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); }
+
+    /* Page Container */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* VIEW 1: PORTAL SELECTION HUB */
+    #view-select-portal {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-sub {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem auto;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .portal-grid {
+        grid-template-columns: 1fr;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    .portal-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-card);
+      padding: 2rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .portal-card.card-admin::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .portal-card.card-vendor::before { background: linear-gradient(90deg, var(--accent-cyan), #0284c7); }
+    .portal-card.card-customer::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
+
+    .portal-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    }
+    .portal-card:hover::before { opacity: 1; }
+
+    .portal-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      transition: transform 0.25s ease;
+    }
+    .portal-card:hover .portal-icon { transform: scale(1.08); }
+
+    .card-admin .portal-icon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .card-vendor .portal-icon { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .card-customer .portal-icon { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .portal-role-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.35rem;
+    }
+    .card-admin .portal-role-tag { color: #f59e0b; }
+    .card-vendor .portal-role-tag { color: var(--accent-cyan); }
+    .card-customer .portal-role-tag { color: var(--accent-green); }
+
+    .portal-card-name {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      color: var(--text-main);
+    }
+
+    .portal-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.75rem;
+      flex: 1;
+    }
+
+    .portal-btn {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-btn);
+      font-family: var(--font-main);
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .card-admin .portal-btn {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: #fff;
+    }
+    .card-vendor .portal-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+    }
+    .card-customer .portal-btn {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      color: #fff;
+    }
+    .portal-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    /* VIEW 2: DEDICATED LOGIN VIEW */
+    #view-login-form {
+      display: none;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--text-main); }
+
+    .login-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 20px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .role-badge.admin { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .role-badge.vendor { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .role-badge.customer { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .login-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+      color: var(--text-main);
+    }
+
+    .login-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.45;
+    }
+
+    /* Quick Fill Chips */
+    .quick-chips-wrap {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .quick-chips-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      padding: 0.3rem 0.7rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .chip-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: rgba(10, 15, 28, 0.85);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-btn);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    body.light-theme .form-input {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(15, 23, 42, 0.15);
+      color: #0f172a;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 12px var(--accent-green-glow);
+    }
+
+    .form-input-otp {
+      text-align: center;
+      letter-spacing: 4px;
+      font-weight: 800;
+      font-size: 1.3rem;
+      font-family: var(--font-code);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      border-radius: var(--radius-btn);
+      border: none;
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .submit-btn.admin { background: linear-gradient(135deg, #d97706, #b45309); }
+    .submit-btn.vendor { background: linear-gradient(135deg, #0284c7, #0369a1); }
+    .submit-btn.customer { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); }
+
+    .submit-btn:hover { filter: brightness(1.12); transform: translateY(-2px); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .feedback-msg {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: none;
+      line-height: 1.4;
+    }
+    .feedback-msg.error {
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: var(--accent-rose);
+    }
+    .feedback-msg.success {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-green);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+  <div class="glow-orb glow-3"></div>
+
+  <!-- HEADER -->
+  <header>
+    <a href="/login" class="brand">
+      <div class="brand-logo">
+        <i data-lucide="leaf"></i>
+      </div>
+      <div>
+        <div class="brand-title">NEXPIRE</div>
+        <div class="brand-subtitle">AI Food-Waste Rescue Platform</div>
+      </div>
+    </a>
+
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <i data-lucide="sun" id="theme-icon"></i>
+    </button>
+  </header>
+
+  <main>
+    <!-- ====================================================
+         VIEW 1: SELECT PORTAL SCREEN
+         ==================================================== -->
+    <div id="view-select-portal">
+      <h1 class="hero-title">Select User Portal</h1>
+      <p class="hero-sub">Choose your dedicated workspace below to access login and enter the platform.</p>
+
+      <div class="portal-grid">
+        <!-- 1. ADMIN PORTAL -->
+        <div class="portal-card card-admin" onclick="goToLogin('ADMIN')">
+          <div class="portal-icon">
+            <i data-lucide="shield-check" style="width:28px;height:28px;"></i>
+          </div>
+          <div class="portal-role-tag">Enterprise Control</div>
+          <div class="portal-card-name">1. ADMIN Portal</div>
+          <div class="portal-card-desc">
+            Platform-wide ESG analytics, Scikit-Learn ML retraining, bulk standing orders, and multi-store management.
+          </div>
+          <button class="portal-btn" onclick="event.stopPropagation(); goToLogin('ADMIN')">
+            Continue as Admin <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- 2. VENDOR PORTAL -->
+        <div class="portal-card card-vendor" onclick="goToLogin('VENDOR')">
+          <div class="portal-icon">
+            <i data-lucide="store" style="width:28px;height:28px;"></i>
+          </div>
+          <div class="portal-card-role">Store Manager & Staff</div>
+          <div class="portal-card-name">2. VENDOR Portal</div>
+          <div class="portal-card-desc">
+            Branch inventory tracking, automated AI discount repricing, expiration risk simulator, and local flash broadcasts.
+          </div>
+          <button class="portal-btn" onclick="event.stopPropagation(); goToLogin('VENDOR')">
+            Continue as Vendor <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- 3. CUSTOMER PORTAL -->
+        <div class="portal-card card-customer" onclick="goToLogin('CUSTOMERS')">
+          <div class="portal-icon">
+            <i data-lucide="sparkles" style="width:28px;height:28px;"></i>
+          </div>
+          <div class="portal-card-role">Community Food Rescuer</div>
+          <div class="portal-card-name">3. CUSTOMERS Portal</div>
+          <div class="portal-card-desc">
+            Hyper-local flash sales, instant near-expiry discounts, passwordless SMS OTP claiming, and verified QR pickup.
+          </div>
+          <button class="portal-btn" onclick="event.stopPropagation(); goToLogin('CUSTOMERS')">
+            Continue as Customer <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ====================================================
+         VIEW 2: DEDICATED LOGIN SCREEN
+         ==================================================== -->
+    <div id="view-login-form">
+      <button class="back-btn" onclick="backToPortalSelect()">
+        <i data-lucide="arrow-left"></i> Back to Portal Selection
+      </button>
+
+      <div class="login-card">
+        <!-- Role Badge -->
+        <div class="role-badge admin" id="role-badge">
+          <i data-lucide="shield" id="role-badge-icon" style="width:14px;height:14px;"></i>
+          <span id="role-badge-text">ADMIN PORTAL LOGIN</span>
+        </div>
+
+        <h2 class="login-title" id="login-title">Admin Sign In</h2>
+        <p class="login-desc" id="login-desc">Enter your business email and account password to access the enterprise dashboard.</p>
+
+        <!-- Quick-Fill Test Chips -->
+        <div class="quick-chips-wrap" id="quick-chips-wrap">
+          <div class="quick-chips-title">
+            <i data-lucide="zap" style="width:12px;height:12px;color:var(--accent-amber);"></i>
+            <span>One-Click Test Credentials:</span>
+          </div>
+          <div class="chips-group" id="chips-group">
+            <!-- Dynamic chips populated by JS -->
+          </div>
+        </div>
+
+        <!-- CREDENTIAL LOGIN FORM (ADMIN & VENDOR) -->
+        <form id="form-credentials" onsubmit="event.preventDefault(); submitCredentialLogin();">
+          <div class="form-group">
+            <label class="form-label" for="inp-email">Business Email</label>
+            <input type="email" id="inp-email" class="form-input" placeholder="name@nexpire.org" required autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-password">Password</label>
+            <input type="password" id="inp-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" id="btn-submit-cred" class="submit-btn admin">
+            <i data-lucide="log-in"></i>
+            <span id="btn-cred-text">Sign In to Admin Portal</span>
+          </button>
+        </form>
+
+        <!-- OTP LOGIN FORM (CUSTOMERS) -->
+        <form id="form-otp" style="display:none;" onsubmit="event.preventDefault(); submitCustomerOTP();">
+          <div class="form-group">
+            <label class="form-label" for="inp-phone">Mobile Phone Number</label>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="tel" id="inp-phone" class="form-input" placeholder="+919876543210" style="flex:1;">
+              <button type="button" class="chip-btn" id="btn-send-code" onclick="sendOTP()" style="border-radius:var(--radius-btn);padding:0.75rem 1rem;white-space:nowrap;">
+                Send OTP
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group" id="group-otp-code">
+            <label class="form-label" for="inp-otp">
+              6-Digit Verification Code <span style="color:var(--accent-green);font-size:0.75rem;">(Dev mock: 123456)</span>
+            </label>
+            <input type="text" id="inp-otp" class="form-input form-input-otp" placeholder="123456" maxlength="6">
+          </div>
+
+          <button type="submit" id="btn-submit-otp" class="submit-btn customer">
+            <i data-lucide="check-check"></i>
+            <span>Verify OTP & Enter Customer Portal</span>
+          </button>
+        </form>
+
+        <!-- Feedback Alert -->
+        <div id="login-feedback" class="feedback-msg"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentRole = 'ADMIN';
+
+    // Check query param on page load (e.g. /login?portal=vendor)
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const portalParam = urlParams.get('portal') || urlParams.get('role');
+      if (portalParam) {
+        goToLogin(portalParam.toUpperCase());
+      }
+      if (window.lucide) lucide.createIcons();
+    });
+
+    function goToLogin(roleKey) {
+      currentRole = roleKey;
+      const selectView = document.getElementById('view-select-portal');
+      const loginView = document.getElementById('view-login-form');
+
+      selectView.style.display = 'none';
+      loginView.style.display = 'block';
+
+      const roleBadge = document.getElementById('role-badge');
+      const badgeText = document.getElementById('role-badge-text');
+      const loginTitle = document.getElementById('login-title');
+      const loginDesc = document.getElementById('login-desc');
+      const credForm = document.getElementById('form-credentials');
+      const otpForm = document.getElementById('form-otp');
+      const submitBtn = document.getElementById('btn-submit-cred');
+      const submitBtnText = document.getElementById('btn-cred-text');
+      const chipsGroup = document.getElementById('chips-group');
+      const feedback = document.getElementById('login-feedback');
+
+      if (feedback) feedback.style.display = 'none';
+
+      // Setup Role Specific Form Content
+      if (roleKey === 'ADMIN') {
+        roleBadge.className = 'role-badge admin';
+        badgeText.textContent = 'ADMIN PORTAL LOGIN';
+        loginTitle.textContent = 'Enterprise Admin Sign In';
+        loginDesc.textContent = 'Enter your admin email and password to access the operations hub.';
+        credForm.style.display = 'block';
+        otpForm.style.display = 'none';
+        submitBtn.className = 'submit-btn admin';
+        submitBtnText.textContent = 'Sign In to Admin Portal';
+
+        chipsGroup.innerHTML = `
+          <button type="button" class="chip-btn" onclick="fillCreds('admin@nexpire.org', 'AdminPassword123!')">
+            ⚡ Admin (admin@nexpire.org)
+          </button>
+        `;
+        document.getElementById('inp-email').focus();
+
+      } else if (roleKey === 'VENDOR') {
+        roleBadge.className = 'role-badge vendor';
+        badgeText.textContent = 'STORE VENDOR LOGIN';
+        loginTitle.textContent = 'Store Manager Sign In';
+        loginDesc.textContent = 'Access your retail branch inventory, re-pricing engine, and local alerts.';
+        credForm.style.display = 'block';
+        otpForm.style.display = 'none';
+        submitBtn.className = 'submit-btn vendor';
+        submitBtnText.textContent = 'Sign In to Vendor Portal';
+
+        chipsGroup.innerHTML = `
+          <button type="button" class="chip-btn" onclick="fillCreds('metro.manager@nexpire.org', 'VendorPassword123!')">
+            ⚡ Downtown Vendor (#1)
+          </button>
+          <button type="button" class="chip-btn" onclick="fillCreds('green.grocer@nexpire.org', 'VendorPassword123!')">
+            ⚡ Green Grocer Vendor (#2)
+          </button>
+        `;
+        document.getElementById('inp-email').focus();
+
+      } else { // CUSTOMERS
+        roleBadge.className = 'role-badge customer';
+        badgeText.textContent = 'CUSTOMER VERIFICATION';
+        loginTitle.textContent = 'Customer Verification';
+        loginDesc.textContent = 'Sign in with your mobile phone number using passwordless SMS OTP.';
+        credForm.style.display = 'none';
+        otpForm.style.display = 'block';
+
+        chipsGroup.innerHTML = `
+          <button type="button" class="chip-btn" onclick="fillCustomer('+919876543210', '123456')">
+            ⚡ Test Rescuer (+91 98765 43210 / OTP: 123456)
+          </button>
+        `;
+        document.getElementById('inp-phone').focus();
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function backToPortalSelect() {
+      document.getElementById('view-select-portal').style.display = 'block';
+      document.getElementById('view-login-form').style.display = 'none';
+      history.replaceState(null, '', '/login');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function fillCreds(email, pwd) {
+      document.getElementById('inp-email').value = email;
+      document.getElementById('inp-password').value = pwd;
+      showFeedback('Credentials pre-filled! Click Sign In to enter.', 'success');
+    }
+
+    function fillCustomer(phone, otp) {
+      document.getElementById('inp-phone').value = phone;
+      document.getElementById('inp-otp').value = otp;
+      showFeedback('Sample customer details loaded! Click Verify to enter.', 'success');
+    }
+
+    function showFeedback(msg, type = 'error') {
+      const el = document.getElementById('login-feedback');
+      el.textContent = msg;
+      el.className = 'feedback-msg ' + type;
+      el.style.display = 'block';
+    }
+
+    async function submitCredentialLogin() {
+      const email = document.getElementById('inp-email').value.trim();
+      const password = document.getElementById('inp-password').value;
+      const btn = document.getElementById('btn-submit-cred');
+
+      if (!email || !password) {
+        showFeedback('Please provide both email and password.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Signing in...';
+
+      try {
+        const res = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Invalid email or password');
+
+        localStorage.setItem('nexpire_token', data.access_token);
+        localStorage.setItem('nexpire_user', JSON.stringify(data.user));
+        localStorage.setItem('nexpire_selected_portal', data.user.role === 'admin' ? 'ADMIN' : 'VENDOR');
+
+        showFeedback(`✓ Welcome back, ${data.user.full_name || 'User'}! Redirecting...`, 'success');
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 600);
+
+      } catch (err) {
+        showFeedback(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="log-in"></i> Sign In to ${currentRole === 'ADMIN' ? 'Admin' : 'Vendor'} Portal`;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    async function sendOTP() {
+      const phone = document.getElementById('inp-phone').value.trim();
+      const btn = document.getElementById('btn-send-code');
+
+      if (!phone || phone.length < 7) {
+        showFeedback('Please enter a valid phone number (e.g. +91 98765 43210)');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/v1/auth/customer/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phone })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to send OTP code');
+
+        if (data.dev_mock_otp) {
+          document.getElementById('inp-otp').value = data.dev_mock_otp;
+          showFeedback(`✓ Verification code sent! (Dev mode: use ${data.dev_mock_otp})`, 'success');
+        } else {
+          showFeedback(`✓ Verification code sent to ${phone}`, 'success');
+        }
+      } catch (err) {
+        showFeedback(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Resend OTP';
+      }
+    }
+
+    async function submitCustomerOTP() {
+      const phone = document.getElementById('inp-phone').value.trim();
+      const otp = document.getElementById('inp-otp').value.trim();
+      const btn = document.getElementById('btn-submit-otp');
+
+      if (!phone || !otp) {
+        showFeedback('Please provide both phone number and 6-digit OTP code.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Verifying...';
+
+      try {
+        const res = await fetch('/api/v1/auth/customer/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phone, otp_code: otp })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Invalid or expired OTP code');
+
+        localStorage.setItem('nexpire_token', data.access_token);
+        localStorage.setItem('nexpire_user', JSON.stringify(data.user));
+        localStorage.setItem('nexpire_selected_portal', 'CUSTOMERS');
+
+        showFeedback(`✓ Phone verified! Redirecting to Customer Portal...`, 'success');
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 600);
+
+      } catch (err) {
+        showFeedback(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="check-check"></i> Verify OTP & Enter Customer Portal';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-theme');
+      localStorage.setItem('nexpire-theme', isLight ? 'light' : 'dark');
+      document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+    }
+
+    (function initTheme() {
+      if (localStorage.getItem('nexpire-theme') === 'light') {
+        document.body.classList.add('light-theme');
+      }
+    })();
+  </script>
+</body>
+</html>

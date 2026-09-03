@@ -67,6 +67,12 @@ def root():
     return FileResponse("app/static/index.html")
 
 
+@app.get("/login")
+def login_page():
+    """Multi-role portal selection and authentication page."""
+    return FileResponse("app/static/login.html")
+
+
 @app.get("/claim/new")
 def claim_new():
     """Consumer claim page for new claims from auction or SMS links."""

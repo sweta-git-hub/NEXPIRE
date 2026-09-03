@@ -16,6 +16,7 @@ from app.api.claims import router as claims_router
 from app.api.payments import router as payments_router
 from app.api.analytics import router as analytics_router
 from app.api.assistant import router as assistant_router
+from app.api.auth import router as auth_router
 from app.ml.predictor import get_predictor
 
 
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="NEXPIRE API", version="0.1.0", lifespan=lifespan)
 
 # Register API Routers
+app.include_router(auth_router)
 app.include_router(stores_router)
 app.include_router(inventory_router)
 app.include_router(pricing_router)

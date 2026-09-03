@@ -16,3 +16,4 @@ pandas==2.2.2
 scikit-learn==1.4.2
 joblib==1.4.0
 twilio==9.3.2
+groq>=0.18.0

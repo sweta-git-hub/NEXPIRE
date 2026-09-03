@@ -457,16 +457,30 @@
           </div>
         </div>
 
-        <!-- Contact -->
-        <div class="section-label">Your contact (for confirmation)</div>
-        <div class="form-row">
-          <label class="form-label">Phone Number</label>
-          <input type="tel" class="form-input" id="inp-phone" placeholder="+91 98765 43210">
+        <!-- Contact & OTP Verification -->
+        <div class="section-label">Customer Verification (Phone + OTP)</div>
+        <div style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+          <button type="button" class="btn-claim" onclick="quickFillClaimCustomer()" style="width: auto; padding: 0.3rem 0.7rem; font-size: 0.75rem; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--accent-green); box-shadow: none; border-radius: 9999px;">
+            ⚡ Quick-Fill Test Customer (+91 98765 43210 / 123456)
+          </button>
         </div>
+
         <div class="form-row">
-          <label class="form-label">Email (optional)</label>
-          <input type="email" class="form-input" id="inp-email" placeholder="you@example.com">
+          <label class="form-label">Mobile Phone Number</label>
+          <div style="display: flex; gap: 0.4rem;">
+            <input type="tel" class="form-input" id="inp-phone" placeholder="+91 98765 43210" style="flex: 1;">
+            <button type="button" class="btn-claim" id="btn-claim-send-otp" onclick="handleClaimSendOTP()" style="width: auto; padding: 0.6rem 0.9rem; font-size: 0.82rem; white-space: nowrap; box-shadow: none; background: rgba(255,255,255,0.08); border: 1px solid var(--bg-card-border);">
+              Send OTP
+            </button>
+          </div>
         </div>
+
+        <div class="form-row" id="otp-entry-row" style="display: none;">
+          <label class="form-label">Enter 6-Digit OTP <span id="otp-hint" style="color: var(--accent-green); font-size: 0.75rem;">(Dev mode: 123456)</span></label>
+          <input type="text" class="form-input" id="inp-otp" placeholder="123456" maxlength="6" style="text-align: center; letter-spacing: 3px; font-weight: 700; font-family: var(--font-code);">
+        </div>
+
+        <div id="otp-claim-feedback" style="display: none; font-size: 0.8rem; margin-bottom: 0.8rem;"></div>
 
         <button class="btn-claim" id="claim-btn" onclick="submitClaim()">
           <i data-lucide="zap"></i> Lock In This Deal
@@ -692,24 +706,132 @@
       lucide.createIcons();
     }
 
+    function quickFillClaimCustomer() {
+      const phoneInput = document.getElementById('inp-phone');
+      const otpRow = document.getElementById('otp-entry-row');
+      const otpInput = document.getElementById('inp-otp');
+      const fb = document.getElementById('otp-claim-feedback');
+
+      if (phoneInput) phoneInput.value = '+919876543210';
+      if (otpRow) otpRow.style.display = 'block';
+      if (otpInput) otpInput.value = '123456';
+      if (fb) {
+        fb.textContent = '✓ Sample customer credentials loaded (+919876543210 / OTP: 123456)';
+        fb.style.color = 'var(--accent-green)';
+        fb.style.display = 'block';
+      }
+    }
+
+    async function handleClaimSendOTP() {
+      const phone = (document.getElementById('inp-phone').value || '').trim();
+      const fb = document.getElementById('otp-claim-feedback');
+      const otpRow = document.getElementById('otp-entry-row');
+      const otpInput = document.getElementById('inp-otp');
+      const btn = document.getElementById('btn-claim-send-otp');
+
+      if (!phone || phone.length < 7) {
+        if (fb) {
+          fb.textContent = 'Please enter a valid mobile number (e.g. +91 98765 43210)';
+          fb.style.color = 'var(--accent-rose)';
+          fb.style.display = 'block';
+        }
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+      try {
+        const res = await fetch('/api/v1/auth/customer/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phone })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to send OTP code');
+
+        if (otpRow) otpRow.style.display = 'block';
+        if (otpInput && data.dev_mock_otp) {
+          otpInput.value = data.dev_mock_otp;
+        }
+
+        if (fb) {
+          fb.textContent = data.dev_mock_otp 
+            ? `✓ OTP dispatched! (Dev Mode: enter test code ${data.dev_mock_otp})`
+            : `✓ 6-digit OTP code sent to ${phone}`;
+          fb.style.color = 'var(--accent-green)';
+          fb.style.display = 'block';
+        }
+      } catch (err) {
+        if (fb) {
+          fb.textContent = err.message;
+          fb.style.color = 'var(--accent-rose)';
+          fb.style.display = 'block';
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Resend OTP'; }
+      }
+    }
+
     async function submitClaim() {
       if (!batchData) { showError('No batch loaded.'); return; }
 
       const phone = document.getElementById('inp-phone').value.trim();
-      const email = document.getElementById('inp-email').value.trim();
-
+      const otpRow = document.getElementById('otp-entry-row');
+      const otpInput = document.getElementById('inp-otp');
+      const otp = otpInput ? otpInput.value.trim() : '';
+      const fb = document.getElementById('otp-claim-feedback');
       const btn = document.getElementById('claim-btn');
+
+      if (!phone) {
+        if (fb) {
+          fb.textContent = 'Please enter your mobile phone number';
+          fb.style.color = 'var(--accent-rose)';
+          fb.style.display = 'block';
+        }
+        return;
+      }
+
+      // If OTP input is not yet shown, request OTP first
+      if (!otpRow || otpRow.style.display === 'none' || !otp) {
+        await handleClaimSendOTP();
+        if (fb) {
+          fb.textContent = 'Please enter the 6-digit OTP code to verify and reserve this deal.';
+          fb.style.color = 'var(--accent-cyan)';
+          fb.style.display = 'block';
+        }
+        return;
+      }
+
       btn.disabled = true;
-      btn.innerHTML = '<div style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;"></div> Locking your deal...';
+      btn.innerHTML = '<div style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;"></div> Verifying & Locking Deal...';
 
       try {
-        const res = await fetch('/api/v1/claims', {
+        // 1. Verify OTP with customer auth engine
+        const verifyRes = await fetch('/api/v1/auth/customer/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phone, otp_code: otp })
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyRes.ok) {
+          throw new Error(verifyData.detail || 'Invalid verification code');
+        }
+
+        // Store customer token
+        localStorage.setItem('nexpire_token', verifyData.access_token);
+        localStorage.setItem('nexpire_user', JSON.stringify(verifyData.user));
+
+        // 2. Reserve Claim
+        const res = await fetch('/api/v1/claims', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${verifyData.access_token}`
+          },
           body: JSON.stringify({
             batch_id: batchData.id,
-            reserver_phone: phone || null,
-            reserver_email: email || null,
+            reserver_phone: phone,
+            reserver_email: verifyData.user.email || null,
             reserved_quantity: qty,
             fulfillment_type: selectedFulfillment,
             is_subsidized: false
@@ -732,7 +854,11 @@
         btn.disabled = false;
         btn.innerHTML = '<i data-lucide="zap"></i> Lock In This Deal';
         lucide.createIcons();
-        alert('⚠️ ' + err.message);
+        if (fb) {
+          fb.textContent = err.message;
+          fb.style.color = 'var(--accent-rose)';
+          fb.style.display = 'block';
+        }
       }
     }
 
